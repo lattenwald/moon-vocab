@@ -37,7 +37,7 @@ class AppContainer(context: Context) {
     private val ankiLock = Mutex()
     val sender = CardSender(db, anki, settings, ankiLock, clock = System::currentTimeMillis)
     val ankiCheck = AnkiCheck(db, anki, ankiLock)
-    val inboxActions = InboxActions(db)
+    val inboxActions = InboxActions(db, ankiLock)
 
     // LlmClient does its own retries; OkHttp's silent retry would add attempts.
     private val http = OkHttpClient.Builder().callTimeout(60, TimeUnit.SECONDS).retryOnConnectionFailure(false).build()

@@ -1,8 +1,11 @@
 package org.lattenwald.moonvocab.domain.inbox
 
+import androidx.room.withTransaction
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,7 +20,7 @@ import org.lattenwald.moonvocab.domain.card.Translator
 import org.lattenwald.moonvocab.domain.import.ImportTestBase
 
 class InboxActionsTest : ImportTestBase() {
-    private val actions by lazy { InboxActions(db) }
+    private val actions by lazy { InboxActions(db, ankiLock) }
     private val firstCandidate = SenseJudge { questions -> questions.associate { it.id to it.candidates.first().ref } }
     private val failsWord1 = Translator { items, _, _ -> items.filter { it.marked != word(1) }.associate { it.id to tr(it) } }
 
@@ -54,6 +57,20 @@ class InboxActionsTest : ImportTestBase() {
         val pendingId = allIds.single { it != sentId }
         assertEquals(listOf(pendingId), actions.discard(allIds))
         assertEquals(SENT, db.cards().byIds(listOf(sentId)).single().status)
+    }
+
+    @Test fun discardWaitsForASendHoldingTheAnkiLock() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val ids = allIds()
+        ankiLock.lock()
+        val discarded = async { actions.discard(ids) }
+        yield()
+        db.withTransaction { // a send's save, made under the lock
+            db.cards().update(db.cards().byIds(ids).single().copy(status = SENT, ankiNoteId = 1))
+        }
+        ankiLock.unlock()
+        assertEquals(emptyList<Long>(), discarded.await())
+        assertEquals(SENT, db.cards().byIds(ids).single().status)
     }
 
     @Test fun restoreTwiceRestoresOnce() = runTest {

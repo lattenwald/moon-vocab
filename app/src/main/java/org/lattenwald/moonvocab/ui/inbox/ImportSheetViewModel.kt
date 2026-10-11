@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
+import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -47,6 +48,7 @@ sealed interface SheetState {
         val selected: Set<StyleCombo>,
         val sendToAnki: Boolean,
         val pickIncomplete: Boolean = false,
+        val importRunning: Boolean = false,
     ) : SheetState
     data class Error(val message: String) : SheetState
 }
@@ -111,6 +113,12 @@ class ImportSheetViewModel(
     fun start(onStarted: () -> Unit) {
         act { // queued behind pending settings writes; a failed one leaves Error
             val ready = state.value as? SheetState.Ready ?: return@act
+            // ImportWork.enqueue keeps unfinished work and drops this request
+            val running = withContext(io) { workManager.getWorkInfosForUniqueWork(ImportWork.NAME).get() }.any { !it.state.isFinished }
+            if (running) {
+                mutableState.value = ready.copy(importRunning = true)
+                return@act
+            }
             val request = ImportRequest(ready.backup.file, ready.selected, onlyBookFileKey = null, sendToAnki = ready.sendToAnki)
             ImportWork.enqueue(workManager, ImportWork.input(request))
             onStarted()
@@ -121,6 +129,9 @@ class ImportSheetViewModel(
         val search = try {
             finder.newest(tree)
         } catch (e: SecurityException) {
+            Log.w(TAG, "backup folder unreadable", e)
+            return SheetState.FolderUnreadable
+        } catch (e: IOException) { // a deleted or moved folder can't be listed
             Log.w(TAG, "backup folder unreadable", e)
             return SheetState.FolderUnreadable
         }

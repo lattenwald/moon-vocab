@@ -70,6 +70,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
@@ -104,10 +105,10 @@ fun InboxScreen(
     val allSelected = list.visibleIds.isNotEmpty() && selectedIds.size == list.visibleIds.size
 
     val snackbar = remember { SnackbarHostState() }
-    // One after another: a Sent snackbar and its Undo must outlast the SendFailed that can follow it.
+    // Cancelling showSnackbar dismisses it, so a new event replaces the shown snackbar.
     LaunchedEffect(vm, resources) {
-        vm.events.collect { event ->
-            val message = eventMessage(resources, event) ?: return@collect
+        vm.events.collectLatest { event ->
+            val message = eventMessage(resources, event) ?: return@collectLatest
             val undoable = event is InboxEvent.Sent || event is InboxEvent.Discarded
             val result = snackbar.showSnackbar(
                 message,
@@ -308,10 +309,11 @@ private fun SelectionToolbar(count: Int, canTranslate: Boolean, onDiscard: () ->
 }
 
 private fun eventMessage(r: Resources, event: InboxEvent): String? = when (event) {
-    is InboxEvent.Sent -> {
-        val sent = r.getQuantityString(R.plurals.inbox_sent, event.ids.size, event.ids.size)
-        if (event.stayed > 0) r.getString(R.string.inbox_sent_and_stayed, sent, r.getQuantityString(R.plurals.inbox_stayed, event.stayed, event.stayed)) else sent
-    }
+    is InboxEvent.Sent -> listOfNotNull(
+        r.getQuantityString(R.plurals.inbox_sent, event.ids.size, event.ids.size),
+        event.stayed.takeIf { it > 0 }?.let { r.getQuantityString(R.plurals.inbox_stayed, it, it) },
+        event.error?.let { r.getString(R.string.inbox_send_stopped, it) },
+    ).reduce { a, b -> r.getString(R.string.inbox_sent_and_stayed, a, b) }
     is InboxEvent.Stayed -> r.getQuantityString(R.plurals.inbox_stayed, event.count, event.count)
     is InboxEvent.Discarded -> r.getQuantityString(R.plurals.inbox_discarded, event.ids.size, event.ids.size)
     is InboxEvent.Unavailable -> when (event.availability) {

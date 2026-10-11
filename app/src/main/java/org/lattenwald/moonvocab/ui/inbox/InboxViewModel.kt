@@ -55,7 +55,7 @@ data class InboxState(
 )
 
 sealed interface InboxEvent {
-    data class Sent(val ids: List<Long>, val stayed: Int) : InboxEvent
+    data class Sent(val ids: List<Long>, val stayed: Int, val error: String? = null) : InboxEvent
     data class Stayed(val count: Int) : InboxEvent
     data class Discarded(val ids: List<Long>) : InboxEvent
     data class Unavailable(val availability: AnkiAvailability) : InboxEvent
@@ -87,7 +87,9 @@ class InboxViewModel(
         emit(emptyList())
     }
 
-    private val list = combine(rows, filter, ::inboxList).onEach { l -> selection.update { it.retain(l.visibleIds.toSet()) } }
+    private val list = combine(rows, filter) { r, f ->
+        inboxList(r, f).also { if (it.filter != f) filter.compareAndSet(f, LanguageFilter.All) }
+    }.onEach { l -> selection.update { it.retain(l.visibleIds.toSet()) } }
 
     val state: StateFlow<InboxState> = combine(
         list, selection, workManager.getWorkInfosForUniqueWorkFlow(ImportWork.NAME), availability, missingFields,
@@ -150,30 +152,32 @@ class InboxViewModel(
         if (ids.isEmpty()) return
         clearSelection()
         viewModelScope.launch {
-            val events = try {
-                sendEvents(ids, withContext(io) { sender.send(ids) })
+            val event = try {
+                sendEvent(ids, withContext(io) { sender.send(ids) })
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "send failed", e)
-                listOf(InboxEvent.SendFailed(messageOf(e)))
+                InboxEvent.SendFailed(messageOf(e))
             }
-            if (events.none { it is InboxEvent.Sent }) onStayed()
-            for (event in events) eventChannel.send(event)
+            if (event !is InboxEvent.Sent) onStayed()
+            eventChannel.send(event)
         }
     }
 
-    private fun sendEvents(ids: List<Long>, r: SendResult): List<InboxEvent> {
-        r.unavailable?.let { return listOf(InboxEvent.Unavailable(it)) }
+    private fun sendEvent(ids: List<Long>, r: SendResult): InboxEvent {
+        r.unavailable?.let { return unavailable(it) }
         missingFields.value = r.missingFields
-        return buildList {
-            if (r.sentIds.isNotEmpty()) add(InboxEvent.Sent(r.sentIds, stayed = ids.size - r.sentIds.size))
-            if (r.error != null) {
-                add(InboxEvent.SendFailed(r.error))
-            } else if (r.sentIds.isEmpty()) {
-                add(InboxEvent.Stayed(ids.size))
-            }
+        return when {
+            r.sentIds.isNotEmpty() -> InboxEvent.Sent(r.sentIds, stayed = r.skipped, error = r.error)
+            r.error != null -> InboxEvent.SendFailed(r.error)
+            else -> InboxEvent.Stayed(ids.size)
         }
+    }
+
+    private fun unavailable(a: AnkiAvailability): InboxEvent {
+        availability.value = a
+        return InboxEvent.Unavailable(a)
     }
 
     fun discard(ids: List<Long>, onStayed: () -> Unit = {}) {
@@ -235,7 +239,7 @@ class InboxViewModel(
         val r = withContext(io) { sender.undoSend(ids) }
         r.error?.let { Log.w(TAG, "undo send stopped: $it") }
         when {
-            r.unavailable != null -> InboxEvent.Unavailable(r.unavailable)
+            r.unavailable != null -> unavailable(r.unavailable)
             r.kept > 0 -> InboxEvent.UndoKept(r.kept)
             else -> null
         }

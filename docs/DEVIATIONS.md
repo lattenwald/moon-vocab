@@ -4,15 +4,21 @@ Departures from the spec or a plan: what the plan said, what was done instead, a
 
 ## 2026-10-12: The import sheet's ViewModel reports a bad pick and confirms the start
 
-- Plan said: M3 Task 9's `SheetState.NoBackup` is `(skipped)`, `SheetState.Ready` is `(backup, skipped, counts, selected, sendToAnki)`, and the ViewModel has `fun start()`.
-- Actual: `NoBackup` and `Ready` also carry `pickIncomplete: Boolean = false`, which shows `sheet_change_incomplete`. `start(onStarted: () -> Unit)` runs after the sheet's pending settings writes and calls `onStarted`, which closes the sheet, only once the work is enqueued.
-- Reason: the plan's states have nowhere to keep the "incomplete pick" line beside the previous backup. A Start that closed the sheet at once could close it over a settings error that the screen must show.
+- Plan said: M3 Task 9's `SheetState.NoBackup` is `(skipped)`, `SheetState.Ready` is `(backup, skipped, counts, selected, sendToAnki)`, `FolderUnreadable` comes from a `SecurityException`, and the ViewModel has `fun start()`, which enqueues the import and closes the sheet.
+- Actual: `NoBackup` and `Ready` also carry `pickIncomplete: Boolean = false`, which shows `sheet_change_incomplete`. `Ready` also carries `importRunning: Boolean = false`: when unfinished import work exists, Start enqueues nothing, keeps the sheet open and shows `sheet_import_running`. `start(onStarted: () -> Unit)` runs after the sheet's pending settings writes and calls `onStarted`, which closes the sheet, only once the work is enqueued. An `IOException` from `newest` also gives `FolderUnreadable`.
+- Reason: the plan's states have nowhere to keep the "incomplete pick" line beside the previous backup. A Start that closed the sheet at once could close it over a settings error that the screen must show. `ImportWork.enqueue` keeps unfinished work, so a Start during an import would be dropped silently. A deleted or moved folder can't be listed and throws `IOException`, and spec §8 asks the user to choose the folder again.
 
-## 2026-10-12: A send that stops partway gives both Sent and SendFailed
+## 2026-10-12: A send that stops partway gives Sent with its error
 
-- Plan said: M3 Task 8's send maps any `error` to `SendFailed`, and `Sent` only when there is no error.
-- Actual: when `sentIds` isn't empty, `Sent(sentIds, stayed)` is emitted first, then `SendFailed(error)` if the send also stopped. `SendFailed` alone means nothing was sent. The Inbox shows its snackbars one after another instead of replacing the current one.
-- Reason: the cards that did go to AnkiDroid would otherwise leave the Inbox with no Undo, and the following `SendFailed` would replace the `Sent` snackbar.
+- Plan said: M3 Task 8's send maps any `error` to `SendFailed`, and `Sent(sentIds, stayed = ids.size - sentIds.size)` only when there is no error.
+- Actual: when `sentIds` isn't empty, one `Sent(sentIds, stayed = skipped, error)` is emitted. Its snackbar names the cards sent, the cards without a translation that stayed, and "Sending stopped: <error>", and offers Undo. `SendFailed` alone means nothing was sent. `stayed` is `SendResult.skipped`, so cards left unsent because the send stopped aren't counted as lacking a translation.
+- Reason: the cards that did go to AnkiDroid would otherwise leave the Inbox with no Undo. A new snackbar replaces the shown one, so a separate `SendFailed` would replace the `Sent` snackbar and its Undo.
+
+## 2026-10-12: Inbox actions take the AnkiDroid lock
+
+- Plan said: M3 Task 2's `class InboxActions(private val db: AppDatabase)` runs each method in one transaction.
+- Actual: `InboxActions(db, lock)` takes the `Mutex` that `CardSender` and `AnkiCheck` share, and runs each method's transaction under it.
+- Reason: a send saves its snapshot of PENDING cards one by one. A card discarded meanwhile would be overwritten as SENT, and a card deleted for translate again would leave its note orphaned in AnkiDroid.
 
 ## 2026-10-12: The Inbox has a generic Failed event
 
@@ -53,7 +59,7 @@ Departures from the spec or a plan: what the plan said, what was done instead, a
 ## 2026-10-12: The mark wave spans character boxes
 
 - Plan said: M3 Task 6's `MarkedExcerpt` runs the wave's x from `getHorizontalPosition(start)` to `getHorizontalPosition(end)` on each line the mark covers.
-- Actual: on each line, x runs from the outer left to the outer right edge of `getBoundingBox` of the segment's first and last visible characters. Each segment ends at `getLineEnd(line, visibleEnd = true)`.
+- Actual: on each line, x runs from the outer left to the outer right edge of `getBoundingBox` of the segment's first and last visible characters. A segment ends at the mark's end or at `getLineEnd(line, visibleEnd = true)`, whichever is earlier.
 - Reason: when a mark wraps onto the next line, its segment ends at the line's end offset. `getHorizontalPosition` at that offset reports the next line's start, which would draw the wave backwards across the line. The boxes also cover RTL text.
 
 ## 2026-10-12: A picked backup is copied under a temporary name first

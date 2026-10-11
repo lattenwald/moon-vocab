@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -125,7 +126,16 @@ internal fun ImportSheet(vm: ImportSheetViewModel, onDismiss: () -> Unit) {
                     onSendToAnki = vm::setSendToAnki,
                     onStart = { vm.start(onStarted = hide) },
                 )
-                is SheetState.Error -> Note(stringResource(R.string.inbox_action_failed, s.message), MaterialTheme.colorScheme.error)
+                is SheetState.Error -> {
+                    Note(stringResource(R.string.inbox_action_failed, s.message), MaterialTheme.colorScheme.error)
+                    Row(Modifier.padding(start = SidePadding, top = 12.dp, end = SidePadding), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = vm::open) { Text(stringResource(R.string.sheet_retry)) }
+                        FilledTonalButton(onClick = { pickFolder.launch(null) }) {
+                            Icon(painterResource(R.drawable.ic_folder_open), contentDescription = null, modifier = Modifier.size(18.dp))
+                            Text(stringResource(R.string.sheet_choose_folder), Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
             }
         }
     }
@@ -178,6 +188,10 @@ private fun Ready(
             shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
             modifier = Modifier.weight(1f),
         ) { Text(stringResource(R.string.sheet_send)) }
+    }
+    if (s.importRunning) {
+        Spacer(Modifier.height(12.dp))
+        Note(stringResource(R.string.sheet_import_running), MaterialTheme.colorScheme.error)
     }
     val n = s.counts.toImport
     Button(
@@ -340,7 +354,6 @@ internal fun ImportFab(import: ImportState, expanded: Boolean, onClick: () -> Un
     val running = import.running
     val progress = import.progress?.takeIf { running && it.total > 0 }
     ExtendedFloatingActionButton( // FABs have no enabled state
-
         text = {
             Text(
                 if (progress != null) stringResource(R.string.inbox_progress_count, progress.done, progress.total) else stringResource(R.string.inbox_import),

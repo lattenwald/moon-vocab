@@ -120,7 +120,7 @@
 - `Stop` ends the import with nothing written for that batch. `Failed` makes the batch's cards FAILED.
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
-- `AppContainer` creates one `Mutex`, shared by `CardSender` and `AnkiCheck`. Sends, deletes, undo and the check run under it.
+- `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck` and `InboxActions`. Sends, deletes, undo, the check, and the Inbox's discard, restore and translate again run under it.
 - `CardSender`:
   - a gateway error stops the send and is reported in `SendResult.error`;
   - saving a sent card can't be cancelled;
@@ -137,13 +137,17 @@
 - Discard keeps the card's status in `previousStatus`. Restore puts it back and clears it.
 - Translate again deletes the chosen PENDING and FAILED cards that have no note, then starts a resume import without sending. Their marks get new cards.
 - Inbox groups are ordered by their newest mark. Cards in a group are ordered by newest mark, then id, both descending.
+- Groups whose newest marks are equal are ordered by book id, descending.
 - Language chips appear only when the Inbox holds two or more languages. A card with no language counts as Other, listed last.
-- A filter whose language left the Inbox falls back to All.
+- A filter whose language left the Inbox falls back to All, and the stored filter becomes All.
 - Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen only maps fingers to rows and calls it.
 - Long-press is 360 ms. Auto-scroll starts 72 dp from either list edge and moves at most 18 dp per frame.
 - Swipe is off while selecting.
 - Translate again is disabled while an import runs.
 - Send and discard offer Undo in a snackbar. Undoing a send deletes the notes it created.
+- A new Inbox snackbar replaces the one showing.
+- A send that stops after sending some cards shows one snackbar: the count sent, the cards without a translation that stayed, `inbox_send_stopped` with the reason, and Undo.
+- A send or undo that finds AnkiDroid unavailable updates the Inbox banner at once.
 - Cards labelled "Already in Anki" can be sent from the Inbox.
 - While an import runs, the Import button shows its progress and opens nothing.
 
@@ -154,6 +158,9 @@
 - The import sheet reads the newest complete backup each time it opens.
 - The sheet's Review first / Send to Anki choice is saved as `reviewFirst`, and its mark selection as `styles`.
 - The import sheet runs its `BackupFinder` calls and settings writes one at a time, under one lock.
+- A `SecurityException` or `IOException` from `BackupFinder.newest` shows FolderUnreadable.
+- The sheet's Error state offers Try again (`open()`) and Choose folder.
+- While unfinished import work exists, Start keeps the sheet open and shows `sheet_import_running`.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.

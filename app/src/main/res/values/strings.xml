@@ -88,6 +88,7 @@
         <item quantity="other">%d cards stay in AnkiDroid: it didn\'t delete their notes</item>
     </plurals>
     <string name="inbox_send_failed">Couldn\'t send: %1$s</string>
+    <string name="inbox_send_stopped">Sending stopped: %1$s</string>
     <string name="inbox_note_type_missing">The Moon+ Vocab note type in AnkiDroid is missing %1$s. Sending is stopped until it\'s back.</string>
     <string name="inbox_action_failed">Something went wrong: %1$s</string>
     <plurals name="inbox_retranslating">
@@ -105,6 +106,8 @@
     <string name="sheet_no_folder">Choose the folder where Moon+ Reader saves its backups.</string>
     <string name="sheet_folder_unreadable">Moon+ Vocab can\'t read the backup folder any more. Choose it again.</string>
     <string name="sheet_choose_folder">Choose folder</string>
+    <string name="sheet_retry">Try again</string>
+    <string name="sheet_import_running">An import is already running.</string>
     <string name="sheet_no_backup">No complete backup in this folder.</string>
     <string name="sheet_marks">Marks that are words to learn</string>
     <string name="sheet_combo">%1$s, %2$s</string>
