@@ -26,7 +26,7 @@
 - An FB2 is parsed from its bytes, so the declared encoding applies.
 - FB2 chapters come from the first `<body>`, plus every later `<body>` without a `name`.
 - FB2 chapter text is the `p` and `v` lines, in document order.
-- An FB2 is parsed only up to its first `<binary`.
+- An FB2 is parsed only up to its first `<binary` after the first `<body`.
 - A zip file named `.fb2` is read as a zipped FB2.
 - `isoLanguage` maps ISO 639-2/B codes to two-letter codes and returns only two-letter codes in `Locale.getISOLanguages()`; anything else is null.
 - A book whose file can't be found, copied or parsed has no text. Its marks get model-written examples.
@@ -72,6 +72,7 @@
 - The model's `sourceLanguage` goes through `isoLanguage`.
 - Same-sense questions for a batch go in one request to the active service, at most 8 candidates each.
 - A judge's match is kept only when it is one of that question's own candidate refs.
+- For a repeated id in a sense reply, the first result wins even when its match is null or invalid.
 
 ## Storage and status
 - `mark.cardId` is a foreign key to `card.id` with `ON DELETE SET NULL`.
@@ -111,7 +112,7 @@
 - One transaction per batch: the cards are written and their marks linked.
 - A card links one or more marks. The mark that made it is the first; later same-sense marks only link to it.
 - Per batch: translate, merge same-sense marks, search other sources, then write and link in one transaction.
-- A sense `Stop` ends the import with nothing written for that batch. A sense `Failed` means no merges.
+- A sense `Stop` ends the import with nothing written for that batch. A sense `Failed` means no merges for that batch, is logged, and counts in `ImportSummary.senseFailed`.
 - AnkiDroid availability is read once per run for the other-source search. A search error means no label.
 - A mark whose preparation or draft building throws becomes a FAILED card.
 - An incomplete backup still resumes the pending marks.
@@ -134,4 +135,5 @@
 - App data is excluded from cloud backup and device transfer.
 - UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen.
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
-- The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget unsent PENDING and FAILED cards.
+- The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
+- The debug screen's Send all pending skips cards with an `elsewhereDeck`.

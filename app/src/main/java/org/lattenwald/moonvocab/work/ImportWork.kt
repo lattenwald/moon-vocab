@@ -29,6 +29,7 @@ object ImportWork {
     private const val FAILED = "failed"
     private const val ALREADY_CARD = "alreadyCard"
     private const val SKIPPED_DISCARDED = "skippedDiscarded"
+    private const val SENSE_FAILED = "senseFailed"
     private const val SENT = "sent"
     private const val INCOMPLETE_BACKUP = "incompleteBackup"
     private const val STOPPED = "stopped"
@@ -68,6 +69,7 @@ object ImportWork {
         FAILED to s.failed,
         ALREADY_CARD to s.alreadyCard,
         SKIPPED_DISCARDED to s.skippedDiscarded,
+        SENSE_FAILED to s.senseFailed,
         SENT to s.sent,
         INCOMPLETE_BACKUP to s.incompleteBackup,
         STOPPED to s.stopped?.name,
@@ -79,6 +81,7 @@ object ImportWork {
         failed = data.getInt(FAILED, 0),
         alreadyCard = data.getInt(ALREADY_CARD, 0),
         skippedDiscarded = data.getInt(SKIPPED_DISCARDED, 0),
+        senseFailed = data.getInt(SENSE_FAILED, 0),
         sent = data.getInt(SENT, 0),
         incompleteBackup = data.getString(INCOMPLETE_BACKUP),
         stopped = data.getString(STOPPED)?.let { name -> LlmException.Stop.Kind.entries.firstOrNull { it.name == name } },

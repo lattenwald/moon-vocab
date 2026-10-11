@@ -70,20 +70,23 @@ class MarkQueriesTest {
         assertEquals(setOf("k1", "k2"), db.marks().withoutCard(b).map { it.key }.toSet())
     }
 
-    @Test fun forgetUnsentKeepsSentAndDiscardedCards() = runTest {
+    @Test fun forgetKeepsOnlySentAndDiscardedCards() = runTest {
         val b = db.books().upsertByFileKey(book("diaspora.epub"))
-        val ids = db.marks().insertIgnoringKnown(listOf(mark("pending", b), mark("failed", b), mark("sent", b), mark("discarded", b)))
+        val ids = db.marks().insertIgnoringKnown(
+            listOf(mark("pending", b), mark("failed", b), mark("sent", b), mark("discarded", b), mark("deleted", b)),
+        )
         db.writeBatch(
             listOf(
                 card(b, "p", CardStatus.PENDING) to listOf(ids[0]),
                 card(b, "f", CardStatus.FAILED) to listOf(ids[1]),
                 card(b, "s", CardStatus.SENT, ankiNoteId = 7) to listOf(ids[2]),
                 card(b, "d", CardStatus.DISCARDED) to listOf(ids[3]),
+                card(b, "x", CardStatus.DELETED_IN_ANKI, ankiNoteId = 8) to listOf(ids[4]),
             ),
         )
         db.cards().deleteUnsent()
         assertEquals(setOf("s", "d"), db.cards().observeAll().first().map { it.uuid }.toSet())
-        assertEquals(setOf("pending", "failed"), db.marks().withoutCard(b).map { it.key }.toSet())
+        assertEquals(setOf("pending", "failed", "deleted"), db.marks().withoutCard(b).map { it.key }.toSet())
     }
 
     @Test fun upsertKeepsIdAndKnownLanguage() = runTest {

@@ -646,13 +646,13 @@ Controls:
   - Each object also has `marks`, an array of `{text, chapter, position, markedAt}` in `markedAt` order.
   - No settings and no keys go in the file.
 - **Forget unsent cards.**
-  - A confirm dialog runs `deleteUnsent()`: `DELETE FROM card WHERE status IN ('PENDING','FAILED') AND ankiNoteId IS NULL`.
+  - A confirm dialog runs `deleteUnsent()`: `DELETE FROM card WHERE (status IN ('PENDING','FAILED') AND ankiNoteId IS NULL) OR status = 'DELETED_IN_ANKI'`.
   - Their marks lose their card through the foreign key, so the next Import (no backup needed) translates them again.
 
 - [ ] **Step 1: Write the failing test**
 
 ```kotlin
-@Test fun forgetUnsentKeepsSentAndDiscardedCards() // cards PENDING, FAILED, SENT(note 7), DISCARDED, each with a mark → after deleteUnsent: SENT and DISCARDED remain, the PENDING and FAILED cards' marks have cardId null
+@Test fun forgetKeepsOnlySentAndDiscardedCards() // cards PENDING, FAILED, SENT(note 7), DISCARDED, DELETED_IN_ANKI(note 8), each with a mark → after deleteUnsent: SENT and DISCARDED remain, the PENDING, FAILED and DELETED_IN_ANKI cards' marks have cardId null
 ```
 
 No test for the export or the switch: they are debug tools, and their logic is the DAO query above.
@@ -662,7 +662,7 @@ No test for the export or the switch: they are debug tools, and their logic is t
 - [ ] **Step 3: Decisions and commit subject**
 
 Decisions (under App):
-- "The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget unsent PENDING and FAILED cards."
+- "The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards."
 
 Commit subject: `feat: debug tools for tuning and the real import`.
 
@@ -707,7 +707,7 @@ Apply the fixes the user agrees to, with tests and the Decisions lines. Run `mak
 
 On the phone, in order:
 1. "Delete every note this build created", which empties `Moon+::Test`.
-2. Forget unsent cards.
+2. Forget unsent cards. The debug screen's card list must now be empty. If it is not (for example a SENT card whose note AnkiDroid refused to delete), export the cards and stop to look at them with the user before importing.
 3. Switch Send to test deck off.
 4. Import all wavy marks. The user chooses Send on or off.
 
@@ -717,7 +717,7 @@ Then check:
 - `note:"Moon+ Vocab"` in AnkiDroid counts the same as the SENT cards;
 - cards labelled "Already in Anki" stayed pending.
 
-"Send all pending" on the debug screen would send the labelled cards too. Tell the user before they press it. The empty `Moon+::Test` deck stays for the user to delete.
+"Send all pending" on the debug screen skips the labelled cards. The empty `Moon+::Test` deck stays for the user to delete.
 
 - [ ] **Step 7: Report and close out**
 

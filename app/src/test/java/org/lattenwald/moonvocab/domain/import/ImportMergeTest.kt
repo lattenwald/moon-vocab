@@ -83,6 +83,7 @@ class ImportMergeTest : ImportTestBase() {
         val s = pipeline(judge = { throw LlmException.Failed("503") }).run(req(MrproFixture.build(tmp, rows(1) + again(0))), {})
         assertEquals(2, db.cards().byStatus(PENDING).size)
         assertEquals(2, s.newCards)
+        assertEquals(1, s.senseFailed)
     }
 
     @Test fun everyMarkIsAccountedFor() = runTest {

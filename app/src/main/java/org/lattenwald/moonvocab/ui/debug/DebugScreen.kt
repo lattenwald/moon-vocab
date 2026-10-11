@@ -155,7 +155,7 @@ fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
                     Switch(
                         checked = state.settings?.deckOverride != null,
                         onCheckedChange = vm::setTestDeck,
-                        enabled = state.settings != null,
+                        enabled = idle && state.settings != null,
                     )
                 }
             }
@@ -435,6 +435,9 @@ private fun ImportSection(run: ImportState, enabled: Boolean, onImport: () -> Un
                 ),
             )
             s.incompleteBackup?.let { Text(stringResource(R.string.debug_import_incomplete, it), color = MaterialTheme.colorScheme.error) }
+            if (s.senseFailed > 0) {
+                Text(pluralStringResource(R.plurals.import_sense_failed, s.senseFailed, s.senseFailed), color = MaterialTheme.colorScheme.error)
+            }
             when (s.stopped) {
                 null -> Unit
                 LlmException.Stop.Kind.AUTH -> Text(stringResource(R.string.debug_import_stopped_auth), color = MaterialTheme.colorScheme.error)

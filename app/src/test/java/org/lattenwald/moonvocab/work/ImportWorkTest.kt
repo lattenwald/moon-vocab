@@ -25,8 +25,8 @@ class ImportWorkTest {
     }
 
     @Test fun summarySurvivesOutputData() {
-        val full = ImportSummary(3, 1, 4, 5, 2, "truncated", LlmException.Stop.Kind.CREDITS, "AnkiDroid refused")
-        val plain = ImportSummary(0, 0, 0, 0, 0, null, null, null)
+        val full = ImportSummary(3, 1, 4, 5, 6, 2, "truncated", LlmException.Stop.Kind.CREDITS, "AnkiDroid refused")
+        val plain = ImportSummary(0, 0, 0, 0, 0, 0, null, null, null)
 
         assertEquals(full, ImportWork.summary(ImportWork.output(full)))
         assertEquals(plain, ImportWork.summary(ImportWork.output(plain)))

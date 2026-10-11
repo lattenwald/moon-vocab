@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import com.ichi2.anki.FlashCardsContract
 import com.ichi2.anki.api.AddContentApi
+import kotlin.coroutines.cancellation.CancellationException
 
 class AnkiDroidGateway(context: Context) : AnkiGateway {
     private val context = context.applicationContext
@@ -76,7 +77,18 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
         val noteId = resolver.query(FlashCardsContract.Note.CONTENT_URI, null, elsewhereQuery(terms), null, null)?.use { c ->
             if (c.moveToFirst()) c.getLong(c.getColumnIndexOrThrow(FlashCardsContract.Note._ID)) else null
         } ?: return null
-        val deckId = resolver.query(Uri.withAppendedPath(noteUri(noteId), "cards"), null, null, null, null)?.use { c ->
+        return try {
+            deckName(noteId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun deckName(noteId: Long): String {
+        val projection = arrayOf(FlashCardsContract.Card.CARD_ORD, FlashCardsContract.Card.DECK_ID)
+        val deckId = resolver.query(Uri.withAppendedPath(noteUri(noteId), "cards"), projection, null, null, null)?.use { c ->
             val ord = c.getColumnIndexOrThrow(FlashCardsContract.Card.CARD_ORD)
             val deck = c.getColumnIndexOrThrow(FlashCardsContract.Card.DECK_ID)
             var first: Pair<Int, Long>? = null

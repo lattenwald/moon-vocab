@@ -77,6 +77,10 @@
         <item quantity="other">%d sent</item>
     </plurals>
     <string name="debug_import_incomplete">Backup incomplete: %1$s</string>
+    <plurals name="import_sense_failed">
+        <item quantity="one">Same-meaning check failed for %d batch; repeated words became separate cards</item>
+        <item quantity="other">Same-meaning check failed for %d batches; repeated words became separate cards</item>
+    </plurals>
     <string name="debug_import_stopped_auth">Stopped: the API key was rejected</string>
     <string name="debug_import_stopped_credits">Stopped: no credits left</string>
     <string name="debug_import_stopped_config">Stopped: check the service\'s base URL and model</string>
@@ -112,7 +116,7 @@
     </plurals>
     <string name="debug_forget_unsent">Forget unsent cards</string>
     <string name="debug_forget_title">Forget unsent cards?</string>
-    <string name="debug_forget_text">This deletes every pending and failed card that is not in AnkiDroid. The next import translates their marks again.</string>
+    <string name="debug_forget_text">This deletes every pending and failed card that is not in AnkiDroid, and every card whose note was deleted in AnkiDroid. The next import translates their marks again.</string>
     <string name="debug_forget">Forget</string>
     <plurals name="debug_forgotten">
         <item quantity="one">%d card forgotten</item>

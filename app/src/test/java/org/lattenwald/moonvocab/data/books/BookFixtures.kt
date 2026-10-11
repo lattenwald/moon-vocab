@@ -69,6 +69,7 @@ $body
         encoding: String = "UTF-8",
         name: String = "book.fb2",
         mainBodyName: String? = null,
+        beforeBodies: String = "",
         afterBodies: String = "",
     ): File {
         fun section(paragraphs: List<String>) =
@@ -83,6 +84,7 @@ $body
       <lang>$lang</lang>
     </title-info>
   </description>
+  $beforeBodies
   <body${mainBodyName?.let { " name=\"$it\"" }.orEmpty()}>${sections.joinToString("") { section(it) }}</body>
   $notesBody
   $afterBodies

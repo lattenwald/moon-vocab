@@ -90,6 +90,6 @@ interface CardDao {
     @Query("DELETE FROM card WHERE id IN (:ids)")
     suspend fun delete(ids: List<Long>)
 
-    @Query("DELETE FROM card WHERE status IN ('PENDING','FAILED') AND ankiNoteId IS NULL")
+    @Query("DELETE FROM card WHERE (status IN ('PENDING','FAILED') AND ankiNoteId IS NULL) OR status = 'DELETED_IN_ANKI'")
     suspend fun deleteUnsent(): Int
 }

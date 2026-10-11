@@ -7,13 +7,15 @@ import org.jsoup.nodes.Element
 import org.jsoup.parser.Parser
 
 internal object Fb2Text {
+    private val BODY = "<body".toByteArray(Charsets.US_ASCII)
     private val BINARY = "<binary".toByteArray(Charsets.US_ASCII)
 
     // Parsed from bytes: FB2 files are often windows-1251, declared only in the XML prolog.
-    // FB2 places binaries (base64 images) after the bodies.
+    // FB2 places binaries (base64 images) after the bodies, though some files put one before them.
     fun read(input: InputStream): BookText {
         val bytes = input.readBytes()
-        val end = bytes.indexOf(BINARY).takeIf { it >= 0 } ?: bytes.size
+        val bodyStart = bytes.indexOf(BODY, 0).takeIf { it >= 0 } ?: 0
+        val end = bytes.indexOf(BINARY, bodyStart).takeIf { it >= 0 } ?: bytes.size
         val doc = Jsoup.parse(ByteArrayInputStream(bytes, 0, end), null, "", Parser.xmlParser())
         val info = doc.selectFirst("description > title-info")
         val author = info?.selectFirst("author")?.let { a ->
@@ -32,8 +34,8 @@ internal object Fb2Text {
         )
     }
 
-    private fun ByteArray.indexOf(part: ByteArray): Int {
-        outer@ for (i in 0..size - part.size) {
+    private fun ByteArray.indexOf(part: ByteArray, from: Int): Int {
+        outer@ for (i in from..size - part.size) {
             for (j in part.indices) if (this[i + j] != part[j]) continue@outer
             return i
         }

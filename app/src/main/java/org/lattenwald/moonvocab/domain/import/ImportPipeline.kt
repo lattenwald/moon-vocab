@@ -53,6 +53,7 @@ data class ImportSummary(
     val failed: Int,
     val alreadyCard: Int,
     val skippedDiscarded: Int,
+    val senseFailed: Int,
     val sent: Int,
     val incompleteBackup: String?,
     val stopped: LlmException.Stop.Kind?,
@@ -90,6 +91,7 @@ class ImportPipeline(
         var failed = 0
         var alreadyCard = 0
         var skippedDiscarded = 0
+        var senseFailed = 0
         var sent = 0
         var sendError: String? = null
         var stopped: LlmException.Stop.Kind? = null
@@ -132,6 +134,7 @@ class ImportPipeline(
             failed += cards.count { it.first.status == CardStatus.FAILED }
             alreadyCard += merged.alreadyCard
             skippedDiscarded += merged.skippedDiscarded
+            if (merged.senseFailed) senseFailed++
 
             if (request.sendToAnki && sendError == null) {
                 val toSend = ids.filterIndexed { i, _ -> cards[i].first.let { it.status == CardStatus.PENDING && it.elsewhereDeck == null } }
@@ -145,7 +148,7 @@ class ImportPipeline(
             progress(ImportProgress(done, todo.size, run.book(batch.last().bookId).title))
         }
         withContext(io) { check.run() }
-        return ImportSummary(newCards, failed, alreadyCard, skippedDiscarded, sent, incomplete, stopped, sendError)
+        return ImportSummary(newCards, failed, alreadyCard, skippedDiscarded, senseFailed, sent, incomplete, stopped, sendError)
     }
 
     suspend fun retryFailed(): ImportSummary {
@@ -180,12 +183,15 @@ class ImportPipeline(
         val known = batch.map { it.language }.distinct().flatMap { db.cards().senseCandidates(it) }
             .map { KnownCard(it.id, it.status, it.sourceLanguage, it.lemma, it.word, it.translation, it.meaning) }
         val questions = senseQuestions(batch, known)
+        var senseFailed = false
         val answers = if (questions.isEmpty()) {
             emptyMap()
         } else {
             try {
                 judge.judge(questions)
             } catch (e: LlmException.Failed) {
+                Log.w(TAG, "Sense check failed", e)
+                senseFailed = true
                 emptyMap()
             }
         }
@@ -214,7 +220,7 @@ class ImportPipeline(
             }
         }
         val kept = built.indices.filter { (merges[it] ?: Merge.New) == Merge.New }.map { built[it] to markIds[it].toList() }
-        return Merged(kept, links, alreadyCard, skippedDiscarded)
+        return Merged(kept, links, alreadyCard, skippedDiscarded, senseFailed)
     }
 
     private suspend fun search(cards: List<Pair<Built, List<Long>>>, run: Run): List<Pair<CardEntity, List<Long>>> {
@@ -276,6 +282,7 @@ class ImportPipeline(
         val links: List<Pair<Long, Long>>,
         val alreadyCard: Int,
         val skippedDiscarded: Int,
+        val senseFailed: Boolean,
     )
 
     private class LoadedBook(val text: BookText?, var normalized: List<NormalizedText>? = null)

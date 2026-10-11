@@ -188,7 +188,7 @@ class DebugViewModel(
     fun checkAnki() = whileBusy { Notice.Checked(withContext(io) { ankiCheck.check() }) }
 
     fun sendAllPending() = whileBusy {
-        Notice.Sent(withContext(io) { sender.send(db.cards().byStatus(CardStatus.PENDING).map { it.id }) })
+        Notice.Sent(withContext(io) { sender.send(db.cards().byStatus(CardStatus.PENDING).filter { it.elsewhereDeck == null }.map { it.id }) })
     }
 
     fun deleteAllCreated() = whileBusy { Notice.Deleted(withContext(io) { sender.deleteAllCreated() }) }
