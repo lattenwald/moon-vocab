@@ -91,7 +91,7 @@ internal fun ImportSheet(vm: ImportSheetViewModel, onDismiss: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val sheetState = rememberBottomSheetState(SheetValue.Hidden, setOf(SheetValue.Hidden, SheetValue.Expanded))
     val scope = rememberCoroutineScope()
-    LaunchedEffect(vm) { vm.open() }
+    LaunchedEffect(vm) { vm.openIfIdle() }
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::chooseFolder) }
     val pickBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let(vm::change) }
     val hide: () -> Unit = {

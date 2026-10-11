@@ -72,6 +72,10 @@ class ImportSheetViewModel(
         if (tree == null) SheetState.NoFolder else find(tree)
     }
 
+    fun openIfIdle() { // a recreated sheet keeps a pending picker result and the shown backup
+        if (search == null) open()
+    }
+
     fun chooseFolder(uri: Uri) = search {
         withContext(io) { resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
         settings.update { it.copy(backupTree = uri) }

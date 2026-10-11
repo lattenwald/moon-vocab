@@ -184,7 +184,14 @@ fun InboxScreen(
                     enter = scaleIn(initialScale = 0.6f) + fadeIn(),
                     exit = scaleOut(targetScale = 0.6f) + fadeOut(),
                 ) {
-                    ImportFab(import, expanded = fabExpanded, onClick = { sheetOpen = true })
+                    ImportFab(
+                        import,
+                        expanded = fabExpanded,
+                        onClick = {
+                            sheetVm.open()
+                            sheetOpen = true
+                        },
+                    )
                 }
             }
         },
