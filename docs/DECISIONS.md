@@ -155,3 +155,9 @@
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
 - The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
 - The debug screen's Send all pending skips cards with an `elsewhereDeck`.
+
+## UI
+- Fonts are bundled variable TTFs from google/fonts: Roboto Flex for the UI and Literata for book text. The licences ship in `assets/licenses/`.
+- Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
+- The theme follows the system's light or dark mode until Settings adds the choice in milestone 5.
+- The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
