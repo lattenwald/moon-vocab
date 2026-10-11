@@ -29,6 +29,8 @@ class CardSender(
     // The import worker and the debug screen can send the same pending cards at once.
     private val mutex = Mutex()
 
+    private var noteType: Pair<Long, Int>? = null
+
     suspend fun send(cardIds: List<Long>): SendResult = mutex.withLock { sendLocked(cardIds) }
 
     suspend fun deleteAllCreated(): Int = mutex.withLock { deleteAllCreatedLocked() }
@@ -44,17 +46,23 @@ class CardSender(
         var sent = 0
         try {
             val s = settings.current()
-            val (mid, version) = anki.ensureNoteType(s.noteTypeId, s.noteTypeVersion)
-            if (mid != s.noteTypeId || version != s.noteTypeVersion) {
-                settings.update { it.copy(noteTypeId = mid, noteTypeVersion = version) }
+            val (mid, _) = noteType ?: anki.ensureNoteType(s.noteTypeId, s.noteTypeVersion).also { (mid, version) ->
+                if (mid != s.noteTypeId || version != s.noteTypeVersion) {
+                    settings.update { it.copy(noteTypeId = mid, noteTypeVersion = version) }
+                }
+                noteType = mid to version
             }
+            // Process death between add and save leaves the note in AnkiDroid and the card PENDING.
+            val existing = anki.findByAppIds(mid, pending.map { it.uuid })
             val books = HashMap<Long, BookEntity>()
             val decks = HashMap<String, Long>()
             for (card in pending) {
-                val book = books.getOrPut(card.bookId) { checkNotNull(db.books().byId(card.bookId)) { "no book ${card.bookId}" } }
-                val deck = deckName(s.deckPattern, card.sourceLanguage, s.deckOverride)
-                val deckId = decks.getOrPut(deck) { anki.ensureDeck(deck) }
-                val noteId = anki.add(mid, deckId, card.ankiFields(bookLine(book)), bookTags(s.tagPattern, book.title))
+                val noteId = existing[card.uuid] ?: run {
+                    val book = books.getOrPut(card.bookId) { checkNotNull(db.books().byId(card.bookId)) { "no book ${card.bookId}" } }
+                    val deck = deckName(s.deckPattern, card.sourceLanguage, s.deckOverride)
+                    val deckId = decks.getOrPut(deck) { anki.ensureDeck(deck) }
+                    anki.add(mid, deckId, card.ankiFields(bookLine(book)), bookTags(s.tagPattern, book.title))
+                }
                 save(
                     card.copy(
                         status = next(card.status, CardEvent.SEND), ankiNoteId = noteId, sentAt = clock(), ankiMod = null, error = null,
@@ -65,6 +73,7 @@ class CardSender(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            noteType = null
             return SendResult(sent, skipped, null, e.message ?: e::class.simpleName)
         }
         return SendResult(sent, skipped, null, null)

@@ -133,7 +133,7 @@ class ImportPipeline(
             alreadyCard += merged.alreadyCard
             skippedDiscarded += merged.skippedDiscarded
 
-            if (request.sendToAnki) {
+            if (request.sendToAnki && sendError == null) {
                 val toSend = ids.filterIndexed { i, _ -> cards[i].first.let { it.status == CardStatus.PENDING && it.elsewhereDeck == null } }
                 if (toSend.isNotEmpty()) {
                     val result = withContext(io) { sender.send(toSend) }

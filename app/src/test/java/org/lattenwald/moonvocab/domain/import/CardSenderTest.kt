@@ -47,6 +47,32 @@ class CardSenderTest : ImportTestBase() {
         assertEquals(3, results.sumOf { it.sent })
     }
 
+    @Test fun noteAlreadyInAnkiIsAdoptedNotAddedAgain() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val card = db.cards().byStatus(PENDING).single()
+        fakeAnki.notes[7L] = FakeAnki.Note(FakeAnki.MID, "Moon+::Test", mapOf("AppId" to card.uuid), emptySet(), mod = 1)
+        assertEquals(SendResult(1, 0, null, null), sender.send(listOf(card.id)))
+        assertEquals(0, fakeAnki.adds)
+        assertEquals(7L, db.cards().byStatus(SENT).single().ankiNoteId)
+    }
+
+    @Test fun noteTypeIsEnsuredOncePerSender() = runTest {
+        pipeline().run(req(backup(2)), {})
+        val (a, b) = db.cards().byStatus(PENDING).map { it.id }
+        sender.send(listOf(a))
+        sender.send(listOf(b))
+        assertEquals(1, fakeAnki.ensureCalls)
+    }
+
+    @Test fun sendErrorForgetsTheNoteType() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val ids = db.cards().byStatus(PENDING).map { it.id }
+        fakeAnki.failOnNthAdd = 1
+        sender.send(ids)
+        assertEquals(SendResult(1, 0, null, null), sender.send(ids))
+        assertEquals(2, fakeAnki.ensureCalls)
+    }
+
     @Test fun sentCardsAreNotSentAgain() = runTest {
         pipeline().run(req(backup(2)), {})
         val ids = db.cards().byStatus(PENDING).map { it.id }

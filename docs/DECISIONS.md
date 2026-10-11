@@ -119,7 +119,10 @@
 - `CardSender`:
   - one `Mutex` covers `send` and `deleteAllCreated`;
   - a gateway error stops the send and is reported in `SendResult.error`;
-  - saving a sent card can't be cancelled.
+  - saving a sent card can't be cancelled;
+  - the note type is ensured once per sender and again after a send error;
+  - before adding, notes already in AnkiDroid with the card's AppId are adopted;
+  - after a send error the import sends nothing more in that run.
 - `deleteAllCreated` resets a card only when AnkiDroid deleted its note.
 - `retryFailed` deletes FAILED cards, then resumes.
 

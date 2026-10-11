@@ -142,6 +142,14 @@ class ImportPipelineTest : ImportTestBase() {
         assertEquals(2, db.cards().byStatus(SENT).size)
     }
 
+    @Test fun sendErrorStopsLaterSendsInTheRun() = runTest {
+        fakeAnki.failOnNthAdd = 1
+        val s = pipeline().run(req(backup(25), send = true), {})
+        assertEquals(1, fakeAnki.adds)
+        assertEquals("AnkiDroid refused to add the note", s.sendError)
+        assertEquals(25, db.cards().byStatus(PENDING).size)
+    }
+
     @Test fun bookFieldHasTheAuthorFromTheBookText() = runTest {
         pipeline().run(req(backup(1), send = true), {})
         assertEquals("$TITLE, Greg Egan", fakeAnki.notes.values.single().fields["Book"])
