@@ -1,0 +1,1508 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Moon+ Vocab Inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..600;1,7..72,400..600&family=Roboto+Flex:opsz,wght@8..144,300..700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..500,0..1,0&icon_names=add,arrow_back,battery_full,check,check_circle,chevron_right,close,delete,done_all,download,edit,error,file_open,folder,folder_open,inbox,info,key,language,link,menu_book,more_vert,network_check,palette,refresh,school,search,select_all,sell,send,settings,signal_cellular_alt,style,swipe,touch_app,translate,visibility,visibility_off,wifi&display=block">
+<style>
+/* Layout: a quiet control column beside one working phone. Phone UI = Material 3 Expressive; colors are tonal-spot schemes from material-color-utilities (2025 spec). */
+:root{
+  --primary:#4F5D8C;--on-primary:#FAF8FF;--primary-container:#B3C2F7;--on-primary-container:#2D3C68;
+  --secondary:#595E72;--on-secondary:#FAF8FF;--secondary-container:#DDE1F9;--on-secondary-container:#4C5164;
+  --tertiary:#6D567F;--on-tertiary:#FFF6FE;--tertiary-container:#E9CDFD;--on-tertiary-container:#584269;
+  --error:#A83836;--on-error:#FFF7F6;--error-container:#FA746F;--on-error-container:#6E0A12;
+  --surface:#FAF8FE;--surface-dim:#D9D9E4;--surface-bright:#FAF8FE;
+  --surface-container-lowest:#FFFFFF;--surface-container-low:#F4F3FA;--surface-container:#EEEDF6;--surface-container-high:#E8E7F1;--surface-container-highest:#E1E2ED;
+  --on-surface:#30323B;--on-surface-variant:#5D5F68;--outline:#797A84;--outline-variant:#B0B1BC;
+  --inverse-surface:#0D0E12;--inverse-on-surface:#9D9CA2;--inverse-primary:#B3C2F7;--scrim:#000000;
+
+  /* roles derived for this app */
+  --screen-bg:var(--surface-container);
+  --row-bg:var(--surface-container-lowest);
+  --page-bg:var(--surface);
+  --bezel:#1C1D22;
+  --mark:#D9480F;           /* Moon+ wavy underline, the one signature color */
+  --snack-text:#E9E8EF;
+
+  --font-ui:'Roboto Flex',Roboto,'Segoe UI',system-ui,sans-serif;
+  --font-book:'Literata',Georgia,'Times New Roman',serif;
+  --ease:cubic-bezier(.2,0,0,1);
+  --spring:cubic-bezier(.3,1.35,.55,1);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --primary:#BAC5EE;--on-primary:#343F61;--primary-container:#465174;--on-primary-container:#DCE2FF;
+    --secondary:#C1C6DD;--on-secondary:#3A4052;--secondary-container:#353B4D;--on-secondary-container:#BABED5;
+    --tertiary:#F3DEFF;--on-tertiary:#604B72;--tertiary-container:#E9CDFD;--on-tertiary-container:#584269;
+    --error:#FA746F;--on-error:#490006;--error-container:#871F21;--on-error-container:#FF9993;
+    --surface:#0D0E12;--surface-dim:#0D0E12;--surface-bright:#2A2C34;
+    --surface-container-lowest:#000000;--surface-container-low:#121318;--surface-container:#181920;--surface-container-high:#1E1F26;--surface-container-highest:#23252E;
+    --on-surface:#E4E4F0;--on-surface-variant:#AAAAB5;--outline:#73757F;--outline-variant:#464750;
+    --inverse-surface:#FAF8FE;--inverse-on-surface:#54555A;--inverse-primary:#535E81;--scrim:#000000;
+    --screen-bg:var(--surface);--row-bg:var(--surface-container);--page-bg:var(--surface-container-low);
+    --bezel:#2B2C33;--mark:#FF8A50;--snack-text:#2A2B31;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --primary:#BAC5EE;--on-primary:#343F61;--primary-container:#465174;--on-primary-container:#DCE2FF;
+  --secondary:#C1C6DD;--on-secondary:#3A4052;--secondary-container:#353B4D;--on-secondary-container:#BABED5;
+  --tertiary:#F3DEFF;--on-tertiary:#604B72;--tertiary-container:#E9CDFD;--on-tertiary-container:#584269;
+  --error:#FA746F;--on-error:#490006;--error-container:#871F21;--on-error-container:#FF9993;
+  --surface:#0D0E12;--surface-dim:#0D0E12;--surface-bright:#2A2C34;
+  --surface-container-lowest:#000000;--surface-container-low:#121318;--surface-container:#181920;--surface-container-high:#1E1F26;--surface-container-highest:#23252E;
+  --on-surface:#E4E4F0;--on-surface-variant:#AAAAB5;--outline:#73757F;--outline-variant:#464750;
+  --inverse-surface:#FAF8FE;--inverse-on-surface:#54555A;--inverse-primary:#535E81;--scrim:#000000;
+  --screen-bg:var(--surface);--row-bg:var(--surface-container);--page-bg:var(--surface-container-low);
+  --bezel:#2B2C33;--mark:#FF8A50;--snack-text:#2A2B31;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--page-bg);color:var(--on-surface);font-family:var(--font-ui);padding-inline:16px;padding-block:40px 56px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.material-symbols-rounded{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;font-size:24px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;font-feature-settings:'liga';-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;user-select:none}
+.fill{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+
+.wrap{max-width:1040px;margin:0 auto;display:flex;gap:64px;align-items:flex-start;justify-content:center}
+.panel{flex:1 1 320px;max-width:380px;min-width:0;display:flex;flex-direction:column;gap:28px;padding-top:24px}
+.panel h1{margin:0;font-size:34px;line-height:40px;font-weight:450;letter-spacing:-.4px;text-wrap:balance}
+.panel h1 small{display:block;font-size:15px;line-height:22px;font-weight:500;color:var(--primary);letter-spacing:0;margin-bottom:6px}
+.panel p{margin:0;font-size:15px;line-height:23px;color:var(--on-surface-variant);max-width:60ch}
+.panel h2{margin:0 0 10px;font-size:14px;line-height:20px;font-weight:600;color:var(--on-surface)}
+.tries{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.tries li{display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:14.5px;line-height:21px;color:var(--on-surface-variant)}
+.tries .material-symbols-rounded{font-size:20px;color:var(--primary);margin-top:1px}
+.tries b{color:var(--on-surface);font-weight:550}
+.ctl{display:flex;flex-direction:column;gap:18px}
+.seg{display:inline-flex;border:1px solid var(--outline);border-radius:20px;overflow:hidden;height:40px}
+.seg button{display:flex;align-items:center;gap:6px;padding:0 16px;font-size:14px;font-weight:500;color:var(--on-surface);border-left:1px solid var(--outline);transition:background .2s var(--ease)}
+.seg button:first-child{border-left:0}
+.seg button .material-symbols-rounded{font-size:18px;width:0;overflow:hidden;transition:width .2s var(--ease)}
+.seg button[aria-pressed="true"]{background:var(--secondary-container);color:var(--on-secondary-container)}
+.seg button[aria-pressed="true"] .material-symbols-rounded{width:18px}
+.swatches{display:flex;gap:12px;flex-wrap:wrap}
+.sw{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;position:relative;transition:border-radius .3s var(--spring)}
+.sw i{width:100%;height:100%;border-radius:inherit;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.sw i span:first-child{grid-row:1/3}
+.sw[aria-pressed="true"]{border-radius:14px;outline:2px solid var(--on-surface);outline-offset:3px}
+.note{font-size:13px;line-height:19px;color:var(--on-surface-variant)}
+
+.device{flex:0 0 auto;padding:9px;border-radius:54px;background:var(--bezel)}
+.screen{width:384px;height:836px;border-radius:45px;overflow:hidden;position:relative;background:var(--screen-bg);color:var(--on-surface);isolation:isolate;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-size:14px}
+@media (max-width:820px){
+  .wrap{flex-direction:column;align-items:center;gap:36px}
+  .panel{max-width:520px;padding-top:0}
+}
+@media (max-width:440px){
+  body{padding-block:24px 40px}
+  .device{width:100%;padding:6px;border-radius:40px}
+  .screen{width:100%;height:max(620px,calc(100svh - 64px));border-radius:34px}
+}
+
+.statusbar{position:absolute;top:0;left:0;right:0;height:38px;padding:10px 26px 0 30px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500;z-index:60;pointer-events:none;font-variant-numeric:tabular-nums}
+.statusbar .material-symbols-rounded{font-size:17px}
+.gesture{position:absolute;left:0;right:0;bottom:0;height:22px;display:grid;place-items:center;z-index:60;pointer-events:none}
+.gesture i{width:108px;height:4px;border-radius:2px;background:var(--on-surface);opacity:.55}
+
+.tab{position:absolute;inset:0 0 96px 0;padding-top:38px;display:flex;flex-direction:column;transition:opacity .22s var(--ease),transform .22s var(--ease)}
+.tab[aria-hidden="true"]{opacity:0;transform:translateY(10px);pointer-events:none;visibility:hidden}
+
+.topbar{height:64px;flex:0 0 auto;display:flex;align-items:center;padding:0 4px 0 4px;gap:2px;position:relative;z-index:5;transition:background .2s var(--ease)}
+.topbar.raised{background:var(--surface-container-high)}
+.tb-title{flex:1;min-width:0;padding-left:12px;font-size:22px;line-height:28px;font-weight:450;opacity:0;transform:translateY(4px);transition:opacity .18s,transform .18s var(--ease);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.raised .tb-title,.tb-title.always{opacity:1;transform:none}
+.ib{width:48px;height:48px;border-radius:24px;display:grid;place-items:center;color:var(--on-surface-variant);position:relative;flex:0 0 auto}
+.ib::before{content:"";position:absolute;inset:4px;border-radius:20px;background:currentColor;opacity:0;transition:opacity .15s}
+.ib:hover::before{opacity:.08}.ib:active::before{opacity:.12}
+.ib.on{color:var(--on-secondary-container)}
+.ib.on::after{content:"";position:absolute;inset:4px;border-radius:12px;background:var(--secondary-container);z-index:-1}
+.selbar{position:absolute;inset:0;display:flex;align-items:center;gap:2px;padding:0 4px;background:var(--surface-container-high);opacity:0;pointer-events:none;transform:translateY(-6px);transition:opacity .18s,transform .22s var(--ease)}
+.selmode .selbar{opacity:1;pointer-events:auto;transform:none}
+.selcount{flex:1;font-size:22px;line-height:28px;font-weight:450;padding-left:6px;font-variant-numeric:tabular-nums}
+
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none;position:relative}
+.scroll::-webkit-scrollbar{display:none}
+.large{padding:4px 20px 18px}
+.large h2{margin:0;font-size:34px;line-height:42px;font-weight:420;letter-spacing:-.3px}
+.large p{margin:2px 0 0;font-size:15px;line-height:20px;color:var(--on-surface-variant);font-variant-numeric:tabular-nums}
+
+.chips{display:flex;gap:8px;padding:0 16px 6px;overflow-x:auto;scrollbar-width:none}
+.chip{height:32px;flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:0 14px;border-radius:8px;border:1px solid var(--outline-variant);font-size:14px;font-weight:500;color:var(--on-surface-variant);transition:background .2s,border-color .2s,padding .2s var(--ease)}
+.chip .material-symbols-rounded{font-size:18px;width:0;margin-right:-6px;overflow:hidden;transition:width .2s var(--ease),margin .2s var(--ease)}
+.chip[aria-pressed="true"]{background:var(--secondary-container);border-color:transparent;color:var(--on-secondary-container);padding-left:8px}
+.chip[aria-pressed="true"] .material-symbols-rounded{width:18px;margin-right:0}
+.chip em{font-style:normal;opacity:.75;font-variant-numeric:tabular-nums}
+
+.group{margin:14px 12px 4px}
+.ghead{display:flex;align-items:center;gap:0;padding:6px 8px 10px;min-height:44px;border-radius:12px}
+.ghead .gt{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;overflow:hidden}
+.ghead .book{font-family:var(--font-book);font-size:16px;line-height:22px;font-weight:600;white-space:nowrap}
+.ghead .auth{font-size:13px;color:var(--on-surface-variant);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ghead .gn{font-size:13px;font-weight:500;color:var(--on-surface-variant);font-variant-numeric:tabular-nums;padding-right:6px}
+.selmode .ghead{cursor:pointer}
+.gitems{display:flex;flex-direction:column;gap:2px}
+
+.row{position:relative;border-radius:6px;overflow:hidden;transition:border-radius .32s var(--spring),opacity .18s,height .26s var(--ease)}
+.gitems .row:first-child{border-top-left-radius:24px;border-top-right-radius:24px}
+.gitems .row:last-child{border-bottom-left-radius:24px;border-bottom-right-radius:24px}
+.row.sel{border-radius:24px}
+.row.out{opacity:0}
+.sbg{position:absolute;inset:0;display:flex;align-items:center;padding:0 24px;gap:8px;font-size:14px;font-weight:600;opacity:0}
+.row.sw-r .sbg{opacity:1;background:var(--primary);color:var(--on-primary);justify-content:flex-start}
+.row.sw-l .sbg{opacity:1;background:var(--error-container);color:var(--on-error-container);justify-content:flex-end}
+.sbg .material-symbols-rounded{transition:transform .25s var(--spring)}
+.row.armed .sbg .material-symbols-rounded{transform:scale(1.3)}
+.sbg .l,.sbg .r{display:none;align-items:center;gap:8px}
+.row.sw-r .sbg .l{display:flex}.row.sw-l .sbg .r{display:flex}
+.inner{position:relative;z-index:1;display:flex;align-items:flex-start;padding:14px 18px 15px 14px;background:var(--row-bg);transition:background .2s var(--ease);touch-action:pan-y;cursor:default}
+.inner::after{content:"";position:absolute;inset:0;background:var(--on-surface);opacity:0;transition:opacity .15s;pointer-events:none}
+.row.pressed .inner::after{opacity:.08}
+.row.sel .inner{background:var(--secondary-container)}
+.row.fresh .inner{animation:fresh 1.6s var(--ease)}
+@keyframes fresh{0%{background:var(--primary-container)}100%{background:var(--row-bg)}}
+
+.lead{flex:0 0 auto;width:0;height:24px;margin-top:0;overflow:hidden;transition:width .26s var(--ease);display:flex;align-items:center}
+.selmode .lead{width:38px}
+.lead i{flex:0 0 auto;width:22px;height:22px;margin-left:2px;border-radius:50%;border:2px solid var(--outline);display:grid;place-items:center;transition:background .15s,border-color .15s,transform .25s var(--spring)}
+.lead i .material-symbols-rounded{font-size:16px;color:var(--on-primary);transform:scale(0);transition:transform .22s var(--spring);font-variation-settings:'FILL' 0,'wght' 600,'GRAD' 0,'opsz' 20}
+.row.sel .lead i,.ghead.all .lead i{background:var(--primary);border-color:var(--primary)}
+.row.sel .lead i .material-symbols-rounded,.ghead.all .lead i .material-symbols-rounded{transform:scale(1)}
+.ghead.some .lead i{border-color:var(--primary)}
+.lead i>*,.lead i::after{grid-area:1/1}
+.ghead.some .lead i::after{content:"";width:10px;height:2px;border-radius:1px;background:var(--primary)}
+.ghead .lead{margin-left:6px}
+
+.txt{flex:1;min-width:0}
+.l1{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.word{font-size:18px;line-height:24px;font-weight:560;letter-spacing:-.1px;font-variation-settings:'opsz' 20}
+.gram{font-family:var(--font-book);font-style:italic;font-size:14px;color:var(--on-surface-variant)}
+.tr{font-size:15px;line-height:20px;margin-top:1px;color:var(--on-surface)}
+.tr.err{color:var(--error);font-size:14px}
+.ex{font-family:var(--font-book);font-size:14px;line-height:21px;color:var(--on-surface-variant);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mark{color:var(--on-surface);text-decoration:underline wavy var(--mark);text-decoration-thickness:1.5px;text-underline-offset:4px;text-decoration-skip-ink:none}
+.flag{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:12.5px;line-height:16px;font-weight:500;color:var(--tertiary)}
+.flag .material-symbols-rounded{font-size:15px}
+.working{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--primary);height:20px}
+
+/* M3 Expressive wavy progress indicator */
+.wavy{position:relative;height:10px;display:flex;align-items:center;gap:4px}
+.wavy .done{height:10px;background:var(--primary);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0 5 Q5 0.8 10 5 T20 5' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/20px 10px repeat-x;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0 5 Q5 0.8 10 5 T20 5' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/20px 10px repeat-x;animation:wave 1s linear infinite;transition:width .5s var(--ease);border-radius:2px}
+.wavy .rest{flex:1;height:4px;border-radius:2px;background:var(--secondary-container)}
+.wavy .rest::after{content:"";display:block;width:4px;height:4px;border-radius:2px;background:var(--primary);margin-left:auto}
+@keyframes wave{to{-webkit-mask-position:20px 0;mask-position:20px 0}}
+.working .wavy{width:72px}
+.working .wavy .done{width:100%}
+
+.progress{margin:6px 12px 10px;padding:16px 18px 18px;border-radius:24px;background:var(--surface-container-highest);display:flex;flex-direction:column;gap:12px}
+.progress .pt{display:flex;justify-content:space-between;gap:12px;font-size:14px;line-height:20px}
+.progress .pt b{font-weight:550}
+.progress .pt span{color:var(--on-surface-variant);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.empty{padding:72px 36px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty .bubble{width:96px;height:96px;border-radius:32px;background:var(--primary-container);color:var(--on-primary-container);display:grid;place-items:center;margin-bottom:10px;transform:rotate(-8deg)}
+.empty .bubble .material-symbols-rounded{font-size:44px;transform:rotate(8deg)}
+.empty h3{margin:0;font-size:22px;line-height:28px;font-weight:450}
+.empty p{margin:0;font-size:14.5px;line-height:21px;color:var(--on-surface-variant);max-width:30ch}
+.spacer{height:96px}
+
+/* nav bar */
+.navbar{position:absolute;left:0;right:0;bottom:0;height:96px;padding:12px 8px 22px;background:var(--surface-container);display:grid;grid-template-columns:repeat(3,1fr);z-index:10;transition:transform .3s var(--ease)}
+.selmode .navbar{transform:translateY(100%)}
+.nv{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;line-height:16px;font-weight:500;color:var(--on-surface-variant)}
+.nv .pill{width:56px;height:32px;border-radius:16px;display:grid;place-items:center;position:relative;transition:background .25s var(--ease)}
+.nv[aria-current="page"]{color:var(--on-surface)}
+.nv[aria-current="page"] .pill{background:var(--secondary-container);color:var(--on-secondary-container)}
+.nv[aria-current="page"] .material-symbols-rounded{font-variation-settings:'FILL' 1,'wght' 500,'GRAD' 0,'opsz' 24}
+.badge{position:absolute;left:30px;top:1px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--error);color:var(--on-error);font-size:11px;line-height:16px;font-weight:600;text-align:center;font-variant-numeric:tabular-nums}
+
+/* FAB */
+.fab{position:absolute;right:16px;bottom:112px;height:56px;border-radius:16px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;padding:0 16px;gap:0;z-index:12;box-shadow:0 3px 8px -2px rgb(0 0 0 / .18);transition:bottom .3s var(--ease),transform .3s var(--ease),opacity .2s,border-radius .25s var(--spring)}
+.fab .lbl{font-size:16px;font-weight:550;max-width:160px;overflow:hidden;white-space:nowrap;padding-left:12px;transition:max-width .3s var(--ease),padding .3s var(--ease)}
+.fab.mini .lbl{max-width:0;padding-left:0}
+.fab:active{border-radius:28px}
+.has-snack .fab{bottom:176px}
+.selmode .fab,.fab.hide{transform:scale(.6);opacity:0;pointer-events:none}
+
+/* floating toolbar for selection */
+.ftool{position:absolute;left:0;right:0;bottom:30px;display:flex;justify-content:center;align-items:center;gap:10px;z-index:12;transform:translateY(120px);transition:transform .34s var(--spring)}
+.selmode .ftool{transform:none}
+.ftool .bar{height:64px;padding:0 8px;border-radius:32px;background:var(--primary-container);color:var(--on-primary-container);display:flex;align-items:center;gap:2px;box-shadow:0 4px 12px -4px rgb(0 0 0 / .25)}
+.ftool .ib{color:var(--on-primary-container)}
+.ftool .go{height:64px;border-radius:20px;padding:0 22px 0 18px;background:var(--primary);color:var(--on-primary);display:flex;align-items:center;gap:10px;font-size:16px;font-weight:550;box-shadow:0 4px 12px -4px rgb(0 0 0 / .3);transition:border-radius .25s var(--spring),opacity .2s;font-variant-numeric:tabular-nums}
+.ftool .go:active{border-radius:32px}
+.ftool .go[disabled],.ftool .ib[disabled]{opacity:.45;pointer-events:none}
+
+/* snackbar */
+.snack{position:absolute;left:12px;right:12px;bottom:108px;min-height:48px;padding:6px 8px 6px 16px;border-radius:8px;background:var(--inverse-surface);color:var(--snack-text);display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;z-index:40;transform:translateY(16px);opacity:0;pointer-events:none;transition:transform .25s var(--ease),opacity .2s}
+.snack.show{transform:none;opacity:1;pointer-events:auto}
+.selmode .snack{bottom:108px}
+.snack span{flex:1}
+.snack button{height:36px;padding:0 12px;border-radius:18px;color:var(--inverse-primary);font-weight:600}
+
+/* pages pushed over the tabs */
+.page{position:absolute;inset:0;background:var(--screen-bg);padding-top:38px;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .38s var(--ease)}
+.page.open{transform:none}
+.page .col{padding:4px 16px 24px;display:flex;flex-direction:column;gap:10px}
+.page .tb-title{padding-left:4px}
+.chev{color:var(--on-surface-variant)}
+.lrow.tap{cursor:pointer;position:relative}
+.lrow.tap:active{background:var(--surface-container-high)}
+.lrow .wd{font-size:16px;font-weight:560}
+.lrow .vl.err{color:var(--error)}
+.help{margin:0;font-size:12.5px;line-height:17px;color:var(--on-surface-variant);padding:6px 16px 0}
+.ok{color:var(--primary)}
+
+.bookhead{padding:4px 20px 14px}
+.bookhead h2{margin:0;font-family:var(--font-book);font-size:30px;line-height:38px;font-weight:600;letter-spacing:-.2px;text-wrap:balance}
+.bookhead p{margin:4px 0 0;font-size:15px;line-height:21px;color:var(--on-surface-variant);font-variant-numeric:tabular-nums}
+
+.search{margin:4px 16px 8px;height:56px;flex:0 0 auto;border-radius:28px;background:var(--surface-container-highest);display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;color:var(--on-surface-variant)}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:16px/24px var(--font-ui);color:var(--on-surface);outline:none;user-select:text;-webkit-user-select:text}
+.search input::placeholder{color:var(--on-surface-variant)}
+.search input::-webkit-search-cancel-button{display:none}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--on-surface-variant);display:grid;place-items:center;flex:0 0 auto}
+.radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--primary);transform:scale(0);transition:transform .22s var(--spring)}
+[aria-checked="true"]>.radio{border-color:var(--primary)}
+[aria-checked="true"]>.radio::after{transform:scale(1)}
+.switch{width:52px;height:32px;border-radius:16px;border:2px solid var(--outline);background:var(--surface-container-highest);position:relative;flex:0 0 auto;transition:background .2s,border-color .2s}
+.switch::after{content:"";position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:50%;background:var(--outline);transition:all .28s var(--spring)}
+[aria-checked="true"]>.switch{background:var(--primary);border-color:var(--primary)}
+[aria-checked="true"]>.switch::after{left:22px;top:2px;width:24px;height:24px;background:var(--on-primary)}
+
+.form{padding:8px 16px;display:flex;flex-direction:column;gap:12px}
+.form.flush{padding:4px 0}
+.field{position:relative;padding-top:6px}
+.field input{width:100%;height:56px;border:1px solid var(--outline);border-radius:6px;background:transparent;color:var(--on-surface);font:16px/24px var(--font-ui);padding:0 16px;outline:none;user-select:text;-webkit-user-select:text}
+.field input.has-ic{padding-right:52px}
+.field input:focus{border:2px solid var(--primary);padding-left:15px}
+.field input[readonly]{color:var(--on-surface-variant);border-style:dashed}
+.field input::placeholder{color:var(--outline)}
+.field label{position:absolute;left:12px;top:-2px;padding:0 4px;font-size:12px;line-height:16px;color:var(--on-surface-variant);background:var(--screen-bg)}
+.field input:focus+label{color:var(--primary)}
+.field .ib{position:absolute;right:4px;top:10px}
+.form .help{padding:0 16px}
+
+.slider{width:100%;-webkit-appearance:none;appearance:none;height:44px;background:transparent;margin:6px 0 2px;--p:50%}
+.slider::-webkit-slider-runnable-track{height:16px;border-radius:8px;background:linear-gradient(to right,var(--primary) 0 var(--p),var(--secondary-container) var(--p) 100%)}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:4px;height:44px;border-radius:2px;background:var(--primary);margin-top:-14px;box-shadow:0 0 0 6px var(--row-bg)}
+.slider::-moz-range-track{height:16px;border-radius:8px;background:var(--secondary-container)}
+.slider::-moz-range-progress{height:16px;border-radius:8px;background:var(--primary)}
+.slider::-moz-range-thumb{width:4px;height:44px;border-radius:2px;background:var(--primary);border:0;box-shadow:0 0 0 6px var(--row-bg)}
+.lrow.dim{opacity:.45;pointer-events:none}
+.face.small{padding:20px 20px 18px;gap:4px}
+.face.small .fw{font-size:24px;line-height:30px}
+.face.small .fx{font-size:16px;line-height:25px;margin-top:6px}
+.result{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:20px;background:var(--row-bg);font-size:14px;line-height:20px}
+.result .lt{flex:1;min-width:0}
+.result .lt b{display:block;font-size:16px;line-height:22px;font-weight:500}
+.result .lt span{display:block;color:var(--on-surface-variant)}
+
+.akhelp{padding:0 20px 8px}
+.ankiwrap{padding:4px 16px 16px}
+.ankicard{min-height:100%;border-radius:20px;background:var(--row-bg);padding:40px 24px 30px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.ankicard .aw{font-size:32px;line-height:40px;font-weight:520;letter-spacing:-.3px}
+.ankicard .ag{font-family:var(--font-book);font-style:italic;font-size:16px;color:var(--on-surface-variant)}
+.ankicard .ax{font-family:var(--font-book);font-size:19px;line-height:30px;margin-top:20px;max-width:30ch}
+.ankicard hr{width:40%;border:0;border-top:1px solid var(--outline-variant);margin:22px 0 12px}
+.ankicard .at{font-size:24px;line-height:31px;font-weight:500}
+.ankicard .an{font-size:15px;line-height:22px;color:var(--on-surface-variant);max-width:32ch}
+.ankicard .af{font-family:var(--font-book);font-size:16px;line-height:26px;margin-top:14px;text-align:left}
+.ankicard .as{font-size:13px;color:var(--on-surface-variant);margin-top:6px;align-self:flex-start}
+.grades{flex:0 0 auto;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;padding:10px 12px 34px;background:var(--surface-container)}
+.grades button{height:56px;border-radius:12px;background:var(--surface-container-highest);font-size:14px;font-weight:550;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.grades small{font-size:11px;font-weight:500;color:var(--on-surface-variant);font-variant-numeric:tabular-nums}
+.grades .show{font-size:16px}
+
+.steps{display:flex;gap:6px;padding:14px 24px 0;flex:0 0 auto}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--secondary-container);transition:background .3s}
+.steps i.on{background:var(--primary)}
+.setupcol{padding:20px 24px 24px;display:flex;flex-direction:column;gap:14px}
+.setupcol h2{margin:8px 0 0;font-size:30px;line-height:38px;font-weight:420;letter-spacing:-.3px;text-wrap:balance}
+.setupcol .sub{padding:12px 0 0}
+.lede{margin:0;font-size:16px;line-height:24px;color:var(--on-surface-variant)}
+.lede.small{font-size:14px;line-height:20px}
+.lede.err{color:var(--error)}
+.btn.fit{flex:none;align-self:flex-start;padding:0 24px 0 20px;margin-top:4px}
+.hero{margin:8px 0 10px;padding:30px 24px 26px;border-radius:32px;background:var(--row-bg);font-family:var(--font-book);font-size:21px;line-height:34px}
+.draw{position:relative;white-space:nowrap}
+.draw::after{content:"";position:absolute;left:0;bottom:-5px;height:8px;width:100%;background:var(--mark);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 4 Q4 0.6 8 4 T16 4' fill='none' stroke='black' stroke-width='1.8'/%3E%3C/svg%3E") 0 0/16px 8px repeat-x;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='8'%3E%3Cpath d='M0 4 Q4 0.6 8 4 T16 4' fill='none' stroke='black' stroke-width='1.8'/%3E%3C/svg%3E") 0 0/16px 8px repeat-x;animation:draw 1.1s .5s var(--ease) both}
+@keyframes draw{from{width:0}}
+.mini{margin-top:22px;display:flex;flex-direction:column;gap:2px;width:max-content;max-width:100%;padding:14px 18px;border-radius:20px;background:var(--primary-container);color:var(--on-primary-container);font-family:var(--font-ui);line-height:22px;animation:rise .5s 1.5s var(--spring) both}
+.mini b{font-size:17px;font-weight:560}
+.mini span{font-size:15px}
+@keyframes rise{from{opacity:0;transform:translateY(12px) scale(.96)}}
+.bigok{width:96px;height:96px;border-radius:32px;background:var(--primary-container);color:var(--on-primary-container);display:grid;place-items:center;margin-top:40px;transform:rotate(-8deg)}
+.bigok .material-symbols-rounded{font-size:48px;transform:rotate(8deg)}
+
+.dscrim{position:absolute;inset:0;z-index:70;background:rgb(0 0 0 / .4);display:grid;place-items:center;padding:24px;opacity:0;transition:opacity .2s}
+.dscrim.open{opacity:1}
+.dlg{width:100%;max-width:312px;border-radius:28px;background:var(--surface-container-high);padding:24px 20px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;transform:scale(.92);transition:transform .3s var(--spring)}
+.dscrim.open .dlg{transform:none}
+.dlg>.material-symbols-rounded{color:var(--secondary)}
+.dlg h4{margin:0;font-size:20px;line-height:27px;font-weight:450;text-align:center;text-wrap:balance}
+.stackb{display:flex;flex-direction:column;gap:4px;width:100%}
+.stackb button{height:52px;border-radius:8px;background:var(--surface-container-highest);font-size:15px;font-weight:550;color:var(--primary)}
+.stackb button:first-child{border-radius:26px 26px 8px 8px}
+.stackb button:last-child{border-radius:8px 8px 26px 26px}
+.sub{font-size:14px;line-height:20px;font-weight:550;color:var(--primary);padding:10px 8px 2px}
+.face{border-radius:28px;background:var(--row-bg);padding:26px 24px 24px;display:flex;flex-direction:column;gap:8px}
+.face .fw{font-size:30px;line-height:36px;font-weight:520;letter-spacing:-.4px;font-variation-settings:'opsz' 36}
+.face .fg{font-family:var(--font-book);font-style:italic;font-size:15px;color:var(--on-surface-variant)}
+.face .fx{font-family:var(--font-book);font-size:18px;line-height:28px;margin-top:10px}
+.face .bt{font-size:24px;line-height:31px;font-weight:500}
+.face .bn{font-size:15px;line-height:22px;color:var(--on-surface-variant)}
+.face hr{border:0;border-top:1px solid var(--outline-variant);margin:10px 0 6px}
+.face .bf{font-family:var(--font-book);font-size:16px;line-height:26px}
+.face .bs{font-size:13px;line-height:18px;color:var(--on-surface-variant)}
+.editing [data-edit]{outline:2px solid var(--primary);outline-offset:4px;border-radius:6px;user-select:text;-webkit-user-select:text;cursor:text}
+.actions{flex:0 0 auto;display:flex;gap:10px;padding:12px 16px 34px}
+.btn{flex:1;height:56px;border-radius:28px;font-size:16px;font-weight:550;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-radius .25s var(--spring)}
+.btn:active{border-radius:14px}
+.btn.filled{background:var(--primary);color:var(--on-primary)}
+.btn.tonal{background:var(--secondary-container);color:var(--on-secondary-container)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+
+/* bottom sheet */
+.scrim{position:absolute;inset:0;z-index:50;background:rgb(0 0 0 / .32);opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:51;background:var(--surface-container-low);border-radius:28px 28px 0 0;padding:0 0 30px;transform:translateY(105%);transition:transform .38s var(--ease);max-height:92%;overflow-y:auto;scrollbar-width:none}
+.sheet.open{transform:none}
+.handle{width:32px;height:4px;border-radius:2px;background:var(--on-surface-variant);opacity:.4;margin:14px auto 12px}
+.sheet h3{margin:0;padding:6px 24px 14px;font-size:22px;line-height:28px;font-weight:450}
+.li{display:flex;align-items:center;gap:16px;padding:10px 16px 10px 24px;min-height:64px}
+.li .ic{width:40px;height:40px;border-radius:20px;background:var(--secondary-container);color:var(--on-secondary-container);display:grid;place-items:center;flex:0 0 auto}
+.li .ic .material-symbols-rounded{font-size:20px}
+.li .lt{flex:1;min-width:0}
+.li .lt b{display:block;font-size:16px;line-height:22px;font-weight:450}
+.li .lt span{display:block;font-size:13.5px;line-height:19px;color:var(--on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbtn{height:40px;padding:0 12px;border-radius:20px;color:var(--primary);font-weight:550;font-size:14px}
+.sheet .sub{padding:14px 24px 4px}
+.cb{width:18px;height:18px;border-radius:3px;border:2px solid var(--on-surface-variant);display:grid;place-items:center;flex:0 0 auto;margin:0 3px;transition:background .15s,border-color .15s}
+.cb .material-symbols-rounded{font-size:16px;color:var(--on-primary);transform:scale(0);transition:transform .2s var(--spring);font-variation-settings:'FILL' 0,'wght' 600,'GRAD' 0,'opsz' 20}
+[aria-checked="true"] .cb{background:var(--primary);border-color:var(--primary)}
+[aria-checked="true"] .cb .material-symbols-rounded{transform:scale(1)}
+.mk{width:40px;flex:0 0 auto;display:grid;place-items:center}
+.mk span{font-family:var(--font-book);font-size:16px;line-height:20px;padding:0 2px}
+.mk .m1{text-decoration:underline wavy var(--mark);text-underline-offset:4px;text-decoration-thickness:1.5px}
+.mk .m2{background:#F6D84A;color:#2B2611;border-radius:2px}
+.mk .m3{text-decoration:underline solid #3B7BE0;text-underline-offset:4px;text-decoration-thickness:2px}
+.sheet .seg{margin:6px 24px 0;display:flex}
+.sheet .seg button{flex:1;justify-content:center}
+.sheet .go{margin:22px 24px 0;width:calc(100% - 48px)}
+
+/* library + settings */
+.lgroup{margin:6px 12px 14px}
+.lgroup .sub{padding:8px 12px 8px}
+.lrow{display:flex;align-items:center;gap:16px;padding:14px 18px;background:var(--row-bg);border-radius:6px}
+.lrows{display:flex;flex-direction:column;gap:2px}
+.lrows .lrow:first-child{border-top-left-radius:24px;border-top-right-radius:24px}
+.lrows .lrow:last-child{border-bottom-left-radius:24px;border-bottom-right-radius:24px}
+.lrow .lt{flex:1;min-width:0}
+.lrow .bk{font-family:var(--font-book);font-size:17px;line-height:23px;font-weight:600}
+.lrow .au{font-size:13.5px;line-height:19px;color:var(--on-surface-variant)}
+.lrow .mt{font-size:13.5px;line-height:19px;color:var(--on-surface-variant);margin-top:4px;font-variant-numeric:tabular-nums}
+.lrow .mt b{color:var(--primary);font-weight:550}
+.lrow .lb{font-size:16px;line-height:22px}
+.lrow .vl{font-size:13.5px;line-height:19px;color:var(--on-surface-variant)}
+.lrow .ic{width:40px;height:40px;border-radius:20px;background:var(--secondary-container);color:var(--on-secondary-container);display:grid;place-items:center;flex:0 0 auto}
+.lrow .ic .material-symbols-rounded{font-size:20px}
+.lrow .seg{margin-top:10px;display:flex;height:36px}
+.lrow .seg button{flex:1;justify-content:center;padding:0 8px;font-size:13px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
+</style>
+
+<div class="wrap">
+  <section class="panel" aria-label="About this prototype">
+    <h1><small>Moon+ Vocab</small>Inbox, in Material 3 Expressive</h1>
+    <p>A working prototype, not a picture. The phone responds to touch and to the mouse, so you can judge how it feels, not only how it looks.</p>
+
+    <div>
+      <h2>Try this</h2>
+      <ul class="tries">
+        <li><span class="material-symbols-rounded">touch_app</span><span><b>Press and hold a word, then drag</b> up or down. Every word you pass gets selected. Drag near the top or bottom edge and the list scrolls with you.</span></li>
+        <li><span class="material-symbols-rounded">select_all</span><span><b>Select all</b> is the icon at the top right. While selecting, <b>tap a book name</b> to take or drop that whole book.</span></li>
+        <li><span class="material-symbols-rounded">swipe</span><span><b>Swipe one word</b> right to send it to Anki, left to discard it. Everything can be undone.</span></li>
+        <li><span class="material-symbols-rounded">download</span><span><b>Tap Import</b> to bring in new marks from a backup and watch them arrive.</span></li>
+        <li><span class="material-symbols-rounded">menu_book</span><span><b>Open a book in Library</b> to see its cards. Cards already in Anki open too, and saving an edit updates them there.</span></li>
+        <li><span class="material-symbols-rounded">language</span><span><b>In Settings, open Translate into</b> and search for a language. The list holds about 80 and grows without any change to the screen.</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2>First run</h2>
+      <p style="margin-bottom:12px">What a new install shows: Moon+ folder, AnkiDroid access, translation key. Folder choices stand in for Android’s system folder picker.</p>
+      <button class="btn tonal fit" id="runSetup" style="height:44px;font-size:14px"><span class="material-symbols-rounded">touch_app</span>Show first-run setup</button>
+    </div>
+
+    <div class="ctl">
+      <div>
+        <h2 id="thL">Theme</h2>
+        <div class="seg" role="group" aria-labelledby="thL" id="themeSeg">
+          <button id="th-system" data-v="system"><span class="material-symbols-rounded">check</span>System</button>
+          <button id="th-light" data-v="light"><span class="material-symbols-rounded">check</span>Light</button>
+          <button id="th-dark" data-v="dark"><span class="material-symbols-rounded">check</span>Dark</button>
+        </div>
+      </div>
+      <div>
+        <h2 id="lgL">App language</h2>
+        <div class="seg" role="group" aria-labelledby="lgL" id="langSeg">
+          <button id="lg-en" data-v="en"><span class="material-symbols-rounded">check</span>English</button>
+          <button id="lg-ru" data-v="ru"><span class="material-symbols-rounded">check</span>Русский</button>
+        </div>
+      </div>
+      <div>
+        <h2 id="wpL">Wallpaper color</h2>
+        <div class="swatches" role="group" aria-labelledby="wpL" id="seedSeg"></div>
+        <p class="note" style="margin-top:10px">On Android 12 and later the app takes its colors from your wallpaper, like the system apps do. Pick a wallpaper to see it adapt.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="device">
+    <div class="screen" id="screen" lang="en">
+      <div class="statusbar"><span>9:41</span><span><span class="material-symbols-rounded">signal_cellular_alt</span> <span class="material-symbols-rounded">wifi</span> <span class="material-symbols-rounded">battery_full</span></span></div>
+
+      <section class="tab" id="v-inbox" aria-hidden="false">
+        <header class="topbar" id="ibTop">
+          <span class="tb-title" id="ibSmall"></span>
+          <button class="ib" id="selAllN"><span class="material-symbols-rounded">select_all</span></button>
+          <div class="selbar">
+            <button class="ib" id="selClose"><span class="material-symbols-rounded">close</span></button>
+            <span class="selcount" id="selCount" aria-live="polite"></span>
+            <button class="ib" id="selAll"><span class="material-symbols-rounded">select_all</span></button>
+          </div>
+        </header>
+        <div class="scroll" id="list"></div>
+      </section>
+
+      <section class="tab" id="v-library" aria-hidden="true">
+        <header class="topbar" id="lbTop"><span class="tb-title" id="lbSmall"></span></header>
+        <div class="scroll" id="lib"></div>
+      </section>
+
+      <section class="tab" id="v-settings" aria-hidden="true">
+        <header class="topbar" id="stTop"><span class="tb-title" id="stSmall"></span></header>
+        <div class="scroll" id="set"></div>
+      </section>
+
+      <button class="fab" id="fab"><span class="material-symbols-rounded">download</span><span class="lbl" id="fabL"></span></button>
+
+      <div class="ftool" id="ftool">
+        <div class="bar">
+          <button class="ib" id="actDiscard"><span class="material-symbols-rounded">delete</span></button>
+          <button class="ib" id="actRetry"><span class="material-symbols-rounded">refresh</span></button>
+        </div>
+        <button class="go" id="actSend"><span class="material-symbols-rounded fill">send</span><span id="actSendL"></span></button>
+      </div>
+
+      <nav class="navbar" id="nav"></nav>
+
+      <div class="snack" id="snack" role="status"><span id="snackT"></span><button id="snackB"></button></div>
+
+      <div id="pages"></div>
+
+      <div class="scrim" id="scrim"></div>
+      <section class="sheet" id="sheet" aria-hidden="true" role="dialog" aria-labelledby="shT"></section>
+
+      <div class="gesture"><i></i></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCHEMES = {"ink":{"light":{"primary":"#4F5D8C","on-primary":"#FAF8FF","primary-container":"#B3C2F7","on-primary-container":"#2D3C68","secondary":"#595E72","on-secondary":"#FAF8FF","secondary-container":"#DDE1F9","on-secondary-container":"#4C5164","tertiary":"#6D567F","on-tertiary":"#FFF6FE","tertiary-container":"#E9CDFD","on-tertiary-container":"#584269","error":"#A83836","on-error":"#FFF7F6","error-container":"#FA746F","on-error-container":"#6E0A12","surface":"#FAF8FE","surface-dim":"#D9D9E4","surface-bright":"#FAF8FE","surface-container-lowest":"#FFFFFF","surface-container-low":"#F4F3FA","surface-container":"#EEEDF6","surface-container-high":"#E8E7F1","surface-container-highest":"#E1E2ED","on-surface":"#30323B","on-surface-variant":"#5D5F68","outline":"#797A84","outline-variant":"#B0B1BC","inverse-surface":"#0D0E12","inverse-on-surface":"#9D9CA2","inverse-primary":"#B3C2F7","scrim":"#000000"},"dark":{"primary":"#BAC5EE","on-primary":"#343F61","primary-container":"#465174","on-primary-container":"#DCE2FF","secondary":"#C1C6DD","on-secondary":"#3A4052","secondary-container":"#353B4D","on-secondary-container":"#BABED5","tertiary":"#F3DEFF","on-tertiary":"#604B72","tertiary-container":"#E9CDFD","on-tertiary-container":"#584269","error":"#FA746F","on-error":"#490006","error-container":"#871F21","on-error-container":"#FF9993","surface":"#0D0E12","surface-dim":"#0D0E12","surface-bright":"#2A2C34","surface-container-lowest":"#000000","surface-container-low":"#121318","surface-container":"#181920","surface-container-high":"#1E1F26","surface-container-highest":"#23252E","on-surface":"#E4E4F0","on-surface-variant":"#AAAAB5","outline":"#73757F","outline-variant":"#464750","inverse-surface":"#FAF8FE","inverse-on-surface":"#54555A","inverse-primary":"#535E81","scrim":"#000000"}},"moss":{"light":{"primary":"#496738","on-primary":"#ECFFDC","primary-container":"#C9EDB2","on-primary-container":"#3C592C","secondary":"#56634D","on-secondary":"#EFFEE0","secondary-container":"#D9E7CB","on-secondary-container":"#495640","tertiary":"#65612A","on-tertiary":"#FFF9DE","tertiary-container":"#FBF3AD","on-tertiary-container":"#605C25","error":"#A73B21","on-error":"#FFF7F6","error-container":"#FD795A","on-error-container":"#6E1400","surface":"#F9FAF1","surface-dim":"#D7DCCE","surface-bright":"#F9FAF1","surface-container-lowest":"#FFFFFF","surface-container-low":"#F2F5EA","surface-container":"#ECEFE3","surface-container-high":"#E6EADD","surface-container-highest":"#DFE4D6","on-surface":"#2F342A","on-surface-variant":"#5B6155","outline":"#777D70","outline-variant":"#AEB4A6","inverse-surface":"#0C0F0A","inverse-on-surface":"#9C9E96","inverse-primary":"#DAFFC2","scrim":"#000000"},"dark":{"primary":"#B3CFA1","on-primary":"#304624","primary-container":"#415934","on-primary-container":"#D0ECBC","secondary":"#BDCBB0","on-secondary":"#37442F","secondary-container":"#333F2B","on-secondary-container":"#B5C4A9","tertiary":"#FFFAE2","on-tertiary":"#65612A","tertiary-container":"#F5EDA8","on-tertiary-container":"#5D5822","error":"#F97758","on-error":"#450900","error-container":"#85230A","on-error-container":"#FF9B82","surface":"#0C0F0A","surface-dim":"#0C0F0A","surface-bright":"#282E24","surface-container-lowest":"#000000","surface-container-low":"#11140E","surface-container":"#171B14","surface-container-high":"#1C2119","surface-container-highest":"#22271E","on-surface":"#E2E7D9","on-surface-variant":"#A7ADA0","outline":"#72776B","outline-variant":"#444A3F","inverse-surface":"#F9FAF1","inverse-on-surface":"#53564F","inverse-primary":"#4E6640","scrim":"#000000"}},"plum":{"light":{"primary":"#844E6B","on-primary":"#FFF7F8","primary-container":"#FFBBDD","on-primary-container":"#673551","secondary":"#725864","on-secondary":"#FFF7F8","secondary-container":"#FCD9E8","on-secondary-container":"#644A57","tertiary":"#6F557D","on-tertiary":"#FFF6FD","tertiary-container":"#EAC9F8","on-tertiary-container":"#584066","error":"#A8364B","on-error":"#FFF7F7","error-container":"#F97386","on-error-container":"#6E0523","surface":"#FFF8F8","surface-dim":"#E8D5DC","surface-bright":"#FFF8F8","surface-container-lowest":"#FFFFFF","surface-container-low":"#FFF0F4","surface-container":"#FBEAEF","surface-container-high":"#F5E4EA","surface-container-highest":"#F1DDE5","on-surface":"#3B2F35","on-surface-variant":"#6A5B61","outline":"#86777D","outline-variant":"#BFADB4","inverse-surface":"#120D0F","inverse-on-surface":"#A59A9E","inverse-primary":"#FFBBDD","scrim":"#000000"},"dark":{"primary":"#EDB7D1","on-primary":"#5B3449","primary-container":"#6F465C","on-primary-container":"#FFD9EA","secondary":"#DFBDCC","on-secondary":"#513945","secondary-container":"#4C3540","on-secondary-container":"#D8B6C5","tertiary":"#F5D9FF","on-tertiary":"#61486F","tertiary-container":"#EAC9F8","on-tertiary-container":"#584066","error":"#F97386","on-error":"#490013","error-container":"#871C34","on-error-container":"#FF97A3","surface":"#120D0F","surface-dim":"#120D0F","surface-bright":"#34292E","surface-container-lowest":"#000000","surface-container-low":"#191115","surface-container":"#20171B","surface-container-high":"#261D21","surface-container-highest":"#2E2328","on-surface":"#F4E0E7","on-surface-variant":"#B8A6AD","outline":"#817178","outline-variant":"#52444A","inverse-surface":"#FFF8F8","inverse-on-surface":"#5B5356","inverse-primary":"#7D5269","scrim":"#000000"}},"sand":{"light":{"primary":"#7A591B","on-primary":"#FFF8F2","primary-container":"#FACE84","on-primary-container":"#614405","secondary":"#6E5C40","on-secondary":"#FFF8F2","secondary-container":"#F8DFBB","on-secondary-container":"#604F34","tertiary":"#855336","on-tertiary":"#FFF7F5","tertiary-container":"#FDBB97","on-tertiary-container":"#63371C","error":"#A73B21","on-error":"#FFF7F6","error-container":"#FD795A","on-error-container":"#6E1400","surface":"#FFF8F3","surface-dim":"#E6D8C6","surface-bright":"#FFF8F3","surface-container-lowest":"#FFFFFF","surface-container-low":"#FEF2E4","surface-container":"#F9ECDD","surface-container-high":"#F4E6D6","surface-container-highest":"#EFE0CE","on-surface":"#393125","on-surface-variant":"#685E4F","outline":"#84796A","outline-variant":"#BDB09F","inverse-surface":"#110E08","inverse-on-surface":"#A49C92","inverse-primary":"#FACE84","scrim":"#000000"},"dark":{"primary":"#E5C187","on-primary":"#543C0E","primary-container":"#684E1F","on-primary-container":"#FFDFAD","secondary":"#DBC3A1","on-secondary":"#4D3E24","secondary-container":"#483920","on-secondary-container":"#D3BC9A","tertiary":"#FFCDB3","on-tertiary":"#6D3F24","tertiary-container":"#FDBB97","on-tertiary-container":"#63371C","error":"#F97758","on-error":"#450900","error-container":"#85230A","on-error-container":"#FF9B82","surface":"#110E08","surface-dim":"#110E08","surface-bright":"#332B1F","surface-container-lowest":"#000000","surface-container-low":"#18130B","surface-container":"#1F1910","surface-container-high":"#251F15","surface-container-highest":"#2C2519","on-surface":"#F2E3D1","on-surface-variant":"#B6A998","outline":"#7F7465","outline-variant":"#504739","inverse-surface":"#FFF8F3","inverse-on-surface":"#5A544C","inverse-primary":"#765A2A","scrim":"#000000"}}};
+
+const plRu = (n, f) => { const a = n % 100, b = n % 10; if (a > 10 && a < 20) return f[2]; if (b === 1) return f[0]; if (b > 1 && b < 5) return f[1]; return f[2]; };
+const en1 = (n, one, many) => n === 1 ? one : many;
+const T = {
+  en: {
+    inbox: 'Inbox', library: 'Library', settings: 'Settings',
+    toReview: n => `${n} ${en1(n, 'card', 'cards')} to review`,
+    all: 'All', langs: { en: 'English', de: 'German' },
+    selected: n => `${n} selected`, selectAll: 'Select all', clear: 'Clear selection', closeSel: 'Stop selecting',
+    send: n => `Send ${n}`, discard: 'Discard', retry: 'Translate again',
+    sent: n => `${n} ${en1(n, 'card', 'cards')} sent to AnkiDroid`,
+    discarded: n => `${n} ${en1(n, 'card', 'cards')} discarded`,
+    skipped: n => `${n} without a translation stayed in Inbox`,
+    undo: 'Undo',
+    phrase: 'Widened to a phrase', invented: 'Example written by the model, sentence not found', failed: 'Couldn’t reach OpenRouter. Translate again to retry.',
+    translating: 'Translating', import: 'Import',
+    front: 'Front', back: 'Back', sendAnki: 'Send to Anki', edit: 'Edit card', done: 'Done editing', backBtn: 'Back to Inbox',
+    swSend: 'Send', swDiscard: 'Discard',
+    emptyT: 'All caught up', emptyP: 'New words show up here after you import a Moon+ backup.',
+    prog: (n, b) => `Translating ${n} ${en1(n, 'word', 'words')} from ${b}`, progN: (d, n) => `${d} of ${n}`,
+    ready: n => `${n} new ${en1(n, 'word', 'words')} to review`,
+    sheet: {
+      title: 'Import from Moon+', file: 'Backup from today, 08:14', change: 'Change',
+      marks: 'Marks that are words to learn', m1: 'Wavy underline, orange', m2: 'Highlight, yellow', m3: 'Underline, blue',
+      cnt: (t, n) => `${t} marks, ${n ? n + ' new' : 'nothing new'}`,
+      after: 'After translating', review: 'Review first', auto: 'Send to Anki',
+      go: n => `Import ${n} ${en1(n, 'word', 'words')}`, none: 'Nothing new to import'
+    },
+    lib: {
+      sub: (b, c) => `${b} books, ${c} cards in Anki`,
+      meta: n => `${n} in Anki`, pend: n => `${n} to review`
+    },
+    set: {
+      tr: 'Translation', service: 'Translation service', into: 'Translate into', ru: 'Russian',
+      moon: 'Moon+ Reader', backups: 'Backup folder', books: 'Books folder', after: 'After translating', review: 'Review first',
+      cards: 'Cards', excerpt: 'Excerpt on the front', excerptV: '6 to 15 words from the book', anki: 'AnkiDroid', ankiV: 'Connected, one deck per language',
+      look: 'Look', theme: 'Theme', sys: 'System', light: 'Light', dark: 'Dark', applang: 'App language', applangV: 'English'
+    }
+  },
+  ru: {
+    inbox: 'Входящие', library: 'Библиотека', settings: 'Настройки',
+    toReview: n => `${n} ${plRu(n, ['карточка', 'карточки', 'карточек'])} на проверку`,
+    all: 'Все', langs: { en: 'Английский', de: 'Немецкий' },
+    selected: n => `Выбрано: ${n}`, selectAll: 'Выбрать все', clear: 'Снять выбор', closeSel: 'Закончить выбор',
+    send: n => `Отправить ${n}`, discard: 'Удалить', retry: 'Перевести заново',
+    sent: n => `Отправлено в AnkiDroid: ${n}`,
+    discarded: n => `Удалено: ${n}`,
+    skipped: n => `Без перевода, остались во входящих: ${n}`,
+    undo: 'Отменить',
+    phrase: 'Расширено до фразы', invented: 'Пример придуман моделью: в книге не нашлось', failed: 'Нет связи с OpenRouter. Переведите заново.',
+    translating: 'Перевожу', import: 'Импорт',
+    front: 'Лицевая сторона', back: 'Обратная сторона', sendAnki: 'Отправить в Anki', edit: 'Изменить карточку', done: 'Готово', backBtn: 'Назад во входящие',
+    swSend: 'В Anki', swDiscard: 'Удалить',
+    emptyT: 'Всё разобрано', emptyP: 'Новые слова появятся здесь после импорта бэкапа Moon+.',
+    prog: (n, b) => `Перевожу ${n} ${plRu(n, ['слово', 'слова', 'слов'])} из «${b}»`, progN: (d, n) => `${d} из ${n}`,
+    ready: n => `Новых слов на проверку: ${n}`,
+    sheet: {
+      title: 'Импорт из Moon+', file: 'Бэкап сегодня, 08:14', change: 'Изменить',
+      marks: 'Какие пометки считать словами', m1: 'Волнистое подчёркивание, оранжевое', m2: 'Выделение, жёлтое', m3: 'Подчёркивание, синее',
+      cnt: (t, n) => `${t} ${plRu(+String(t).replace(/\D/g, ''), ['пометка', 'пометки', 'пометок'])}, ${n ? 'новых: ' + n : 'новых нет'}`,
+      after: 'После перевода', review: 'Сначала проверить', auto: 'Сразу в Anki',
+      go: n => `Импортировать ${n} ${plRu(n, ['слово', 'слова', 'слов'])}`, none: 'Нового нет'
+    },
+    lib: {
+      sub: (b, c) => `${b} ${plRu(b, ['книга', 'книги', 'книг'])}, ${c} ${plRu(c, ['карточка', 'карточки', 'карточек'])} в Anki`,
+      meta: n => `В Anki: ${n}`, pend: n => `на проверке: ${n}`
+    },
+    set: {
+      tr: 'Перевод', service: 'Сервис перевода', into: 'Язык перевода', ru: 'Русский',
+      moon: 'Moon+ Reader', backups: 'Папка с бэкапами', books: 'Папка с книгами', after: 'После перевода', review: 'Сначала проверить',
+      cards: 'Карточки', excerpt: 'Отрывок на лицевой стороне', excerptV: 'От 6 до 15 слов из книги', anki: 'AnkiDroid', ankiV: 'Подключено, колода на каждый язык',
+      look: 'Внешний вид', theme: 'Тема', sys: 'Как в системе', light: 'Светлая', dark: 'Тёмная', applang: 'Язык приложения', applangV: 'Русский'
+    }
+  }
+};
+
+/* example marks, not the user's */
+const BOOKS = {
+  moby: { title: 'Moby-Dick', author: 'Herman Melville', lang: 'en', inAnki: 214 },
+  prozess: { title: 'Der Prozess', author: 'Franz Kafka', lang: 'de', inAnki: 97 },
+  mid: { title: 'Middlemarch', author: 'George Eliot', lang: 'en', inAnki: 341 },
+  sidd: { title: 'Siddhartha', author: 'Hermann Hesse', lang: 'de', inAnki: 115 },
+  hod: { title: 'Heart of Darkness', author: 'Joseph Conrad', lang: 'en', inAnki: 158 }
+};
+const I = (id, word, gram, tr, ex, o = {}) => ({ id, word, gram, tr, ex, ...o });
+const GROUPS = [
+  { id: 'moby', items: [
+    I('m1', 'hypos', 'n. pl., archaic', 'хандра, меланхолия', '…whenever my [hypos] get such an upper hand of me…', { note: 'Старое сокращение от hypochondria: приступы тоски.', full: '…and especially whenever my [hypos] get such an upper hand of me, that it requires a strong moral principle to prevent me from deliberately stepping into the street…' }),
+    I('m2', 'get the upper hand', 'phr.', 'взять верх, одолеть', '…whenever my hypos get such an [upper hand] of me…', { flag: 'phrase', note: 'Здесь: хандра одолевает рассказчика.', full: '…and especially whenever my hypos get such an [upper hand] of me, that it requires a strong moral principle to prevent me from deliberately stepping into the street…' }),
+    I('m3', 'spleen', 'n.', 'хандра, раздражение', 'It is a way I have of driving off the [spleen]…', { full: 'It is a way I have of driving off the [spleen] and regulating the circulation.' }),
+    I('m4', 'drizzly', 'adj.', 'моросящий, промозглый', '…a damp, [drizzly] November in my soul…', { full: 'Whenever it is a damp, [drizzly] November in my soul; whenever I find myself involuntarily pausing before coffin warehouses…' }),
+    I('m5', 'wharf', 'n., pl. wharves', 'пристань, причал', '…belted round by [wharves] as Indian isles by coral reefs…', { full: 'There now is your insular city of the Manhattoes, belted round by [wharves] as Indian isles by coral reefs.' }),
+    I('m6', 'reverie', 'n.', 'мечтательность, грёзы', '…thousands of mortal men fixed in ocean [reveries].', { full: 'Posted like silent sentinels all around the town, stand thousands upon thousands of mortal men fixed in ocean [reveries].' }),
+    I('m7', 'mole', 'n.', 'мол, волнорез', '…where that noble [mole] is washed by waves…', { full: 'Its extreme downtown is the battery, where that noble [mole] is washed by waves, and cooled by breezes.' }),
+    I('m8', 'lath and plaster', 'phr.', 'дранка и штукатурка', '…of week days pent up in [lath and plaster]…', { flag: 'phrase', note: 'Метафора конторской жизни в четырёх стенах.', full: 'But these are all landsmen; of week days pent up in [lath and plaster], tied to counters, nailed to benches, clinched to desks.' }),
+    I('m9', 'loiter', 'v.', 'слоняться, медлить', 'Tourists [loiter] along the pier at dusk.', { flag: 'invented' })
+  ] },
+  { id: 'prozess', items: [
+    I('p1', 'verleumden', 'v.', 'оклеветать', 'Jemand musste Josef K. [verleumdet] haben…', { full: 'Jemand musste Josef K. [verleumdet] haben, denn ohne dass er etwas Böses getan hätte, wurde er eines Morgens verhaftet.' }),
+    I('p2', 'verhaften', 'v.', 'арестовать', '…wurde er eines Morgens [verhaftet].', { full: 'Jemand musste Josef K. verleumdet haben, denn ohne dass er etwas Böses getan hätte, wurde er eines Morgens [verhaftet].' }),
+    I('p3', 'die Zimmervermieterin', 'f., -nen', 'квартирная хозяйка', '…die Köchin der Frau Grubach, seiner [Zimmervermieterin]…', { full: 'Die Köchin der Frau Grubach, seiner [Zimmervermieterin], die ihm jeden Tag gegen acht Uhr früh das Frühstück brachte, kam diesmal nicht.' }),
+    I('p4', 'anliegend', 'adj.', 'облегающий', '…er trug ein [anliegendes] schwarzes Kleid…', { full: 'Er war schlank und doch fest gebaut, er trug ein [anliegendes] schwarzes Kleid, das mit verschiedenen Falten, Taschen, Schnallen, Knöpfen und einem Gürtel versehen war.' }),
+    I('p5', 'die Schnalle', 'f., -n', null, '…mit verschiedenen Falten, Taschen, [Schnallen]…', { flag: 'failed', fix: 'пряжка' })
+  ] },
+  { id: 'mid', items: [
+    I('d1', 'thrown into relief', 'phr.', 'оттеняться, выделяться на фоне', '…beauty which seems to be [thrown into relief] by poor dress.', { flag: 'phrase', full: 'Miss Brooke had that kind of beauty which seems to be [thrown into relief] by poor dress.' }),
+    I('d2', 'enamoured', 'adj.', 'увлечённый, влюблённый', '…she was [enamoured] of intensity and greatness…', { full: '…she was [enamoured] of intensity and greatness, and rash in embracing whatever seemed to her to have those aspects.' }),
+    I('d3', 'martyrdom', 'n.', 'мученичество', '…likely to seek [martyrdom]…', { full: '…she was likely to seek [martyrdom], to make retractations, and then to incur martyrdom after all in a quarter where she had not sought it.' }),
+    I('d4', 'retractation', 'n.', 'отречение, отказ от слов', '…to make [retractations]…', { full: '…she was likely to seek martyrdom, to make [retractations], and then to incur martyrdom after all in a quarter where she had not sought it.' })
+  ] },
+  { id: 'sidd', items: [
+    I('s1', 'die Waschung', 'f., -en', 'омовение', '…bei den heiligen [Waschungen]…', { full: 'Sonne bräunte seine lichten Schultern am Flussufer, beim Baden, bei den heiligen [Waschungen], bei den heiligen Opfern.' }),
+    I('s2', 'das Opfer', 'n., -', 'жертвоприношение', '…bei den heiligen [Opfern].', { full: 'Sonne bräunte seine lichten Schultern am Flussufer, beim Baden, bei den heiligen Waschungen, bei den heiligen [Opfern].' }),
+    I('s3', 'der Feigenbaum', 'm., -bäume', 'смоковница, фиговое дерево', '…im Schatten des [Feigenbaumes] wuchs Siddhartha auf…', { full: 'Im Schatten des Hauses, in der Sonne des Flussufers bei den Booten, im Schatten des Salwaldes, im Schatten des [Feigenbaumes] wuchs Siddhartha auf.' })
+  ] }
+];
+const INCOMING = [
+  I('h1', 'yawl', 'n.', 'ял, небольшое парусное судно', 'The Nellie, a cruising [yawl], swung to her anchor…', { full: 'The Nellie, a cruising [yawl], swung to her anchor without a flutter of the sails, and was at rest.' }),
+  I('h2', 'sea-reach', 'n.', 'морской плёс', 'The [sea-reach] of the Thames stretched before us…', { full: 'The [sea-reach] of the Thames stretched before us like the beginning of an interminable waterway.' }),
+  I('h3', 'offing', 'n.', 'морская даль, видимая с берега', 'In the [offing] the sea and the sky were welded together…', { full: 'In the [offing] the sea and the sky were welded together without a joint.' }),
+  I('h4', 'welded together', 'phr.', 'спаяны, слились воедино', '…the sea and the sky were [welded together] without a joint.', { flag: 'phrase', full: 'In the offing the sea and the sky were [welded together] without a joint.' }),
+  I('h5', 'brooding', 'adj.', 'гнетущий, нависший', '…a mournful gloom, [brooding] motionless over the biggest town on earth.', { full: 'The air was dark above Gravesend, and farther back still seemed condensed into a mournful gloom, [brooding] motionless over the biggest, and the greatest, town on earth.' })
+];
+
+BOOKS.moby.sent = [
+  I('ms1', 'grim', 'adj.', 'мрачный, угрюмый', '…whenever I find myself growing [grim] about the mouth…'),
+  I('ms2', 'involuntarily', 'adv.', 'невольно', '…whenever I find myself [involuntarily] pausing before coffin warehouses…'),
+  I('ms3', 'cherish', 'v.', 'питать (чувство), лелеять', '…[cherish] very nearly the same feelings towards the ocean with me.'),
+  I('ms4', 'substitute', 'n.', 'замена', 'This is my [substitute] for pistol and ball.')
+];
+BOOKS.mid.sent = [
+  I('ds1', 'reputed', 'adj.', 'слывущий, считающийся', '…her sister was [reputed] to have more common-sense…'),
+  I('ds2', 'quotation', 'n.', 'цитата', '…the impressiveness of a fine [quotation] from the Bible…')
+];
+BOOKS.prozess.sent = [
+  I('ps1', 'der Wächter', 'm., -', 'страж, охранник', '…sagte der [Wächter]…'),
+  I('ps2', 'die Köchin', 'f., -nen', 'кухарка', 'Die [Köchin] der Frau Grubach…')
+];
+BOOKS.sidd.sent = [
+  I('ss1', 'der Brahmane', 'm., -n', 'брахман', '…der schöne Sohn des [Brahmanen]…')
+];
+BOOKS.hod.sent = [
+  I('hs1', 'estuary', 'n.', 'устье реки, эстуарий', '…the [estuary] of the Thames…'),
+  I('hs2', 'mournful', 'adj.', 'скорбный, печальный', '…condensed into a [mournful] gloom…')
+];
+
+Object.assign(T.en, { x: {
+  back: 'Back', preview: 'Preview in AnkiDroid', inAnkiL: 'In AnkiDroid', toReviewL: 'To review', noTr: 'No translation yet',
+  save: 'Save changes to Anki', saved: 'Card updated in AnkiDroid',
+  sentNote: 'This card is in AnkiDroid. Saving updates it there and keeps its review history.',
+  bookMeta: (a, p) => `${a} cards in Anki` + (p ? `, ${p} to review` : ''),
+  latest: (n, a) => `Showing the latest ${n}. All ${a} are in AnkiDroid.`,
+  pkTarget: 'Translate into', pkApp: 'App language', pkSearch: 'Search languages', pkSug: 'Suggested', pkAll: 'All languages',
+  pkNone: q => `No language matches “${q}”`, samePhone: 'Same as phone', clear: 'Clear',
+  targetSnack: name => `New cards will be translated into ${name}. Existing cards stay as they are.`,
+  svTitle: 'Translation service', svOrSub: 'One key, many models', svOther: 'Other OpenAI-compatible service', svOtherSub: 'Your own address',
+  svAddr: 'Address', svKey: 'API key', svKeyHelp: 'Stored only on this phone.', svModel: 'Model', svShow: 'Show key', svHide: 'Hide key',
+  svTest: 'Test connection', svTesting: 'Checking', svOk: s => `Connected. A test word came back in ${s} s.`,
+  cdTitle: 'Cards', cdRowSub: 'Excerpt, deck, tags and design', cdFront: 'Excerpt on the front', cdFrontSub: 'Shows where you met the word',
+  cdLongest: n => `Longest excerpt: ${n} words`, cdLongestSub: 'Longer sentences are cut around the word.', cdExample: 'Example front',
+  cdDeck: 'Deck', cdDeckHelp: '{language} becomes English, German and so on: one deck per language.',
+  cdTag: 'Book tag', cdTagHelp: '{title} becomes the book title.', cdDesign: 'Card design', cdDesignSub: 'Front and back as AnkiDroid shows them',
+  akTitle: 'Card in AnkiDroid', akNote: 'The buttons belong to AnkiDroid. The card is what this app makes.', akShow: 'Show answer',
+  akagain: 'Again', akhard: 'Hard', akgood: 'Good', akeasy: 'Easy',
+  stReview: 'Review before sending', stReviewSub: 'You can change this for each import.', folderSnack: 'This opens Android’s folder picker.',
+  su0t: 'Turn your Moon+ marks into Anki cards', su0p: 'Words you underline while reading become flashcards, each with the sentence you found it in.', su0go: 'Get started',
+  su1t: 'Where does Moon+ keep its backups?', su1p: 'Pick the folder you chose for backups in Moon+. The app only reads from it.', su1choose: 'Choose folder',
+  su1found: 'Found 3 backups, newest today at 08:14', su1books: 'Books folder', su1booksP: 'Optional. Lets the app read the whole sentence around each mark.', su1booksFound: '46 books',
+  su2t: 'Connect AnkiDroid', su2p: 'Cards go straight into AnkiDroid. The app only adds and updates cards it made itself.', su2allow: 'Allow access', su2ok: 'Connected to AnkiDroid',
+  su2dlg: 'Allow <b>Moon+ Vocab</b> to read and write the AnkiDroid database?', su2yes: 'Allow', su2no: 'Don’t allow',
+  su2denied: 'Without access the app can’t add cards. Tap Allow access to try again.',
+  su3t: 'How should words be translated?', su3p: 'The app sends each word with its sentence to a language model through OpenRouter.', su3help: 'Get a key at openrouter.ai/keys. It stays on this phone.',
+  su4t: 'Ready', su4p: n => n ? `Your newest backup has ${n} new words.` : 'Your newest backup has nothing new.', su4go: 'Import now', su4done: 'Done', su4later: 'Later',
+  suNext: 'Continue', suBack: 'Back'
+} });
+Object.assign(T.ru, { x: {
+  back: 'Назад', preview: 'Как в AnkiDroid', inAnkiL: 'В AnkiDroid', toReviewL: 'На проверку', noTr: 'Перевода пока нет',
+  save: 'Сохранить в Anki', saved: 'Карточка обновлена в AnkiDroid',
+  sentNote: 'Карточка уже в AnkiDroid. Сохранение обновит её там, история повторений останется.',
+  bookMeta: (a, p) => `В Anki: ${a}` + (p ? `, на проверке: ${p}` : ''),
+  latest: (n, a) => `Показаны последние ${n} из ${a}.`,
+  pkTarget: 'Язык перевода', pkApp: 'Язык приложения', pkSearch: 'Поиск языка', pkSug: 'Предлагаемые', pkAll: 'Все языки',
+  pkNone: q => `Нет языка «${q}»`, samePhone: 'Как в системе', clear: 'Очистить',
+  targetSnack: name => `Новые карточки будут переводиться на ${name.toLocaleLowerCase('ru')}. Готовые останутся как есть.`,
+  svTitle: 'Сервис перевода', svOrSub: 'Один ключ, много моделей', svOther: 'Другой OpenAI-совместимый сервис', svOtherSub: 'Свой адрес',
+  svAddr: 'Адрес', svKey: 'API-ключ', svKeyHelp: 'Хранится только на этом телефоне.', svModel: 'Модель', svShow: 'Показать ключ', svHide: 'Скрыть ключ',
+  svTest: 'Проверить связь', svTesting: 'Проверяю', svOk: s => `Работает. Пробное слово переведено за ${s} с.`,
+  cdTitle: 'Карточки', cdRowSub: 'Отрывок, колода, теги и оформление', cdFront: 'Отрывок на лицевой стороне', cdFrontSub: 'Показывает, где встретилось слово',
+  cdLongest: n => `Самый длинный отрывок: ${n} ${plRu(n, ['слово', 'слова', 'слов'])}`, cdLongestSub: 'Длинные предложения обрезаются вокруг слова.', cdExample: 'Пример лицевой стороны',
+  cdDeck: 'Колода', cdDeckHelp: 'Вместо {language} будет English, German и так далее: колода на каждый язык.',
+  cdTag: 'Тег книги', cdTagHelp: 'Вместо {title} будет название книги.', cdDesign: 'Оформление карточки', cdDesignSub: 'Лицевая и обратная сторона в AnkiDroid',
+  akTitle: 'Карточка в AnkiDroid', akNote: 'Кнопки принадлежат AnkiDroid, а карточку делает приложение.', akShow: 'Показать ответ',
+  akagain: 'Снова', akhard: 'Трудно', akgood: 'Хорошо', akeasy: 'Легко',
+  stReview: 'Проверять перед отправкой', stReviewSub: 'Можно поменять при каждом импорте.', folderSnack: 'Здесь откроется системный выбор папки.',
+  su0t: 'Пометки из Moon+ станут карточками Anki', su0p: 'Слова, которые вы подчёркиваете при чтении, превращаются в карточки вместе с предложением из книги.', su0go: 'Начать',
+  su1t: 'Где Moon+ хранит бэкапы?', su1p: 'Выберите папку, куда Moon+ сохраняет бэкапы. Приложение только читает её.', su1choose: 'Выбрать папку',
+  su1found: 'Найдено 3 бэкапа, последний сегодня в 08:14', su1books: 'Папка с книгами', su1booksP: 'Необязательно. Нужна, чтобы брать целое предложение вокруг пометки.', su1booksFound: '46 книг',
+  su2t: 'Подключите AnkiDroid', su2p: 'Карточки попадают прямо в AnkiDroid. Приложение добавляет и меняет только свои карточки.', su2allow: 'Разрешить доступ', su2ok: 'AnkiDroid подключён',
+  su2dlg: 'Разрешить приложению <b>Moon+ Vocab</b> читать и изменять базу данных AnkiDroid?', su2yes: 'Разрешить', su2no: 'Не разрешать',
+  su2denied: 'Без доступа приложение не сможет добавлять карточки. Нажмите «Разрешить доступ», чтобы попробовать снова.',
+  su3t: 'Как переводить слова?', su3p: 'Приложение отправляет слово вместе с предложением языковой модели через OpenRouter.', su3help: 'Ключ можно получить на openrouter.ai/keys. Он хранится только на телефоне.',
+  su4t: 'Готово', su4p: n => n ? `В последнем бэкапе новых слов: ${n}.` : 'В последнем бэкапе нет новых слов.', su4go: 'Импортировать', su4done: 'Готово', su4later: 'Позже',
+  suNext: 'Далее', suBack: 'Назад'
+} });
+
+const PHONE = 'en';
+const S = {
+  lang: 'en', appLang: 'en', theme: 'system', seed: 'ink', target: 'ru',
+  tab: 'inbox', filter: 'all', selMode: false, sel: new Set(),
+  working: new Set(), stack: [],
+  importing: null, imported: false,
+  sheet: { m1: true, m2: false, m3: false, mode: 'review' },
+  service: { prov: 'or', addr: '', key: 'sk-or-v1-example-key-not-real', model: 'openai/gpt-4o-mini' },
+  cards: { front: true, max: 15, deck: 'Moon+::{language}', tag: 'book::{title}' },
+  setup: null
+};
+const $ = (s, r = document) => r.querySelector(s);
+const screen = $('#screen'), list = $('#list');
+const t = () => T[S.lang];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const marked = s => esc(s).replace(/\[(.+?)\]/g, '<span class="mark">$1</span>');
+const nf = n => new Intl.NumberFormat(S.lang === 'ru' ? 'ru-RU' : 'en-US').format(n);
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+const allItems = () => GROUPS.flatMap(g => g.items.map(it => ({ g, it })));
+const findItem = id => { for (const g of GROUPS) { const i = g.items.findIndex(x => x.id === id); if (i >= 0) return { g, i, it: g.items[i] }; } return null; };
+const visibleGroups = () => GROUPS.filter(g => g.items.length && (S.filter === 'all' || BOOKS[g.id].lang === S.filter));
+const visibleIds = () => visibleGroups().flatMap(g => g.items.map(x => x.id));
+const pendingCount = () => GROUPS.reduce((n, g) => n + g.items.length, 0);
+
+function applyTheme(v) {
+  S.theme = v; store.set('mv-theme', v);
+  if (v === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', v);
+  for (const b of document.querySelectorAll('#themeSeg button')) b.setAttribute('aria-pressed', String(b.dataset.v === v));
+  renderSettings();
+}
+function applySeed(name) {
+  S.seed = name; store.set('mv-seed', name);
+  const sc = SCHEMES[name];
+  const vars = o => Object.entries(o).map(([k, v]) => `--${k}:${v}`).join(';');
+  let el = $('#seedcss'); if (!el) { el = document.createElement('style'); el.id = 'seedcss'; document.head.appendChild(el); }
+  el.textContent = `:root{${vars(sc.light)}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${vars(sc.dark)}}}:root[data-theme="dark"]{${vars(sc.dark)}}`;
+  for (const b of document.querySelectorAll('#seedSeg button')) b.setAttribute('aria-pressed', String(b.dataset.v === name));
+}
+function applyLang(v, keepSetting) {
+  S.lang = v; store.set('mv-lang', v); screen.lang = v;
+  if (!keepSetting) S.appLang = v;
+  for (const b of document.querySelectorAll('#langSeg button')) b.setAttribute('aria-pressed', String(b.dataset.v === v));
+  renderAll();
+}
+const SEED_NAMES = { ink: 'Blue', moss: 'Green', plum: 'Plum', sand: 'Sand' };
+$('#seedSeg').innerHTML = Object.entries(SCHEMES).map(([k, s]) =>
+  `<button class="sw" id="seed-${k}" data-v="${k}" aria-label="${SEED_NAMES[k]}" title="${SEED_NAMES[k]}"><i><span style="background:${s.light.primary}"></span><span style="background:${s.light['primary-container']}"></span><span style="background:${s.light['tertiary-container']}"></span></i></button>`).join('');
+$('#themeSeg').onclick = e => { const b = e.target.closest('button'); if (b) applyTheme(b.dataset.v); };
+$('#langSeg').onclick = e => { const b = e.target.closest('button'); if (b) applyLang(b.dataset.v); };
+$('#seedSeg').onclick = e => { const b = e.target.closest('button'); if (b) applySeed(b.dataset.v); };
+
+function rowHtml(it) {
+  const L = t();
+  let tr;
+  if (S.working.has(it.id)) tr = `<div class="working">${L.translating}<div class="wavy"><div class="done"></div></div></div>`;
+  else if (it.tr == null) tr = `<div class="tr err">${L.failed}</div>`;
+  else tr = `<div class="tr">${esc(it.tr)}</div>`;
+  const flag = it.flag === 'phrase' ? `<div class="flag"><span class="material-symbols-rounded">add</span>${L.phrase}</div>`
+    : it.flag === 'invented' ? `<div class="flag"><span class="material-symbols-rounded">edit</span>${L.invented}</div>` : '';
+  return `<div class="row${S.sel.has(it.id) ? ' sel' : ''}${it.fresh ? ' fresh' : ''}" data-id="${it.id}">
+    <div class="sbg"><span class="l"><span class="material-symbols-rounded fill">send</span>${L.swSend}</span><span class="r">${L.swDiscard}<span class="material-symbols-rounded">delete</span></span></div>
+    <div class="inner" tabindex="0" role="option" aria-selected="${S.sel.has(it.id)}">
+      <span class="lead"><i><span class="material-symbols-rounded">check</span></i></span>
+      <div class="txt">
+        <div class="l1"><span class="word">${esc(it.word)}</span><span class="gram">${esc(it.gram)}</span></div>
+        ${tr}
+        <div class="ex">${marked(it.ex)}</div>
+        ${flag}
+      </div>
+    </div>
+  </div>`;
+}
+function renderInbox() {
+  const L = t();
+  const n = pendingCount();
+  const langs = {};
+  for (const g of GROUPS) if (g.items.length) langs[BOOKS[g.id].lang] = (langs[BOOKS[g.id].lang] || 0) + g.items.length;
+  if (S.filter !== 'all' && !langs[S.filter]) S.filter = 'all';
+  let h = `<div class="large"><h2>${L.inbox}</h2><p>${L.toReview(n)}</p></div>`;
+  if (S.importing) {
+    const p = S.importing;
+    h += `<div class="progress" aria-live="polite"><div class="pt"><b>${esc(L.prog(p.n, BOOKS.hod.title))}</b><span>${L.progN(p.d, p.n)}</span></div>
+      <div class="wavy"><div class="done" style="width:${Math.max(6, p.d / p.n * 100)}%"></div><div class="rest"></div></div></div>`;
+  }
+  if (n) {
+    const chip = (v, label, c) => `<button class="chip" data-f="${v}" aria-pressed="${S.filter === v}"><span class="material-symbols-rounded">check</span>${label} <em>${c}</em></button>`;
+    h += `<div class="chips" role="group">${chip('all', L.all, n)}${Object.entries(langs).map(([k, c]) => chip(k, L.langs[k], c)).join('')}</div>`;
+    for (const g of visibleGroups()) {
+      const b = BOOKS[g.id];
+      h += `<section class="group" data-g="${g.id}">
+        <div class="ghead" data-g="${g.id}"><span class="lead"><i><span class="material-symbols-rounded">check</span></i></span>
+          <div class="gt"><span class="book">${esc(b.title)}</span><span class="auth">${esc(b.author)}</span></div><span class="gn">${g.items.length}</span></div>
+        <div class="gitems" role="listbox" aria-multiselectable="true">${g.items.map(rowHtml).join('')}</div></section>`;
+    }
+    h += `<div class="spacer"></div>`;
+  } else if (!S.importing) {
+    h += `<div class="empty"><div class="bubble"><span class="material-symbols-rounded">inbox</span></div><h3>${L.emptyT}</h3><p>${L.emptyP}</p></div>`;
+  }
+  list.innerHTML = h;
+  for (const it of allItems()) delete it.it.fresh;
+  $('#ibSmall').textContent = L.inbox;
+  $('#fabL').textContent = L.import;
+  $('#fab').setAttribute('aria-label', L.import);
+  syncSel();
+}
+function syncSel() {
+  const L = t();
+  for (const r of list.querySelectorAll('.row')) {
+    const on = S.sel.has(r.dataset.id);
+    r.classList.toggle('sel', on);
+    r.querySelector('.inner').setAttribute('aria-selected', String(on));
+  }
+  for (const h of list.querySelectorAll('.ghead')) {
+    const g = GROUPS.find(x => x.id === h.dataset.g);
+    const c = g.items.filter(x => S.sel.has(x.id)).length;
+    h.classList.toggle('all', c > 0 && c === g.items.length);
+    h.classList.toggle('some', c > 0 && c < g.items.length);
+  }
+  screen.classList.toggle('selmode', S.selMode);
+  const n = S.sel.size;
+  $('#selCount').textContent = L.selected(n);
+  $('#actSendL').textContent = L.send(n);
+  for (const id of ['#actSend', '#actDiscard', '#actRetry']) $(id).disabled = n === 0;
+  const vis = visibleIds(), allOn = vis.length > 0 && vis.every(id => S.sel.has(id));
+  const sa = $('#selAll');
+  sa.classList.toggle('on', allOn);
+  sa.title = allOn ? L.clear : L.selectAll; sa.setAttribute('aria-label', sa.title);
+  $('#selAllN').title = L.selectAll; $('#selAllN').setAttribute('aria-label', L.selectAll);
+  $('#selClose').title = L.closeSel; $('#selClose').setAttribute('aria-label', L.closeSel);
+  $('#actDiscard').title = L.discard; $('#actDiscard').setAttribute('aria-label', L.discard);
+  $('#actRetry').title = L.retry; $('#actRetry').setAttribute('aria-label', L.retry);
+}
+function enterSel() { S.selMode = true; syncSel(); }
+function exitSel() { S.selMode = false; S.sel.clear(); syncSel(); }
+
+function renderNav() {
+  const L = t(), n = pendingCount();
+  const it = (k, icon, label, badge) => `<button class="nv" data-tab="${k}"${S.tab === k ? ' aria-current="page"' : ''}><span class="pill"><span class="material-symbols-rounded">${icon}</span>${badge ? `<span class="badge">${badge}</span>` : ''}</span>${label}</button>`;
+  $('#nav').innerHTML = it('inbox', 'inbox', L.inbox, n) + it('library', 'menu_book', L.library) + it('settings', 'settings', L.settings);
+  for (const k of ['inbox', 'library', 'settings']) $('#v-' + k).setAttribute('aria-hidden', String(S.tab !== k));
+  $('#fab').classList.toggle('hide', S.tab !== 'inbox');
+}
+function renderLibrary() {
+  const L = t();
+  const pend = id => (GROUPS.find(g => g.id === id)?.items.length) || 0;
+  const ids = Object.keys(BOOKS);
+  const total = ids.reduce((s, k) => s + BOOKS[k].inAnki, 0);
+  let h = `<div class="large"><h2>${L.library}</h2><p>${L.lib.sub(ids.length, nf(total))}</p></div>`;
+  for (const lang of ['en', 'de']) {
+    h += `<div class="lgroup"><div class="sub">${L.langs[lang]}</div><div class="lrows">`;
+    for (const k of ids.filter(k => BOOKS[k].lang === lang)) {
+      const b = BOOKS[k], p = pend(k);
+      h += `<div class="lrow tap" tabindex="0" data-book="${k}"><div class="lt"><div class="bk">${esc(b.title)}</div><div class="au">${esc(b.author)}</div><div class="mt">${L.lib.meta(nf(b.inAnki))}${p ? `, <b>${L.lib.pend(p)}</b>` : ''}</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>`;
+    }
+    h += `</div></div>`;
+  }
+  $('#lib').innerHTML = h + '<div class="spacer"></div>';
+  $('#lbSmall').textContent = L.library;
+}
+function renderSettings() {
+  const L = t().set, X = t().x;
+  const ic = icon => `<span class="ic"><span class="material-symbols-rounded">${icon}</span></span>`;
+  const row = (icon, lb, vl, act, extra = '') => `<div class="lrow${act ? ' tap' : ''}"${act ? ` tabindex="0" data-act="${act}"` : ''}>${ic(icon)}<div class="lt"><div class="lb">${lb}</div>${vl ? `<div class="vl">${vl}</div>` : ''}${extra}</div>${act ? '<span class="material-symbols-rounded chev">chevron_right</span>' : ''}</div>`;
+  const sw = (icon, lb, vl, act, on) => `<div class="lrow tap" role="switch" tabindex="0" aria-checked="${on}" data-act="${act}">${ic(icon)}<div class="lt"><div class="lb">${lb}</div><div class="vl">${vl}</div></div><span class="switch"></span></div>`;
+  const grp = (title, rows) => `<div class="lgroup"><div class="sub">${title}</div><div class="lrows">${rows.join('')}</div></div>`;
+  const themeSeg = `<div class="seg" role="group" aria-label="${L.theme}">${['system', 'light', 'dark'].map(v => `<button data-theme-v="${v}" aria-pressed="${S.theme === v}"><span class="material-symbols-rounded">check</span>${L[v === 'system' ? 'sys' : v]}</button>`).join('')}</div>`;
+  const appLangV = S.appLang === 'system' ? `${X.samePhone} (${langName(PHONE, S.lang)})` : langName(S.appLang, S.lang);
+  $('#set').innerHTML = `<div class="large"><h2>${t().settings}</h2></div>` +
+    grp(L.tr, [row('translate', L.service, S.service.prov === 'or' ? 'OpenRouter' : X.svOther, 'g-service'), row('language', L.into, langName(S.target, S.lang), 'g-target')]) +
+    grp(L.look, [row('palette', L.theme, '', '', themeSeg), row('language', L.applang, appLangV, 'g-app')]) +
+    grp(L.moon, [row('folder', L.backups, 'Documents/Moon+ backups', 'g-folder'), row('menu_book', L.books, 'Books', 'g-folder'), sw('inbox', X.stReview, X.stReviewSub, 'g-review', S.sheet.mode === 'review')]) +
+    grp(L.cards, [row('style', X.cdTitle, X.cdRowSub, 'g-cards'), row('school', L.anki, L.ankiV, '')]) + '<div class="spacer"></div>';
+  $('#stSmall').textContent = t().settings;
+}
+const GACTS = {
+  'g-service': () => push('service'), 'g-target': () => push('picker', { kind: 'target' }), 'g-app': () => push('picker', { kind: 'app' }),
+  'g-folder': () => snack(t().x.folderSnack), 'g-cards': () => push('cards'),
+  'g-review': () => { S.sheet.mode = S.sheet.mode === 'review' ? 'auto' : 'review'; renderSettings(); }
+};
+$('#set').addEventListener('click', e => {
+  const b = e.target.closest('[data-theme-v]'); if (b) { applyTheme(b.dataset.themeV); return; }
+  const a = e.target.closest('[data-act]'); if (a && GACTS[a.dataset.act]) GACTS[a.dataset.act]();
+});
+$('#lib').addEventListener('click', e => { const r = e.target.closest('[data-book]'); if (r) push('book', { book: r.dataset.book }); });
+for (const el of [$('#set'), $('#lib')]) el.addEventListener('keydown', e => { const a = e.target.closest('.tap'); if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); a.click(); } });
+
+function renderAll() { renderInbox(); renderNav(); renderLibrary(); renderSettings(); for (const p of S.stack) paint(p); if ($('#sheet').classList.contains('open')) renderSheet(); }
+
+let snackTimer;
+function snack(text, undo) {
+  const el = $('#snack');
+  $('#snackT').textContent = text;
+  const b = $('#snackB'); b.hidden = !undo; b.textContent = t().undo;
+  b.onclick = () => { hideSnack(); undo && undo(); };
+  el.classList.add('show'); screen.classList.add('has-snack');
+  clearTimeout(snackTimer); snackTimer = setTimeout(hideSnack, 5000);
+}
+function hideSnack() { $('#snack').classList.remove('show'); screen.classList.remove('has-snack'); }
+
+function animateOut(ids, then) {
+  const rows = ids.map(id => list.querySelector(`.row[data-id="${id}"]`)).filter(Boolean);
+  for (const r of rows) r.style.height = r.offsetHeight + 'px';
+  requestAnimationFrame(() => requestAnimationFrame(() => { for (const r of rows) { r.classList.add('out'); r.style.height = '0px'; } }));
+  setTimeout(then, rows.length ? 270 : 0);
+}
+function take(ids) {
+  const stash = [];
+  for (const id of ids) { const f = findItem(id); if (f) stash.push({ g: f.g, i: f.i, it: f.it }); }
+  for (const s of stash) s.g.items.splice(s.g.items.indexOf(s.it), 1);
+  return stash;
+}
+function restore(stash) {
+  for (const s of [...stash].sort((a, b) => a.i - b.i)) s.g.items.splice(Math.min(s.i, s.g.items.length), 0, s.it);
+}
+function doSend(ids) {
+  const ok = ids.filter(id => findItem(id)?.it.tr != null), skipped = ids.length - ok.length;
+  if (!ok.length) { snack(t().skipped(skipped)); return; }
+  animateOut(ok, () => {
+    const stash = take(ok);
+    for (const s of stash) { BOOKS[s.g.id].inAnki++; BOOKS[s.g.id].sent.unshift(s.it); }
+    if (S.selMode) exitSel();
+    renderAll();
+    const msg = t().sent(ok.length) + (skipped ? '. ' + t().skipped(skipped) : '');
+    snack(msg, () => {
+      restore(stash);
+      for (const s of stash) { const b = BOOKS[s.g.id]; b.inAnki--; b.sent.splice(b.sent.indexOf(s.it), 1); }
+      renderAll();
+    });
+  });
+}
+function doDiscard(ids) {
+  animateOut(ids, () => {
+    const stash = take(ids);
+    if (S.selMode) exitSel();
+    renderAll();
+    snack(t().discarded(stash.length), () => { restore(stash); renderAll(); });
+  });
+}
+function doRetry(ids) {
+  for (const id of ids) S.working.add(id);
+  exitSel(); renderInbox();
+  setTimeout(() => {
+    for (const id of ids) { S.working.delete(id); const f = findItem(id); if (f && f.it.tr == null) { f.it.tr = f.it.fix; f.it.flag = null; } }
+    renderInbox();
+  }, 1600);
+}
+$('#actSend').onclick = () => doSend([...S.sel]);
+$('#actDiscard').onclick = () => doDiscard([...S.sel]);
+$('#actRetry').onclick = () => doRetry([...S.sel]);
+$('#selClose').onclick = exitSel;
+$('#selAll').onclick = () => {
+  const vis = visibleIds();
+  if (vis.every(id => S.sel.has(id))) for (const id of vis) S.sel.delete(id); else for (const id of vis) S.sel.add(id);
+  syncSel();
+};
+$('#selAllN').onclick = () => { enterSel(); for (const id of visibleIds()) S.sel.add(id); syncSel(); };
+
+let G = null;
+const HOLD = 360;
+const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch {} };
+list.addEventListener('contextmenu', e => e.preventDefault());
+list.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || G) return;
+  const row = e.target.closest('.row');
+  if (!row || S.working.has(row.dataset.id)) return;
+  G = { id: row.dataset.id, row, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, type: 'pending', pid: e.pointerId };
+  row.classList.add('pressed');
+  if (S.selMode && e.target.closest('.lead')) startDrag();
+  else G.timer = setTimeout(() => { if (G && G.type === 'pending') startDrag(); }, HOLD);
+});
+function startDrag() {
+  G.type = 'drag'; vib(12);
+  G.row.classList.remove('pressed');
+  if (!S.selMode) enterSel();
+  const order = visibleIds();
+  G.order = order; G.anchor = order.indexOf(G.id);
+  G.target = !S.sel.has(G.id); G.snap = new Set(S.sel); G.cur = G.anchor;
+  applyRange();
+  try { list.setPointerCapture(G.pid); } catch {}
+  autoScroll();
+}
+function applyRange() {
+  const lo = Math.min(G.anchor, G.cur), hi = Math.max(G.anchor, G.cur);
+  S.sel = new Set(G.snap);
+  for (let i = lo; i <= hi; i++) G.target ? S.sel.add(G.order[i]) : S.sel.delete(G.order[i]);
+  syncSel();
+}
+function dragTo(x, y) {
+  const r = list.getBoundingClientRect();
+  const cx = Math.min(Math.max(x, r.left + 40), r.right - 40);
+  const el = document.elementFromPoint(cx, y);
+  const row = el && el.closest && el.closest('.row');
+  if (row && list.contains(row)) {
+    const i = G.order.indexOf(row.dataset.id);
+    if (i >= 0 && i !== G.cur) { G.cur = i; applyRange(); vib(4); }
+  }
+}
+function autoScroll() {
+  if (!G || G.type !== 'drag') return;
+  const r = list.getBoundingClientRect(), zone = 72;
+  let v = 0;
+  if (G.ly < r.top + zone) v = -Math.ceil((r.top + zone - G.ly) / 5);
+  else if (G.ly > r.bottom - zone) v = Math.ceil((G.ly - (r.bottom - zone)) / 5);
+  if (v) { list.scrollTop += Math.max(-18, Math.min(18, v)); dragTo(G.lx, G.ly); }
+  requestAnimationFrame(autoScroll);
+}
+list.addEventListener('pointermove', e => {
+  if (!G || e.pointerId !== G.pid) return;
+  const dx = e.clientX - G.x, dy = e.clientY - G.y;
+  G.lx = e.clientX; G.ly = e.clientY;
+  if (G.type === 'pending') {
+    if (!S.selMode && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      clearTimeout(G.timer); G.type = 'swipe'; G.row.classList.remove('pressed');
+      G.inner = G.row.querySelector('.inner'); G.inner.style.transition = 'none';
+      try { list.setPointerCapture(G.pid); } catch {}
+    } else if (Math.hypot(dx, dy) > 10) {
+      clearTimeout(G.timer); G.type = 'scroll'; G.row.classList.remove('pressed');
+    }
+  }
+  if (G.type === 'drag') dragTo(e.clientX, e.clientY);
+  if (G.type === 'swipe') {
+    const w = G.row.offsetWidth, d = dx;
+    G.inner.style.transform = `translateX(${d}px)`;
+    G.row.classList.toggle('sw-r', d > 0); G.row.classList.toggle('sw-l', d < 0);
+    const armed = Math.abs(d) > w * 0.35;
+    if (armed !== G.row.classList.contains('armed')) { G.row.classList.toggle('armed', armed); if (armed) vib(10); }
+  }
+});
+list.addEventListener('touchmove', e => { if (G && (G.type === 'drag' || G.type === 'swipe')) e.preventDefault(); }, { passive: false });
+function endGesture(e, cancelled) {
+  if (!G || (e && e.pointerId !== G.pid)) return;
+  clearTimeout(G.timer);
+  const g = G; G = null;
+  g.row.classList.remove('pressed');
+  if (g.type === 'pending' && !cancelled) tapRow(g.id);
+  else if (g.type === 'drag') { if (!S.sel.size) exitSel(); }
+  else if (g.type === 'swipe') {
+    const w = g.row.offsetWidth, d = (e ? e.clientX : g.lx) - g.x;
+    g.inner.style.transition = 'transform .28s cubic-bezier(.2,0,0,1)';
+    if (!cancelled && Math.abs(d) > w * 0.35) {
+      g.inner.style.transform = `translateX(${d > 0 ? w : -w}px)`;
+      setTimeout(() => (d > 0 ? doSend : doDiscard)([g.id]), 200);
+      if (d > 0 && findItem(g.id)?.it.tr == null) setTimeout(() => { g.inner.style.transform = ''; g.row.classList.remove('sw-r', 'sw-l', 'armed'); }, 260);
+    } else {
+      g.inner.style.transform = '';
+      setTimeout(() => g.row.classList.remove('sw-r', 'sw-l', 'armed'), 280);
+    }
+  }
+}
+list.addEventListener('pointerup', e => endGesture(e, false));
+list.addEventListener('pointercancel', e => endGesture(e, true));
+function tapRow(id) {
+  if (S.selMode) {
+    S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id);
+    if (!S.sel.size) exitSel(); else syncSel();
+  } else push('card', { id });
+}
+list.addEventListener('click', e => {
+  const c = e.target.closest('.chip');
+  if (c) { S.filter = c.dataset.f; renderInbox(); return; }
+  const h = e.target.closest('.ghead');
+  if (h && S.selMode) {
+    const g = GROUPS.find(x => x.id === h.dataset.g);
+    const all = g.items.every(x => S.sel.has(x.id));
+    for (const x of g.items) all ? S.sel.delete(x.id) : S.sel.add(x.id);
+    if (!S.sel.size) exitSel(); else syncSel();
+  }
+});
+list.addEventListener('keydown', e => {
+  const inner = e.target.closest('.inner'); if (!inner) return;
+  const id = inner.parentElement.dataset.id;
+  if (e.key === 'Enter') { e.preventDefault(); tapRow(id); }
+  if (e.key === ' ') { e.preventDefault(); if (!S.selMode) enterSel(); S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); if (!S.sel.size) exitSel(); else syncSel(); }
+});
+
+let lastTop = 0;
+function hookScroll(sc, bar) {
+  sc.addEventListener('scroll', () => {
+    $(bar).classList.toggle('raised', sc.scrollTop > 44);
+    if (sc === list) {
+      const fab = $('#fab');
+      if (sc.scrollTop > lastTop + 6) fab.classList.add('mini');
+      else if (sc.scrollTop < lastTop - 6 || sc.scrollTop < 20) fab.classList.remove('mini');
+      lastTop = sc.scrollTop;
+    }
+  }, { passive: true });
+}
+hookScroll(list, '#ibTop'); hookScroll($('#lib'), '#lbTop'); hookScroll($('#set'), '#stTop');
+
+$('#nav').addEventListener('click', e => {
+  const b = e.target.closest('.nv'); if (!b) return;
+  if (S.selMode) exitSel();
+  S.tab = b.dataset.tab; renderNav();
+});
+
+const LANG_CODES = 'af am ar az be bg bn bs ca cs cy da de el en eo es et eu fa fi fil fr ga gl gu he hi hr hu hy id is it ja ka kk km kn ko ky la lo lt lv mk ml mn mr ms mt my nb ne nl pa pl ps pt ro ru si sk sl sq sr sv sw ta te tg th tk tr uk ur uz vi yi zh'.split(' ');
+const DN = {};
+function langName(code, inLang) {
+  try {
+    DN[inLang] = DN[inLang] || new Intl.DisplayNames([inLang], { type: 'language' });
+    const s = DN[inLang].of(code) || code;
+    return s.charAt(0).toLocaleUpperCase(inLang) + s.slice(1);
+  } catch { return code; }
+}
+
+const PAGES = {}, ACTS = {};
+function push(type, params = {}) {
+  const el = document.createElement('section');
+  el.className = 'page ' + type;
+  el.style.zIndex = 30 + S.stack.length;
+  $('#pages').appendChild(el);
+  const p = { type, ...params, el };
+  S.stack.push(p); paint(p);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('open')));
+  return p;
+}
+function pop() {
+  const p = S.stack.pop(); if (!p) return;
+  PAGES[p.type].leave?.(p);
+  p.el.classList.remove('open');
+  setTimeout(() => p.el.remove(), 400);
+  renderInbox(); renderNav(); renderLibrary(); renderSettings();
+  for (const q of S.stack) paint(q);
+}
+function paint(p) {
+  const old = p.el.querySelector('.scroll'), top = old ? old.scrollTop : 0;
+  p.el.innerHTML = PAGES[p.type].render(p);
+  const sc = p.el.querySelector('.scroll'), tb = p.el.querySelector('.topbar');
+  if (sc) { sc.scrollTop = top; if (tb) sc.addEventListener('scroll', () => tb.classList.toggle('raised', sc.scrollTop > 8), { passive: true }); }
+  PAGES[p.type].after?.(p);
+}
+const ibtn = (act, icon, label) => `<button class="ib" data-act="${act}" aria-label="${label}" title="${label}"><span class="material-symbols-rounded">${icon}</span></button>`;
+const bar = (title, trailing = '', always = true) => `<header class="topbar">${ibtn('back', 'arrow_back', t().x.back)}<span class="tb-title${always ? ' always' : ''}">${esc(title)}</span>${trailing}</header>`;
+function field(id, label, value, o = {}) {
+  return `<div class="field"><input id="${id}" type="${o.type || 'text'}" value="${esc(value || '')}"${o.readonly ? ' readonly' : ''}${o.ph ? ` placeholder="${esc(o.ph)}"` : ''} class="${o.icon ? 'has-ic' : ''}" autocomplete="off" spellcheck="false"><label for="${id}">${label}</label>${o.icon ? ibtn(o.act, o.icon, o.iconLabel || label) : ''}</div>${o.help ? `<p class="help">${o.help}</p>` : ''}`;
+}
+$('#pages').addEventListener('click', e => {
+  const a = e.target.closest('[data-act]'); if (!a || !a.dataset.act) return;
+  const p = S.stack.find(q => q.el === a.closest('.page')); if (!p) return;
+  const f = ACTS[a.dataset.act]; if (f) f(p, a, e);
+});
+$('#pages').addEventListener('keydown', e => {
+  const a = e.target.closest('.tap,[role="radio"],[role="switch"]');
+  if (a && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); a.click(); }
+});
+ACTS.back = () => pop();
+
+function findCard(id) {
+  const f = findItem(id); if (f) return { it: f.it, book: f.g.id, sent: false };
+  for (const [k, b] of Object.entries(BOOKS)) { const it = (b.sent || []).find(x => x.id === id); if (it) return { it, book: k, sent: true }; }
+  return null;
+}
+function saveEdits(p) {
+  const f = findCard(p.id); if (!f) return;
+  for (const el of p.el.querySelectorAll('[data-edit]')) {
+    const c = el.cloneNode(true);
+    for (const m of c.querySelectorAll('.mark')) m.replaceWith('[' + m.textContent + ']');
+    const v = c.textContent.trim();
+    if (el.dataset.edit === 'tr' && (v === '—' || !v)) continue;
+    f.it[el.dataset.edit] = v;
+  }
+}
+
+PAGES.card = {
+  render(p) {
+    const L = t(), f = findCard(p.id);
+    if (!f) return bar('');
+    const it = f.it, b = BOOKS[f.book], ed = p.editing ? ' contenteditable="true"' : '';
+    const trail = ibtn('preview', 'visibility', L.x.preview) + ibtn('edit', p.editing ? 'check' : 'edit', p.editing ? L.done : L.edit);
+    const flag = it.flag === 'phrase' || it.flag === 'invented'
+      ? `<div class="flag" style="padding:4px 8px"><span class="material-symbols-rounded">${it.flag === 'phrase' ? 'add' : 'edit'}</span>${it.flag === 'phrase' ? L.phrase : L.invented}</div>` : '';
+    const acts = f.sent
+      ? `<div class="actions"><button class="btn filled" data-act="save"${p.dirty ? '' : ' disabled'}><span class="material-symbols-rounded">check</span>${L.x.save}</button></div>`
+      : `<div class="actions"><button class="btn tonal" data-act="discard"><span class="material-symbols-rounded">delete</span>${L.discard}</button><button class="btn filled" data-act="send"${it.tr == null ? ' disabled' : ''}><span class="material-symbols-rounded fill">send</span>${L.sendAnki}</button></div>`;
+    return bar(it.word, trail) + `<div class="scroll"><div class="col${p.editing ? ' editing' : ''}">
+      <div class="sub">${L.front}</div>
+      <div class="face"><div class="fw">${esc(it.word)}</div><div class="fg">${esc(it.gram)}</div><div class="fx" data-edit="ex"${ed}>${marked(it.ex)}</div></div>
+      <div class="sub">${L.back}</div>
+      <div class="face">
+        <div class="bt" data-edit="tr"${ed}>${it.tr == null ? '—' : esc(it.tr)}</div>
+        ${it.note ? `<div class="bn" data-edit="note"${ed}>${esc(it.note)}</div>` : ''}
+        <hr><div class="bf">${marked(it.full || it.ex)}</div>
+        <div class="bs">${esc(b.title)}, ${esc(b.author)}</div>
+      </div>${flag}
+      ${f.sent ? `<p class="help" style="padding:2px 8px 0">${L.x.sentNote}</p>` : ''}
+    </div></div>${acts}`;
+  },
+  after(p) {
+    for (const el of p.el.querySelectorAll('[data-edit]')) el.addEventListener('input', () => {
+      p.dirty = true; const s = p.el.querySelector('[data-act="save"]'); if (s) s.disabled = false;
+    });
+  },
+  leave(p) { if (p.editing) saveEdits(p); }
+};
+ACTS.edit = p => {
+  if (p.editing) saveEdits(p);
+  p.editing = !p.editing; paint(p);
+  if (p.editing) { const el = p.el.querySelector('[data-edit="tr"]'); el.focus(); getSelection().selectAllChildren(el); getSelection().collapseToEnd(); }
+};
+ACTS.preview = p => { if (p.editing) { saveEdits(p); p.editing = false; paint(p); } push('anki', { id: p.id }); };
+ACTS.send = p => { const id = p.id; pop(); setTimeout(() => doSend([id]), 320); };
+ACTS.discard = p => { const id = p.id; pop(); setTimeout(() => doDiscard([id]), 320); };
+ACTS.save = p => { saveEdits(p); p.editing = false; p.dirty = false; pop(); snack(t().x.saved); };
+
+PAGES.book = {
+  render(p) {
+    const L = t(), b = BOOKS[p.book], g = GROUPS.find(x => x.id === p.book), pend = g ? g.items : [];
+    const row = it => `<div class="lrow tap" tabindex="0" data-act="open" data-id="${it.id}"><div class="lt"><div class="lb"><span class="wd">${esc(it.word)}</span> <span class="gram">${esc(it.gram)}</span></div><div class="vl${it.tr == null ? ' err' : ''}">${it.tr == null ? L.x.noTr : esc(it.tr)}</div></div><span class="material-symbols-rounded chev">chevron_right</span></div>`;
+    let h = bar(b.title, '', false) + `<div class="scroll"><div class="bookhead"><h2>${esc(b.title)}</h2><p>${esc(b.author)}, ${L.langs[b.lang]}</p><p>${L.x.bookMeta(nf(b.inAnki), pend.length)}</p></div>`;
+    if (pend.length) h += `<div class="lgroup"><div class="sub">${L.x.toReviewL}</div><div class="lrows">${pend.map(row).join('')}</div></div>`;
+    h += `<div class="lgroup"><div class="sub">${L.x.inAnkiL}</div><div class="lrows">${b.sent.map(row).join('')}</div><p class="help">${L.x.latest(b.sent.length, nf(b.inAnki))}</p></div><div class="spacer"></div></div>`;
+    return h;
+  }
+};
+ACTS.open = (p, a) => push('card', { id: a.dataset.id });
+
+function pickerList(p) {
+  const L = t(), ui = S.lang, isApp = p.kind === 'app';
+  const cur = isApp ? S.appLang : S.target;
+  const row = code => {
+    const sys = code === 'system';
+    const loc = sys ? L.x.samePhone : langName(code, ui);
+    const nat = sys ? langName(PHONE, ui) : langName(code, code);
+    return `<div class="lrow tap" role="radio" tabindex="0" aria-checked="${cur === code}" data-act="pick" data-v="${code}"><div class="lt"><div class="lb">${esc(loc)}</div>${nat !== loc ? `<div class="vl" lang="${sys ? ui : code}">${esc(nat)}</div>` : ''}</div><span class="radio"></span></div>`;
+  };
+  const grp = (title, codes) => codes.length ? `<div class="lgroup">${title ? `<div class="sub">${title}</div>` : ''}<div class="lrows">${codes.map(row).join('')}</div></div>` : '';
+  if (isApp) return grp('', ['system', 'en', 'ru']);
+  const coll = new Intl.Collator(ui);
+  const all = LANG_CODES.slice().sort((a, b) => coll.compare(langName(a, ui), langName(b, ui)));
+  const q = (p.q || '').trim().toLocaleLowerCase(ui);
+  if (q) {
+    const hit = all.filter(c => [langName(c, ui), langName(c, c), langName(c, 'en'), langName(c, 'ru'), c].some(s => s.toLocaleLowerCase().includes(q)));
+    return hit.length ? grp('', hit) : `<div class="empty" style="padding-top:48px"><p>${esc(L.x.pkNone(p.q.trim()))}</p></div>`;
+  }
+  return grp(L.x.pkSug, [...new Set([S.target, 'ru', 'en', 'bg'])]) + grp(L.x.pkAll, all);
+}
+PAGES.picker = {
+  render(p) {
+    const L = t().x, isApp = p.kind === 'app';
+    const search = isApp ? '' : `<div class="search" role="search"><span class="material-symbols-rounded">search</span><input id="pk-q" type="search" placeholder="${L.pkSearch}" aria-label="${L.pkSearch}" value="${esc(p.q || '')}" autocomplete="off"><button class="ib" data-act="clearq" aria-label="${L.clear}" title="${L.clear}"${p.q ? '' : ' hidden'}><span class="material-symbols-rounded">close</span></button></div>`;
+    return bar(isApp ? L.pkApp : L.pkTarget) + search + `<div class="scroll"><div class="plist">${pickerList(p)}</div><div class="spacer"></div></div>`;
+  },
+  after(p) {
+    const q = p.el.querySelector('#pk-q'); if (!q) return;
+    q.addEventListener('input', () => {
+      p.q = q.value; p.el.querySelector('.plist').innerHTML = pickerList(p);
+      p.el.querySelector('[data-act="clearq"]').hidden = !p.q; p.el.querySelector('.scroll').scrollTop = 0;
+    });
+  }
+};
+ACTS.clearq = p => { const q = p.el.querySelector('#pk-q'); q.value = ''; q.dispatchEvent(new Event('input')); q.focus(); };
+ACTS.pick = (p, a) => {
+  const v = a.dataset.v;
+  if (p.kind === 'app') { S.appLang = v; pop(); applyLang(v === 'system' ? PHONE : v, true); return; }
+  const changed = v !== S.target; S.target = v; pop();
+  if (changed) snack(t().x.targetSnack(langName(v, S.lang)));
+};
+
+PAGES.service = {
+  render(p) {
+    const L = t().x, sv = S.service;
+    const prov = (v, title, sub) => `<div class="lrow tap" role="radio" tabindex="0" aria-checked="${sv.prov === v}" data-act="prov" data-v="${v}"><div class="lt"><div class="lb">${title}</div><div class="vl">${sub}</div></div><span class="radio"></span></div>`;
+    const secs = new Intl.NumberFormat(S.lang === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: 1 }).format(1.4);
+    const res = p.test === 'run' ? `<div class="result"><div class="wavy" style="width:56px"><div class="done" style="width:100%"></div></div><span>${L.svTesting}</span></div>`
+      : p.test === 'ok' ? `<div class="result"><span class="material-symbols-rounded fill ok">check_circle</span><span>${L.svOk(secs)}</span></div>` : '';
+    return bar(L.svTitle) + `<div class="scroll">
+      <div class="lgroup"><div class="lrows" role="radiogroup">${prov('or', 'OpenRouter', L.svOrSub)}${prov('other', L.svOther, L.svOtherSub)}</div></div>
+      <div class="form">
+        ${field('sv-addr', L.svAddr, sv.prov === 'or' ? 'https://openrouter.ai/api/v1' : sv.addr, { readonly: sv.prov === 'or', type: 'url', ph: 'https://…/v1' })}
+        ${field('sv-key', L.svKey, sv.key, { type: p.show ? 'text' : 'password', icon: p.show ? 'visibility_off' : 'visibility', act: 'keyvis', iconLabel: p.show ? L.svHide : L.svShow, help: L.svKeyHelp })}
+        ${field('sv-model', L.svModel, sv.model, { ph: 'vendor/model-name' })}
+        <button class="btn tonal fit" data-act="test"><span class="material-symbols-rounded">network_check</span>${L.svTest}</button>
+        ${res}
+      </div><div class="spacer"></div></div>`;
+  },
+  after(p) {
+    const bind = (id, k) => { const el = p.el.querySelector('#' + id); if (el && !el.readOnly) el.addEventListener('input', () => { S.service[k] = el.value; }); };
+    bind('sv-addr', 'addr'); bind('sv-key', 'key'); bind('sv-model', 'model');
+  }
+};
+ACTS.prov = (p, a) => { S.service.prov = a.dataset.v; p.test = null; paint(p); if (a.dataset.v === 'other') p.el.querySelector('#sv-addr').focus(); };
+ACTS.keyvis = p => { p.show = !p.show; paint(p); };
+ACTS.test = p => { p.test = 'run'; paint(p); setTimeout(() => { if (S.stack.includes(p)) { p.test = 'ok'; paint(p); } }, 1500); };
+
+const SAMPLE_FULL = '…and especially whenever my [hypos] get such an upper hand of me, that it requires a strong moral principle to prevent me from deliberately stepping into the street, and methodically knocking people’s hats off…';
+function cutExcerpt(full, max) {
+  const words = full.replace(/^…|…$/g, '').split(/\s+/);
+  const i = Math.max(0, words.findIndex(w => w.includes('[')));
+  let s = Math.max(0, i - Math.floor((max - 1) / 3));
+  const e = Math.min(words.length, s + max);
+  s = Math.max(0, e - max);
+  const body = words.slice(s, e).join(' ').replace(/[,;:]$/, '');
+  return (s > 0 || full.startsWith('…') ? '…' : '') + body + (e < words.length || full.endsWith('…') ? '…' : '');
+}
+PAGES.cards = {
+  render(p) {
+    const L = t().x, c = S.cards;
+    return bar(L.cdTitle) + `<div class="scroll">
+      <div class="lgroup"><div class="lrows">
+        <div class="lrow tap" role="switch" tabindex="0" aria-checked="${c.front}" data-act="front"><div class="lt"><div class="lb">${L.cdFront}</div><div class="vl">${L.cdFrontSub}</div></div><span class="switch"></span></div>
+        <div class="lrow${c.front ? '' : ' dim'}"><div class="lt"><div class="lb" id="cd-len">${L.cdLongest(c.max)}</div><input class="slider" id="cd-max" type="range" min="6" max="30" step="1" value="${c.max}" aria-labelledby="cd-len"${c.front ? '' : ' disabled'}><div class="vl">${L.cdLongestSub}</div></div></div>
+      </div></div>
+      <div class="lgroup"><div class="sub">${L.cdExample}</div><div class="face small"><div class="fw">hypos</div><div class="fg">n. pl., archaic</div>${c.front ? `<div class="fx" id="cd-ex"></div>` : ''}</div></div>
+      <div class="form">${field('cd-deck', L.cdDeck, c.deck, { help: L.cdDeckHelp })}${field('cd-tag', L.cdTag, c.tag, { help: L.cdTagHelp })}</div>
+      <div class="lgroup"><div class="lrows"><div class="lrow tap" tabindex="0" data-act="design"><span class="ic"><span class="material-symbols-rounded">style</span></span><div class="lt"><div class="lb">${L.cdDesign}</div><div class="vl">${L.cdDesignSub}</div></div><span class="material-symbols-rounded chev">chevron_right</span></div></div></div>
+      <div class="spacer"></div></div>`;
+  },
+  after(p) {
+    const s = p.el.querySelector('#cd-max');
+    const upd = () => {
+      S.cards.max = +s.value;
+      s.style.setProperty('--p', ((s.value - 6) / 24 * 100) + '%');
+      p.el.querySelector('#cd-len').textContent = t().x.cdLongest(S.cards.max);
+      const ex = p.el.querySelector('#cd-ex'); if (ex) ex.innerHTML = marked(cutExcerpt(SAMPLE_FULL, S.cards.max));
+    };
+    s.addEventListener('input', upd); upd();
+    for (const [id, k] of [['cd-deck', 'deck'], ['cd-tag', 'tag']]) { const el = p.el.querySelector('#' + id); el.addEventListener('input', () => { S.cards[k] = el.value; }); }
+  }
+};
+ACTS.front = p => { S.cards.front = !S.cards.front; paint(p); };
+ACTS.design = () => push('anki', { id: visibleIds()[0] });
+
+PAGES.anki = {
+  render(p) {
+    const L = t().x;
+    let f = findCard(p.id);
+    if (!f) { p.id = visibleIds()[0] || BOOKS.moby.sent[0].id; f = findCard(p.id); }
+    const it = f.it, b = BOOKS[f.book];
+    const front = `<div class="aw">${esc(it.word)}</div><div class="ag">${esc(it.gram)}</div>${S.cards.front ? `<div class="ax">${marked(it.ex)}</div>` : ''}`;
+    const back = `<hr><div class="at">${esc(it.tr ?? '—')}</div>${it.note ? `<div class="an">${esc(it.note)}</div>` : ''}<div class="af">${marked(it.full || it.ex)}</div><div class="as">${esc(b.title)}, ${esc(b.author)}</div>`;
+    const btns = p.flipped
+      ? `<div class="grades">${[['again', '<1m'], ['hard', '6m'], ['good', '10m'], ['easy', '4d']].map(([k, iv]) => `<button data-act="grade"><small>${esc(iv)}</small>${L['ak' + k]}</button>`).join('')}</div>`
+      : `<div class="grades"><button class="show" data-act="flip">${L.akShow}</button></div>`;
+    return bar(L.akTitle) + `<p class="help akhelp">${L.akNote}</p><div class="scroll ankiwrap"><div class="ankicard" data-act="${p.flipped ? '' : 'flip'}" lang="${b.lang}">${front}${p.flipped ? back : ''}</div></div>${btns}`;
+  }
+};
+ACTS.flip = p => { p.flipped = true; paint(p); };
+ACTS.grade = p => {
+  const ids = visibleIds(); const i = ids.indexOf(p.id);
+  p.id = ids.length ? ids[(i + 1) % ids.length] : p.id; p.flipped = false; paint(p);
+};
+
+PAGES.setup = {
+  render(p) {
+    const L = t().x, st = S.setup, n = p.step;
+    const steps = n >= 1 && n <= 3 ? `<div class="steps" aria-hidden="true">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div>` : '';
+    const res = (title, sub) => `<div class="result"><span class="material-symbols-rounded fill ok">check_circle</span><div class="lt"><b>${title}</b>${sub ? `<span>${sub}</span>` : ''}</div></div>`;
+    const choose = act => `<button class="btn tonal fit" data-act="${act}"><span class="material-symbols-rounded">folder_open</span>${L.su1choose}</button>`;
+    const nav = ok => `<div class="actions"><button class="btn tonal" data-act="sprev">${L.suBack}</button><button class="btn filled" data-act="snext"${ok ? '' : ' disabled'}>${L.suNext}</button></div>`;
+    let body = '', acts = '';
+    if (n === 0) {
+      body = `<div class="hero" lang="en">…whenever my hypos get such an <span class="draw">upper hand</span> of me…<div class="mini"><b>get the upper hand</b><span lang="ru">взять верх, одолеть</span></div></div><h2>${L.su0t}</h2><p class="lede">${L.su0p}</p>`;
+      acts = `<div class="actions"><button class="btn filled" data-act="snext">${L.su0go}</button></div>`;
+    } else if (n === 1) {
+      body = `<h2>${L.su1t}</h2><p class="lede">${L.su1p}</p>${st.folder ? res('Documents/Moon+ backups', L.su1found) : choose('sfolder')}
+        <div class="sub">${L.su1books}</div><p class="lede small">${L.su1booksP}</p>${st.books ? res('Books', L.su1booksFound) : choose('sbooks')}`;
+      acts = nav(st.folder);
+    } else if (n === 2) {
+      body = `<h2>${L.su2t}</h2><p class="lede">${L.su2p}</p>${st.anki ? res(L.su2ok, '') : `<button class="btn filled fit" data-act="sanki"><span class="material-symbols-rounded">school</span>${L.su2allow}</button>`}${st.denied && !st.anki ? `<p class="lede small err">${L.su2denied}</p>` : ''}`;
+      acts = nav(st.anki);
+    } else if (n === 3) {
+      body = `<h2>${L.su3t}</h2><p class="lede">${L.su3p}</p><div class="form flush">${field('su-key', L.svKey, st.key, { type: 'password', ph: 'sk-or-v1-…', help: L.su3help })}</div>
+        <div class="lrows"><div class="lrow tap" tabindex="0" data-act="starget"><span class="ic"><span class="material-symbols-rounded">language</span></span><div class="lt"><div class="lb">${t().set.into}</div><div class="vl">${langName(S.target, S.lang)}</div></div><span class="material-symbols-rounded chev">chevron_right</span></div></div>`;
+      acts = nav(st.key.trim().length > 0);
+    } else {
+      const k = newCount();
+      body = `<div class="bigok"><span class="material-symbols-rounded fill">check_circle</span></div><h2>${L.su4t}</h2><p class="lede">${L.su4p(k)}</p>`;
+      acts = k ? `<div class="actions"><button class="btn tonal" data-act="slater">${L.su4later}</button><button class="btn filled" data-act="sgo">${L.su4go}</button></div>`
+        : `<div class="actions"><button class="btn filled" data-act="slater">${L.su4done}</button></div>`;
+    }
+    return steps + `<div class="scroll"><div class="setupcol">${body}</div></div>` + acts;
+  },
+  after(p) {
+    const k = p.el.querySelector('#su-key');
+    if (k) k.addEventListener('input', () => { S.setup.key = k.value; p.el.querySelector('[data-act="snext"]').disabled = !k.value.trim(); });
+  }
+};
+ACTS.snext = p => { p.step++; paint(p); p.el.querySelector('.scroll').scrollTop = 0; };
+ACTS.sprev = p => { if (p.step === 0) pop(); else { p.step--; paint(p); } };
+ACTS.sfolder = p => { S.setup.folder = true; paint(p); };
+ACTS.sbooks = p => { S.setup.books = true; paint(p); };
+ACTS.starget = () => push('picker', { kind: 'target' });
+ACTS.slater = () => pop();
+ACTS.sgo = () => { pop(); setTimeout(openSheet, 380); };
+ACTS.sanki = p => {
+  const L = t().x;
+  sysDialog({ icon: 'school', title: L.su2dlg, actions: [
+    { label: L.su2yes, run: () => { S.setup.anki = true; paint(p); } },
+    { label: L.su2no, run: () => { S.setup.denied = true; paint(p); } }
+  ] });
+};
+function sysDialog(o) {
+  const d = document.createElement('div'); d.className = 'dscrim';
+  d.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlgT"><span class="material-symbols-rounded">${o.icon}</span><h4 id="dlgT">${o.title}</h4><div class="stackb">${o.actions.map((a, i) => `<button data-i="${i}">${a.label}</button>`).join('')}</div></div>`;
+  screen.appendChild(d);
+  requestAnimationFrame(() => requestAnimationFrame(() => d.classList.add('open')));
+  d.addEventListener('click', e => {
+    const b = e.target.closest('button[data-i]'); if (!b) return;
+    d.classList.remove('open'); setTimeout(() => d.remove(), 220);
+    o.actions[+b.dataset.i].run();
+  });
+  d.querySelector('button').focus();
+}
+$('#runSetup').onclick = () => {
+  while (S.stack.length) { const p = S.stack.pop(); p.el.remove(); }
+  closeSheet(); if (S.selMode) exitSel();
+  S.setup = { folder: false, books: false, anki: false, denied: false, key: '' };
+  push('setup', { step: 0 });
+};
+
+function newCount() { return S.imported ? 0 : (S.sheet.m1 ? INCOMING.length : 0); }
+function renderSheet() {
+  const L = t().sheet, sh = S.sheet, n = newCount();
+  const mk = (k, cls, sample, label, total, nw) => `<div class="li" role="checkbox" tabindex="0" aria-checked="${sh[k]}" data-mk="${k}" style="cursor:pointer">
+      <span class="cb"><span class="material-symbols-rounded">check</span></span>
+      <span class="mk"><span class="${cls}">${sample}</span></span>
+      <div class="lt"><b>${label}</b><span>${L.cnt(nf(total), nw)}</span></div></div>`;
+  $('#sheet').innerHTML = `<div class="handle"></div><h3 id="shT">${L.title}</h3>
+    <div class="li"><span class="ic"><span class="material-symbols-rounded">file_open</span></span><div class="lt"><b>${L.file}</b><span>Documents/Moon+ backups/2026-10-11_0814.mrpro</span></div><button class="tbtn">${L.change}</button></div>
+    <div class="sub">${L.marks}</div>
+    ${mk('m1', 'm1', 'Ab', L.m1, 412, S.imported ? 0 : INCOMING.length)}
+    ${mk('m2', 'm2', 'Ab', L.m2, 1280, 0)}
+    ${mk('m3', 'm3', 'Ab', L.m3, 64, 0)}
+    <div class="sub">${L.after}</div>
+    <div class="seg" role="group" aria-label="${L.after}">
+      <button data-mode="review" aria-pressed="${sh.mode === 'review'}"><span class="material-symbols-rounded">check</span>${L.review}</button>
+      <button data-mode="auto" aria-pressed="${sh.mode === 'auto'}"><span class="material-symbols-rounded">check</span>${L.auto}</button>
+    </div>
+    <button class="btn filled go" id="shGo"${n ? '' : ' disabled'}>${n ? L.go(n) : L.none}</button>`;
+}
+function openSheet() { renderSheet(); $('#sheet').classList.add('open'); $('#sheet').setAttribute('aria-hidden', 'false'); $('#scrim').classList.add('open'); }
+function closeSheet() { $('#sheet').classList.remove('open'); $('#sheet').setAttribute('aria-hidden', 'true'); $('#scrim').classList.remove('open'); }
+$('#fab').onclick = openSheet;
+$('#scrim').onclick = closeSheet;
+$('#sheet').addEventListener('click', e => {
+  const m = e.target.closest('[data-mk]'); if (m) { S.sheet[m.dataset.mk] = !S.sheet[m.dataset.mk]; renderSheet(); return; }
+  const md = e.target.closest('[data-mode]'); if (md) { S.sheet.mode = md.dataset.mode; renderSheet(); return; }
+  if (e.target.closest('#shGo')) startImport();
+});
+$('#sheet').addEventListener('keydown', e => { const m = e.target.closest('[data-mk]'); if (m && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); m.click(); } });
+function startImport() {
+  const n = newCount(); if (!n) return;
+  closeSheet(); S.imported = true;
+  const auto = S.sheet.mode === 'auto';
+  S.importing = { n, d: 0 };
+  if (S.tab !== 'inbox') { S.tab = 'inbox'; renderNav(); }
+  list.scrollTo({ top: 0, behavior: 'smooth' });
+  renderInbox();
+  const step = () => {
+    const p = S.importing; p.d++;
+    if (!auto) {
+      let g = GROUPS.find(x => x.id === 'hod');
+      if (!g) { g = { id: 'hod', items: [] }; GROUPS.unshift(g); }
+      const it = { ...INCOMING[p.d - 1], fresh: true }; g.items.push(it);
+    }
+    if (p.d >= p.n) {
+      S.importing = null;
+      if (auto) { BOOKS.hod.inAnki += n; BOOKS.hod.sent.unshift(...INCOMING.slice(0, n).reverse()); snack(t().sent(n)); } else snack(t().ready(n));
+    }
+    renderInbox(); renderNav(); renderLibrary();
+    if (S.importing) setTimeout(step, 750);
+  };
+  setTimeout(step, 900);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('.dscrim')) return;
+  if ($('#sheet').classList.contains('open')) closeSheet();
+  else if (S.stack.length) pop();
+  else if (S.selMode) exitSel();
+});
+
+const savedLang = store.get('mv-lang'), savedTheme = store.get('mv-theme'), savedSeed = store.get('mv-seed');
+applySeed(SCHEMES[savedSeed] ? savedSeed : 'ink');
+S.lang = S.appLang = savedLang === 'ru' ? 'ru' : 'en'; screen.lang = S.lang;
+for (const b of document.querySelectorAll('#langSeg button')) b.setAttribute('aria-pressed', String(b.dataset.v === S.lang));
+applyTheme(['light', 'dark'].includes(savedTheme) ? savedTheme : 'system');
+renderAll();
+</script>
+
+</body></html>
