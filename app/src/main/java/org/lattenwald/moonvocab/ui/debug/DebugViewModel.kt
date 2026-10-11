@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -52,6 +53,8 @@ sealed interface Notice {
     data class Checked(val result: CheckResult) : Notice
     data class Sent(val result: SendResult) : Notice
     data class Deleted(val notes: Int) : Notice
+    data class Exported(val cards: Int) : Notice
+    data class Forgotten(val cards: Int) : Notice
     data class Error(val message: String) : Notice
 }
 
@@ -190,6 +193,20 @@ class DebugViewModel(
 
     fun deleteAllCreated() = whileBusy { Notice.Deleted(withContext(io) { sender.deleteAllCreated() }) }
 
+    fun setTestDeck(on: Boolean) = launchSafely { settings.update { it.copy(deckOverride = if (on) TEST_DECK else null) } }
+
+    fun exportCards(uri: Uri) = whileBusy {
+        val count = withContext(io) {
+            val cards = db.cards().observeAll().first()
+            val json = cardsExportJson(cards, db.marks().all(), db.books().all())
+            checkNotNull(resolver.openOutputStream(uri)) { "cannot open $uri" }.use { it.write(json.toByteArray()) }
+            cards.size
+        }
+        Notice.Exported(count)
+    }
+
+    fun forgetUnsent() = whileBusy { Notice.Forgotten(withContext(io) { db.cards().deleteUnsent() }) }
+
     private suspend fun findBackup() {
         val tree = settings.current().backupTree ?: return
         local.update { it.copy(searching = true) }
@@ -248,6 +265,7 @@ class DebugViewModel(
 
     companion object {
         private const val BACKUP_DIR = "backups"
+        private const val TEST_DECK = "Moon+::Test"
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

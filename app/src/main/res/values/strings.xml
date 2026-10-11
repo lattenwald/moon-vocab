@@ -104,6 +104,20 @@
         <item quantity="one">%d note deleted</item>
         <item quantity="other">%d notes deleted</item>
     </plurals>
+    <string name="debug_test_deck">Send to test deck</string>
+    <string name="debug_export">Export cards</string>
+    <plurals name="debug_exported">
+        <item quantity="one">%d card exported</item>
+        <item quantity="other">%d cards exported</item>
+    </plurals>
+    <string name="debug_forget_unsent">Forget unsent cards</string>
+    <string name="debug_forget_title">Forget unsent cards?</string>
+    <string name="debug_forget_text">This deletes every pending and failed card that is not in AnkiDroid. The next import translates their marks again.</string>
+    <string name="debug_forget">Forget</string>
+    <plurals name="debug_forgotten">
+        <item quantity="one">%d card forgotten</item>
+        <item quantity="other">%d cards forgotten</item>
+    </plurals>
     <string name="debug_error">Error: %1$s</string>
     <string name="debug_elsewhere">Already in Anki: %1$s</string>
 

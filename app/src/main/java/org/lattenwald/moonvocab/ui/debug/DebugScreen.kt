@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ichi2.anki.api.AddContentApi
+import java.time.LocalDate
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.db.CardEntity
@@ -79,7 +80,9 @@ fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
     val grantAnki = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.refreshAvailability() }
     val notifyThenImport = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.startImport() }
     val notifyThenRetry = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.retryFailed() }
+    val exportCards = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(vm::exportCards) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmForget by remember { mutableStateOf(false) }
     val idle = !state.busy && !state.importState.running
 
     Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
@@ -146,6 +149,24 @@ fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
                     OutlinedButton(onClick = { confirmDelete = true }, enabled = idle) { Text(stringResource(R.string.debug_delete_all)) }
                 }
             }
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.debug_test_deck), modifier = Modifier.weight(1f))
+                    Switch(
+                        checked = state.settings?.deckOverride != null,
+                        onCheckedChange = vm::setTestDeck,
+                        enabled = state.settings != null,
+                    )
+                }
+            }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { exportCards.launch(cardsExportName(LocalDate.now())) }, enabled = idle) {
+                        Text(stringResource(R.string.debug_export))
+                    }
+                    OutlinedButton(onClick = { confirmForget = true }, enabled = idle) { Text(stringResource(R.string.debug_forget_unsent)) }
+                }
+            }
             if (state.notice !is Notice.Checked && state.notice != null) item { NoticeText(state.notice) }
             item {
                 Text(
@@ -169,6 +190,21 @@ fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
                 }) { Text(stringResource(R.string.debug_delete)) }
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.debug_cancel)) } },
+        )
+    }
+
+    if (confirmForget) {
+        AlertDialog(
+            onDismissRequest = { confirmForget = false },
+            title = { Text(stringResource(R.string.debug_forget_title)) },
+            text = { Text(stringResource(R.string.debug_forget_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmForget = false
+                    vm.forgetUnsent()
+                }) { Text(stringResource(R.string.debug_forget)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmForget = false }) { Text(stringResource(R.string.debug_cancel)) } },
         )
     }
 }
@@ -288,6 +324,8 @@ private fun NoticeText(notice: Notice?) {
             is CheckResult.Unavailable -> stringResource(R.string.debug_send_unavailable, r.availability.name)
         }
         is Notice.Deleted -> pluralStringResource(R.plurals.debug_deleted, notice.notes, notice.notes)
+        is Notice.Exported -> pluralStringResource(R.plurals.debug_exported, notice.cards, notice.cards)
+        is Notice.Forgotten -> pluralStringResource(R.plurals.debug_forgotten, notice.cards, notice.cards)
         is Notice.Error -> stringResource(R.string.debug_error, notice.message)
         is Notice.Sent -> {
             val r = notice.result

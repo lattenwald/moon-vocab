@@ -2,6 +2,7 @@ package org.lattenwald.moonvocab.data.db
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -20,10 +21,10 @@ private fun mark(key: String, bookId: Long, markedAt: Long = 0) = MarkEntity(
     markedAt = markedAt, cardId = null,
 )
 
-private fun card(bookId: Long) = CardEntity(
-    uuid = "u-$bookId", bookId = bookId, sourceLanguage = "de", targetLanguage = "ru", word = "w", lemma = "w", grammar = "",
+private fun card(bookId: Long, uuid: String = "u-$bookId", status: CardStatus = CardStatus.PENDING, ankiNoteId: Long? = null) = CardEntity(
+    uuid = uuid, bookId = bookId, sourceLanguage = "de", targetLanguage = "ru", word = "w", lemma = "w", grammar = "",
     excerptHtml = "", translation = "", meaning = "", sentenceHtml = "", sourceNote = "", widened = false, invented = false,
-    elsewhereDeck = null, status = CardStatus.PENDING, previousStatus = null, ankiNoteId = null, ankiMod = null, sentAt = null,
+    elsewhereDeck = null, status = status, previousStatus = null, ankiNoteId = ankiNoteId, ankiMod = null, sentAt = null,
     error = null,
 )
 
@@ -67,6 +68,22 @@ class MarkQueriesTest {
         assertEquals(emptyList<MarkEntity>(), db.marks().withoutCard(b))
         db.cards().delete(listOf(cardId))
         assertEquals(setOf("k1", "k2"), db.marks().withoutCard(b).map { it.key }.toSet())
+    }
+
+    @Test fun forgetUnsentKeepsSentAndDiscardedCards() = runTest {
+        val b = db.books().upsertByFileKey(book("diaspora.epub"))
+        val ids = db.marks().insertIgnoringKnown(listOf(mark("pending", b), mark("failed", b), mark("sent", b), mark("discarded", b)))
+        db.writeBatch(
+            listOf(
+                card(b, "p", CardStatus.PENDING) to listOf(ids[0]),
+                card(b, "f", CardStatus.FAILED) to listOf(ids[1]),
+                card(b, "s", CardStatus.SENT, ankiNoteId = 7) to listOf(ids[2]),
+                card(b, "d", CardStatus.DISCARDED) to listOf(ids[3]),
+            ),
+        )
+        db.cards().deleteUnsent()
+        assertEquals(setOf("s", "d"), db.cards().observeAll().first().map { it.uuid }.toSet())
+        assertEquals(setOf("pending", "failed"), db.marks().withoutCard(b).map { it.key }.toSet())
     }
 
     @Test fun upsertKeepsIdAndKnownLanguage() = runTest {

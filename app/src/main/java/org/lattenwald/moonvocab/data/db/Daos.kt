@@ -30,6 +30,9 @@ abstract class BookDao {
     @Query("SELECT * FROM book WHERE id = :id")
     abstract suspend fun byId(id: Long): BookEntity?
 
+    @Query("SELECT * FROM book")
+    abstract suspend fun all(): List<BookEntity>
+
     @Query("UPDATE book SET language = :language WHERE id = :id AND language IS NULL")
     abstract suspend fun setLanguageIfMissing(id: Long, language: String)
 
@@ -59,6 +62,9 @@ interface MarkDao {
 
     @Query("UPDATE mark SET cardId = NULL WHERE cardId IN (:cardIds)")
     suspend fun unlink(cardIds: List<Long>)
+
+    @Query("SELECT * FROM mark ORDER BY markedAt, id")
+    suspend fun all(): List<MarkEntity>
 }
 
 @Dao
@@ -83,4 +89,7 @@ interface CardDao {
 
     @Query("DELETE FROM card WHERE id IN (:ids)")
     suspend fun delete(ids: List<Long>)
+
+    @Query("DELETE FROM card WHERE status IN ('PENDING','FAILED') AND ankiNoteId IS NULL")
+    suspend fun deleteUnsent(): Int
 }

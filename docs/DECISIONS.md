@@ -132,3 +132,4 @@
 - App data is excluded from cloud backup and device transfer.
 - UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen.
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
+- The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget unsent PENDING and FAILED cards.
