@@ -48,6 +48,8 @@
 - The excerpt has no minimum length.
 - The `…` before and after an excerpt mark where the sentence was cut.
 - Two cards are compared for sense when their source languages are equal (null equals null) and their `senseKey(lemma)` values are equal.
+- Sense candidates are known cards (SENT and PENDING first, then DISCARDED and DELETED_IN_ANKI, then by id) followed by earlier cards of the same batch. FAILED cards are never candidates.
+- A mark that matches an earlier mark of its batch goes wherever that mark went.
 
 ## Translation
 - BYOK only. Settings hold a list of saved services `(id, name, baseUrl, apiKey, model)` and one active service id.
@@ -63,7 +65,7 @@
   - `CONFIG`: 404, or an invalid or empty base URL.
 - `LlmException.Failed` covers retries exhausted, other 4xx, and an unreadable reply.
 - The API key is redacted from error messages and is never attached as a cause.
-- Each item in the model's reply is parsed on its own. For a repeated id, the first valid result wins.
+- Each item in a translation reply is parsed on its own. For a repeated id, the first valid result wins.
 - A blank `lemma` becomes the `headword`.
 - The model's `sourceLanguage` goes through `isoLanguage`.
 - Same-sense questions for a batch go in one request to the active service, at most 8 candidates each.
