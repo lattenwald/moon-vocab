@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The mark wave spans character boxes
+
+- Plan said: M3 Task 6's `MarkedExcerpt` runs the wave's x from `getHorizontalPosition(start)` to `getHorizontalPosition(end)` on each line the mark covers.
+- Actual: on each line, x runs from the outer left to the outer right edge of `getBoundingBox` of the segment's first and last visible characters. Each segment ends at `getLineEnd(line, visibleEnd = true)`.
+- Reason: when a mark wraps onto the next line, its segment ends at the line's end offset. `getHorizontalPosition` at that offset reports the next line's start, which would draw the wave backwards across the line. The boxes also cover RTL text.
+
 ## 2026-10-12: A picked backup is copied under a temporary name first
 
 - Plan said: M3 Task 5's `BackupFinder.open` copies the picked document into `cacheDir/backups` under its display name, reads the copy, and deletes it when the backup is incomplete.
