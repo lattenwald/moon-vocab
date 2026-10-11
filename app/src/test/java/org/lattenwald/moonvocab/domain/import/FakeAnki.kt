@@ -14,13 +14,20 @@ class FakeAnki : AnkiGateway {
     var reads = 0
     var failOnNthAdd: Int? = null
     var failReads = false
+    val elsewhere = HashMap<String, String>()
+    val searches = ArrayList<List<String>>()
+    var failElsewhere = false
+    var ensureCalls = 0
 
     private val decks = LinkedHashMap<Long, String>()
     private var nextId = 1_700_000_000_000L
 
     override fun availability() = availability
 
-    override fun ensureNoteType(knownId: Long?, knownVersion: Int): Pair<Long, Int> = (knownId ?: MID) to NoteTypeSpec.VERSION
+    override fun ensureNoteType(knownId: Long?, knownVersion: Int): Pair<Long, Int> {
+        ensureCalls++
+        return (knownId ?: MID) to NoteTypeSpec.VERSION
+    }
 
     override fun ensureDeck(name: String): Long =
         decks.entries.firstOrNull { it.value == name }?.key ?: nextId++.also { decks[it] = name }
@@ -44,6 +51,15 @@ class FakeAnki : AnkiGateway {
         if (failReads) throw NullPointerException()
         return noteIds.mapNotNull { id -> notes[id]?.let { id to NoteSnapshot(it.fields, it.tags, it.mod) } }.toMap()
     }
+
+    override fun findElsewhere(terms: List<String>): String? {
+        searches += terms
+        if (failElsewhere) throw NullPointerException()
+        return terms.firstNotNullOfOrNull { elsewhere[it.lowercase()] }
+    }
+
+    override fun findByAppIds(mid: Long, uuids: Collection<String>): Map<String, Long> =
+        notes.entries.mapNotNull { (id, note) -> note.fields["AppId"]?.takeIf { note.mid == mid && it in uuids }?.let { it to id } }.toMap()
 
     companion object {
         const val MID = 42L

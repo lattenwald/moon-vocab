@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.ichi2.anki.api.AddContentApi
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -66,8 +67,35 @@ class AnkiDroidGatewayTest {
         assertEquals(NoteTypeSpec.VERSION, staleVersion)
     }
 
+    @Test
+    fun otherSourceSearchAndAppIdLookup() {
+        val api = AddContentApi(context)
+        val basicMid = api.modelList?.entries?.firstOrNull { it.value == BASIC_MODEL }?.key
+            ?: checkNotNull(api.addNewBasicModel(BASIC_MODEL))
+        val deckId = gateway.ensureDeck(DECK)
+        val basicTags = setOf("moon-vocab-instrumented")
+        val basicFields = listOf("Zwiebelkuchenmoonvocab", "onion tart")
+        val basicId = checkNotNull(api.addNote(basicMid, deckId, basicFields.toTypedArray(), basicTags))
+        created += basicId
+
+        assertEquals(DECK, gateway.findElsewhere(listOf("zwiebelkuchenmoonvocab")))
+        assertNull(gateway.findElsewhere(listOf("zwiebelkuchen_oonvocab")))
+        assertNull(gateway.findElsewhere(listOf("-zwiebelkuchenmoonvocab")))
+
+        val (mid, _) = gateway.ensureNoteType(null, 0)
+        val ownId = gateway.add(mid, deckId, mapOf("Word" to "Zwiebelkuchenmoonvocab2", "AppId" to "instrumented-uuid-1"), setOf("moon-vocab"))
+        created += ownId
+        assertNull(gateway.findElsewhere(listOf("zwiebelkuchenmoonvocab2")))
+        assertEquals(mapOf("instrumented-uuid-1" to ownId), gateway.findByAppIds(mid, listOf("instrumented-uuid-1", "nope")))
+
+        val basicAfter = checkNotNull(api.getNote(basicId))
+        assertEquals(basicFields, basicAfter.fields.toList())
+        assertEquals(basicTags, basicAfter.tags)
+    }
+
     private companion object {
         const val DECK = "Moon+::InstrumentedTest"
+        const val BASIC_MODEL = "Moon+ Vocab InstrumentedTest Basic"
         const val MISSING_ID = 999_999_999L
     }
 }

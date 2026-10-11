@@ -99,6 +99,9 @@
 - Templates and CSS are rewritten when the stored version is older. The new version is stored only when the rewrite succeeds.
 - `ensureDeck` matches an exact name, otherwise creates the deck.
 - Notes are read with a null projection, and columns are looked up by name. A note whose field list can't be read is an error.
+- `findElsewhere` returns the first hit's deck name, `""` when the deck can't be read, null for no hit. It searches `-note:"Moon+ Vocab"` with a quoted `w:` term for the lemma and for the focus when it differs, ignoring case.
+- Search terms are always quoted, and `\ " * _ : ( )` and a leading `-` are backslash-escaped.
+- Notes are found by AppId with `mid:<mid> (AppId:<uuid> OR …)`, 50 uuids per query.
 
 ## Import pipeline
 - `ImportPipeline` takes a book-source factory, called once per run.

@@ -21,4 +21,10 @@ interface AnkiGateway {
     fun delete(noteId: Long): Boolean
 
     fun read(noteIds: Collection<Long>): Map<Long, NoteSnapshot>
+
+    /** Deck name of the first note outside the Moon+ Vocab type matching any term; "" if its deck can't be read; null for no hit. */
+    fun findElsewhere(terms: List<String>): String?
+
+    /** uuid → note id, for notes of note type [mid] whose AppId is one of [uuids]. */
+    fun findByAppIds(mid: Long, uuids: Collection<String>): Map<String, Long>
 }

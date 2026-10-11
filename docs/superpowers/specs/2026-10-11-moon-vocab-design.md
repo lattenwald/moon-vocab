@@ -248,7 +248,7 @@ After a batch is translated, for each item whose `lemma` and source language mat
 - `update(noteId, card)`: reads the field list and the note's current fields, maps the fields by name (4.1), then calls `updateNoteFields` with the full array and `updateNoteTags`. The provider requires the full array in the note type's current order.
 - `delete(noteId)`: provider delete on the note's URI.
 - `read(noteIds): Map<noteId, NoteSnapshot>`: a raw provider notes query with the search `nid:id1,id2,…`, in chunks of 200, with `mod` in the projection; `NoteInfo` from the wrapper has no modification time. A snapshot has fields, tags and modification time; missing ids are absent from the map.
-- `findElsewhere(terms): List<Hit>`: see 5.6.
+- `findElsewhere(terms): String?`: the deck name of the first hit, see 5.6.
 
 Provider facts the design relies on, checked against AnkiDroid's source:
 

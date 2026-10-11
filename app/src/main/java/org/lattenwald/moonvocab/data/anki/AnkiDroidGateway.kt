@@ -71,29 +71,60 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
         return out
     }
 
+    override fun findElsewhere(terms: List<String>): String? {
+        if (terms.isEmpty()) return null
+        val noteId = resolver.query(FlashCardsContract.Note.CONTENT_URI, null, elsewhereQuery(terms), null, null)?.use { c ->
+            if (c.moveToFirst()) c.getLong(c.getColumnIndexOrThrow(FlashCardsContract.Note._ID)) else null
+        } ?: return null
+        val deckId = resolver.query(Uri.withAppendedPath(noteUri(noteId), "cards"), null, null, null, null)?.use { c ->
+            val ord = c.getColumnIndexOrThrow(FlashCardsContract.Card.CARD_ORD)
+            val deck = c.getColumnIndexOrThrow(FlashCardsContract.Card.DECK_ID)
+            var first: Pair<Int, Long>? = null
+            while (c.moveToNext()) {
+                if (first == null || c.getInt(ord) < first.first) first = c.getInt(ord) to c.getLong(deck)
+            }
+            first?.second
+        } ?: return ""
+        return api.getDeckName(deckId) ?: ""
+    }
+
+    override fun findByAppIds(mid: Long, uuids: Collection<String>): Map<String, Long> {
+        val wanted = uuids.toSet()
+        val fieldNames = HashMap<Long, List<String>>()
+        val out = HashMap<String, Long>()
+        for (chunk in wanted.chunked(APP_ID_CHUNK)) {
+            for (note in queryRaw(appIdQuery(mid, chunk))) {
+                val appId = fieldNames.getOrPut(note.mid) { fieldList(note.mid) }.indexOf(APP_ID_FIELD)
+                val value = note.values.getOrNull(appId) ?: continue
+                if (value in wanted) out[value] = note.id
+            }
+        }
+        return out
+    }
+
     private class RawNote(val id: Long, val mid: Long, val values: List<String>, val tags: Set<String>, val mod: Long)
 
-    private fun readRaw(noteIds: Collection<Long>): List<RawNote> {
+    private fun readRaw(noteIds: Collection<Long>): List<RawNote> =
+        noteIds.distinct().chunked(READ_CHUNK).flatMap { queryRaw("nid:" + it.joinToString(",")) }
+
+    private fun queryRaw(search: String): List<RawNote> {
         val out = ArrayList<RawNote>()
-        for (chunk in noteIds.distinct().chunked(READ_CHUNK)) {
-            // null when nothing matches, never empty
-            val cursor = resolver.query(FlashCardsContract.Note.CONTENT_URI, null, "nid:" + chunk.joinToString(","), null, null)
-                ?: continue
-            cursor.use { c ->
-                val id = c.getColumnIndexOrThrow(FlashCardsContract.Note._ID)
-                val mid = c.getColumnIndexOrThrow(FlashCardsContract.Note.MID)
-                val flds = c.getColumnIndexOrThrow(FlashCardsContract.Note.FLDS)
-                val tags = c.getColumnIndexOrThrow(FlashCardsContract.Note.TAGS)
-                val mod = c.getColumnIndexOrThrow(FlashCardsContract.Note.MOD)
-                while (c.moveToNext()) {
-                    out += RawNote(
-                        id = c.getLong(id),
-                        mid = c.getLong(mid),
-                        values = c.getString(flds).split(FIELD_SEPARATOR),
-                        tags = c.getString(tags).split(WHITESPACE).filter { it.isNotEmpty() }.toSet(),
-                        mod = c.getLong(mod),
-                    )
-                }
+        // null when nothing matches, never empty
+        val cursor = resolver.query(FlashCardsContract.Note.CONTENT_URI, null, search, null, null) ?: return out
+        cursor.use { c ->
+            val id = c.getColumnIndexOrThrow(FlashCardsContract.Note._ID)
+            val mid = c.getColumnIndexOrThrow(FlashCardsContract.Note.MID)
+            val flds = c.getColumnIndexOrThrow(FlashCardsContract.Note.FLDS)
+            val tags = c.getColumnIndexOrThrow(FlashCardsContract.Note.TAGS)
+            val mod = c.getColumnIndexOrThrow(FlashCardsContract.Note.MOD)
+            while (c.moveToNext()) {
+                out += RawNote(
+                    id = c.getLong(id),
+                    mid = c.getLong(mid),
+                    values = c.getString(flds).split(FIELD_SEPARATOR),
+                    tags = c.getString(tags).split(WHITESPACE).filter { it.isNotEmpty() }.toSet(),
+                    mod = c.getLong(mod),
+                )
             }
         }
         return out
@@ -123,6 +154,8 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
 
     private companion object {
         const val READ_CHUNK = 200
+        const val APP_ID_CHUNK = 50
+        const val APP_ID_FIELD = "AppId"
         const val FIELD_SEPARATOR = '\u001f'
         val WHITESPACE = Regex("\\s+")
     }
