@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The import sheet's ViewModel reports a bad pick and confirms the start
+
+- Plan said: M3 Task 9's `SheetState.NoBackup` is `(skipped)`, `SheetState.Ready` is `(backup, skipped, counts, selected, sendToAnki)`, and the ViewModel has `fun start()`.
+- Actual: `NoBackup` and `Ready` also carry `pickIncomplete: Boolean = false`, which shows `sheet_change_incomplete`. `start(onStarted: () -> Unit)` runs after the sheet's pending settings writes and calls `onStarted`, which closes the sheet, only once the work is enqueued.
+- Reason: the plan's states have nowhere to keep the "incomplete pick" line beside the previous backup. A Start that closed the sheet at once could enqueue a stale mark selection, or close the sheet over a settings error that the screen must show.
+
 ## 2026-10-12: A send that stops partway gives both Sent and SendFailed
 
 - Plan said: M3 Task 8's send maps any `error` to `SendFailed`, and `Sent` only when there is no error.

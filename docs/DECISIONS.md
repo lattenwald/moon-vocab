@@ -145,11 +145,15 @@
 - Translate again is disabled while an import runs.
 - Send and discard offer Undo in a snackbar. Undoing a send deletes the notes it created.
 - Cards labelled "Already in Anki" can be sent from the Inbox.
+- While an import runs, the Import button shows its progress and opens nothing.
 
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
 - A mark combination is named by its style and a colour name taken from its hue.
 - `BackupFinder` keeps only the chosen backup's copy in `cacheDir/backups`.
+- The import sheet reads the newest complete backup each time it opens.
+- The sheet's Review first / Send to Anki choice is saved as `reviewFirst`, and its mark selection as `styles`.
+- The import sheet runs its `BackupFinder` calls and settings writes one at a time, under one lock.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.

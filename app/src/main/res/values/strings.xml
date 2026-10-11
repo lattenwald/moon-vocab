@@ -94,6 +94,52 @@
         <item quantity="one">Translating %d card again</item>
         <item quantity="other">Translating %d cards again</item>
     </plurals>
+    <string name="inbox_import">Import</string>
+
+    <string name="sheet_title">Import from Moon+</string>
+    <string name="sheet_backup_from">Backup from %1$s</string>
+    <string name="sheet_change">Change</string>
+    <string name="sheet_skipped">Skipped %1$s: it\'s incomplete</string>
+    <string name="sheet_change_incomplete">That backup is incomplete. Pick another one.</string>
+    <string name="sheet_reading">Reading backups</string>
+    <string name="sheet_no_folder">Choose the folder where Moon+ Reader saves its backups.</string>
+    <string name="sheet_folder_unreadable">Moon+ Vocab can\'t read the backup folder any more. Choose it again.</string>
+    <string name="sheet_choose_folder">Choose folder</string>
+    <string name="sheet_no_backup">No complete backup in this folder.</string>
+    <string name="sheet_marks">Marks that are words to learn</string>
+    <string name="sheet_combo">%1$s, %2$s</string>
+    <string name="sheet_mark_sample" translatable="false">Ab</string>
+    <string name="style_wavy">Wavy underline</string>
+    <string name="style_underline">Underline</string>
+    <string name="style_highlight">Highlight</string>
+    <string name="style_strikethrough">Strikethrough</string>
+    <string name="color_red">red</string>
+    <string name="color_orange">orange</string>
+    <string name="color_yellow">yellow</string>
+    <string name="color_green">green</string>
+    <string name="color_cyan">cyan</string>
+    <string name="color_blue">blue</string>
+    <string name="color_purple">purple</string>
+    <string name="color_pink">pink</string>
+    <string name="color_gray">gray</string>
+    <string name="color_black">black</string>
+    <string name="color_white">white</string>
+    <plurals name="sheet_counts">
+        <item quantity="one">%1$d mark, %2$d new</item>
+        <item quantity="other">%1$d marks, %2$d new</item>
+    </plurals>
+    <plurals name="sheet_counts_none_new">
+        <item quantity="one">%d mark, nothing new</item>
+        <item quantity="other">%d marks, nothing new</item>
+    </plurals>
+    <string name="sheet_after">After translating</string>
+    <string name="sheet_review_first">Review first</string>
+    <string name="sheet_send">Send to Anki</string>
+    <plurals name="sheet_import_n">
+        <item quantity="one">Import %d word</item>
+        <item quantity="other">Import %d words</item>
+    </plurals>
+    <string name="sheet_nothing_new">Nothing new to import</string>
 
     <string name="debug_folders">Folders</string>
     <string name="debug_choose_backup_folder">Choose backup folder</string>

@@ -50,7 +50,7 @@ fun MarkedExcerpt(
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
     val wave = if (mark == null) Modifier else Modifier.drawWithCache {
         val path = layout?.let { wavePath(it, mark.first, mark.last + 1, this) }
-        val stroke = Stroke(width = WaveStroke.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+        val stroke = waveStroke(this)
         onDrawBehind { if (path != null) drawPath(path, markColor, style = stroke) }
     }
     Text(
@@ -64,12 +64,8 @@ fun MarkedExcerpt(
     )
 }
 
-private fun wavePath(layout: TextLayoutResult, start: Int, end: Int, density: Density): Path = with(density) {
+private fun wavePath(layout: TextLayoutResult, start: Int, end: Int, density: Density): Path {
     val path = Path()
-    val offset = WaveOffset.toPx()
-    val length = WaveLength.toPx()
-    val amplitude = WaveAmplitude.toPx()
-    val step = length / 12
     for (line in layout.getLineForOffset(start) until layout.lineCount) {
         val lineStart = layout.getLineStart(line)
         if (lineStart >= end) break
@@ -79,15 +75,22 @@ private fun wavePath(layout: TextLayoutResult, start: Int, end: Int, density: De
         // getHorizontalPosition at a line-break offset reports the next line's start
         val first = layout.getBoundingBox(s)
         val last = layout.getBoundingBox(e - 1)
-        val x0 = minOf(first.left, last.left)
-        val x1 = maxOf(first.right, last.right)
-        val y = layout.getLineBaseline(line) + offset
-        path.moveTo(x0, y)
-        var x = x0
-        while (x < x1) {
-            x = minOf(x + step, x1)
-            path.lineTo(x, y + amplitude * sin(2 * PI * (x - x0) / length).toFloat())
-        }
+        path.addWave(minOf(first.left, last.left), maxOf(first.right, last.right), layout.getLineBaseline(line), density)
     }
-    path
+    return path
 }
+
+internal fun Path.addWave(x0: Float, x1: Float, baseline: Float, density: Density) = with(density) {
+    val length = WaveLength.toPx()
+    val amplitude = WaveAmplitude.toPx()
+    val step = length / 12
+    val y = baseline + WaveOffset.toPx()
+    moveTo(x0, y)
+    var x = x0
+    while (x < x1) {
+        x = minOf(x + step, x1)
+        lineTo(x, y + amplitude * sin(2 * PI * (x - x0) / length).toFloat())
+    }
+}
+
+internal fun waveStroke(density: Density) = with(density) { Stroke(width = WaveStroke.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round) }

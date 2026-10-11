@@ -9,12 +9,16 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,8 +44,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -76,6 +84,7 @@ fun InboxScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     vm: InboxViewModel = viewModel(factory = InboxViewModel.Factory),
+    sheetVm: ImportSheetViewModel = viewModel(factory = ImportSheetViewModel.Factory),
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -112,6 +121,9 @@ fun InboxScreen(
 
     val listState = rememberLazyListState()
     val drag = rememberDragSelect(listState, onStart = vm::startDrag, onOver = vm::dragOver, onEnd = vm::endDrag)
+    val fabExpanded by remember { derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward } }
+    var sheetOpen by rememberSaveable { mutableStateOf(false) }
+    if (sheetOpen) ImportSheet(sheetVm, onDismiss = { sheetOpen = false })
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -150,18 +162,30 @@ fun InboxScreen(
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            AnimatedVisibility(
-                visible = selecting,
-                enter = slideInVertically { it * 2 } + fadeIn(),
-                exit = slideOutVertically { it * 2 } + fadeOut(),
-            ) {
-                SelectionToolbar(
-                    count = selectedIds.size,
-                    canTranslate = !import.running,
-                    onDiscard = { vm.discard(selectedIds) },
-                    onTranslateAgain = { vm.translateAgain(selectedIds) },
-                    onSend = { vm.send(selectedIds) },
-                )
+            // Full width so the centred toolbar and the end-aligned Import button share the one slot.
+            Box(Modifier.fillMaxWidth()) {
+                AnimatedVisibility(
+                    visible = selecting,
+                    modifier = Modifier.align(Alignment.Center),
+                    enter = slideInVertically { it * 2 } + fadeIn(),
+                    exit = slideOutVertically { it * 2 } + fadeOut(),
+                ) {
+                    SelectionToolbar(
+                        count = selectedIds.size,
+                        canTranslate = !import.running,
+                        onDiscard = { vm.discard(selectedIds) },
+                        onTranslateAgain = { vm.translateAgain(selectedIds) },
+                        onSend = { vm.send(selectedIds) },
+                    )
+                }
+                AnimatedVisibility(
+                    visible = !selecting,
+                    modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp),
+                    enter = scaleIn(initialScale = 0.6f) + fadeIn(),
+                    exit = scaleOut(targetScale = 0.6f) + fadeOut(),
+                ) {
+                    ImportFab(import, expanded = fabExpanded, onClick = { sheetOpen = true })
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
