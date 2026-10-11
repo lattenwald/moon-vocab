@@ -87,6 +87,7 @@
   - a missing or unknown language gives `Other`.
 - `bookTags` sanitizes only the title. Letters are kept in any script.
 - `Settings.snapshot` falls back to defaults on an `IOException`.
+- Settings store only values that differ from their defaults. Writing a default removes its key.
 - `reviewFirst` defaults to `true`, and `deckOverride` defaults to `Moon+::Test`.
 
 ## AnkiDroid
@@ -140,6 +141,11 @@
 - A filter whose language left the Inbox falls back to All.
 - Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen only maps fingers to rows and calls it.
 - Long-press is 360 ms. Auto-scroll starts 72 dp from either list edge and moves at most 18 dp per frame.
+
+## Import sheet
+- The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
+- A mark combination is named by its style and a colour name taken from its hue.
+- `BackupFinder` keeps only the chosen backup's copy in `cacheDir/backups`.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.

@@ -1,6 +1,6 @@
 ---
 id: mv-svor
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-10-11T18:01:20Z

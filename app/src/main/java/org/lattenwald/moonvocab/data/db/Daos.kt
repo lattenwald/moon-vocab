@@ -65,6 +65,12 @@ interface MarkDao {
 
     @Query("SELECT * FROM mark ORDER BY markedAt, id")
     suspend fun all(): List<MarkEntity>
+
+    @Query("SELECT `key` FROM mark")
+    suspend fun keys(): List<String>
+
+    @Query("SELECT COUNT(*) FROM mark WHERE cardId IS NULL")
+    suspend fun countWithoutCard(): Int
 }
 
 @Dao

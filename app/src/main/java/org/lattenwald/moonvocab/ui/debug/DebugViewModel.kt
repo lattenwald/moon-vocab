@@ -10,7 +10,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import java.io.File
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,9 +26,8 @@ import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
-import org.lattenwald.moonvocab.data.backup.BackupReader
-import org.lattenwald.moonvocab.data.backup.SafBackupFolder
-import org.lattenwald.moonvocab.data.backup.pickNewestComplete
+import org.lattenwald.moonvocab.data.backup.BackupFinder
+import org.lattenwald.moonvocab.data.backup.FoundBackup
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.data.settings.LlmService
@@ -43,9 +41,8 @@ import org.lattenwald.moonvocab.domain.import.ImportProgress
 import org.lattenwald.moonvocab.domain.import.ImportRequest
 import org.lattenwald.moonvocab.domain.import.ImportSummary
 import org.lattenwald.moonvocab.domain.import.SendResult
-import org.lattenwald.moonvocab.domain.mark.MarkStyle
-import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
+import org.lattenwald.moonvocab.domain.mark.defaultStyles
 import org.lattenwald.moonvocab.domain.mark.fileKey
 import org.lattenwald.moonvocab.work.ImportWork
 
@@ -88,23 +85,20 @@ data class DebugState(
 
 class DebugViewModel(
     private val resolver: ContentResolver,
-    private val cacheDir: File,
     private val db: AppDatabase,
     private val settings: Settings,
-    private val reader: BackupReader,
+    private val finder: BackupFinder,
     private val sender: CardSender,
     private val ankiCheck: AnkiCheck,
     private val anki: AnkiGateway,
     private val workManager: WorkManager,
     private val io: CoroutineDispatcher,
 ) : ViewModel() {
-    private class Picked(val file: File, val name: String, val marks: List<RawMark>)
-
     private data class Local(
         val availability: AnkiAvailability? = null,
         val searching: Boolean = false,
         val searched: Boolean = false,
-        val picked: Picked? = null,
+        val picked: FoundBackup? = null,
         val skipped: List<String> = emptyList(),
         val book: String? = null,
         val sendToAnki: Boolean = false,
@@ -211,20 +205,10 @@ class DebugViewModel(
         val tree = settings.current().backupTree ?: return
         local.update { it.copy(searching = true) }
         try {
-            val (pick, file) = withContext(io) {
-                val folder = SafBackupFolder(resolver, tree)
-                val dir = File(cacheDir, BACKUP_DIR).apply { mkdirs() }
-                val pick = pickNewestComplete(folder.list()) { doc -> reader.read(folder.copy(doc, File(dir, doc.name))) }
-                dir.listFiles()?.filter { it.name != pick.chosen?.name }?.forEach { it.delete() }
-                pick to pick.chosen?.let { File(dir, it.name) }
-            }
-            val picked = file?.let { Picked(it, it.name, pick.marks) }
-            local.update { it.copy(searched = true, picked = picked, skipped = pick.skipped.map { doc -> doc.name }, book = null) }
-            val present = pick.marks.mapTo(HashSet()) { it.combo }
-            settings.update { s ->
-                if (present.isEmpty() || s.styles.any { it in present }) s
-                else s.copy(styles = present.filterTo(HashSet()) { it.style == MarkStyle.WAVY })
-            }
+            val search = finder.newest(tree)
+            local.update { it.copy(searched = true, picked = search.chosen, skipped = search.skipped, book = null) }
+            val present = search.chosen?.marks.orEmpty().mapTo(HashSet()) { it.combo }
+            settings.update { s -> s.copy(styles = defaultStyles(s.styles, present)) }
         } finally {
             local.update { it.copy(searching = false) }
         }
@@ -264,7 +248,6 @@ class DebugViewModel(
     }
 
     companion object {
-        private const val BACKUP_DIR = "backups"
         private const val TEST_DECK = "Moon+::Test"
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -272,7 +255,7 @@ class DebugViewModel(
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
                 DebugViewModel(
-                    app.contentResolver, app.cacheDir, c.db, c.settings, c.backupReader, c.sender, c.ankiCheck, c.anki, c.workManager, c.io,
+                    app.contentResolver, c.db, c.settings, c.backupFinder, c.sender, c.ankiCheck, c.anki, c.workManager, c.io,
                 )
             }
         }

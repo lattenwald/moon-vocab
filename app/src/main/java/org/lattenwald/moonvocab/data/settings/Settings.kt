@@ -105,29 +105,30 @@ private fun Preferences.toSnapshot() = SettingsSnapshot(
     lastCheckAt = this[SettingsKeys.lastCheckAt] ?: 0L,
 )
 
+private val DEFAULTS = emptyPreferences().toSnapshot()
+
 private fun MutablePreferences.write(s: SettingsSnapshot, writeServices: Boolean) {
-    setOrRemove(SettingsKeys.backupTree, s.backupTree?.toString())
-    setOrRemove(SettingsKeys.booksTree, s.booksTree?.toString())
+    store(SettingsKeys.backupTree, s.backupTree?.toString(), DEFAULTS.backupTree?.toString())
+    store(SettingsKeys.booksTree, s.booksTree?.toString(), DEFAULTS.booksTree?.toString())
     if (writeServices) {
-        this[SettingsKeys.services] = json.encodeToString(
-            s.services.map { it.copy(baseUrl = it.baseUrl.trim(), apiKey = it.apiKey.trim(), model = it.model.trim()) },
-        )
+        val services = s.services.map { it.copy(baseUrl = it.baseUrl.trim(), apiKey = it.apiKey.trim(), model = it.model.trim()) }
+        if (services == DEFAULTS.services) remove(SettingsKeys.services) else this[SettingsKeys.services] = json.encodeToString(services)
     }
-    this[SettingsKeys.activeServiceId] = s.activeServiceId
-    this[SettingsKeys.targetLanguage] = s.targetLanguage
-    this[SettingsKeys.maxExcerptWords] = s.maxExcerptWords
-    this[SettingsKeys.deckPattern] = s.deckPattern
-    this[SettingsKeys.tagPattern] = s.tagPattern
-    this[SettingsKeys.reviewFirst] = s.reviewFirst
-    this[SettingsKeys.styles] = s.styles.map { it.encode() }.toSet()
-    setOrRemove(SettingsKeys.noteTypeId, s.noteTypeId)
-    this[SettingsKeys.noteTypeVersion] = s.noteTypeVersion
-    this[SettingsKeys.deckOverride] = s.deckOverride.orEmpty()
-    this[SettingsKeys.lastCheckAt] = s.lastCheckAt
+    store(SettingsKeys.activeServiceId, s.activeServiceId, DEFAULTS.activeServiceId)
+    store(SettingsKeys.targetLanguage, s.targetLanguage, DEFAULTS.targetLanguage)
+    store(SettingsKeys.maxExcerptWords, s.maxExcerptWords, DEFAULTS.maxExcerptWords)
+    store(SettingsKeys.deckPattern, s.deckPattern, DEFAULTS.deckPattern)
+    store(SettingsKeys.tagPattern, s.tagPattern, DEFAULTS.tagPattern)
+    store(SettingsKeys.reviewFirst, s.reviewFirst, DEFAULTS.reviewFirst)
+    store(SettingsKeys.styles, s.styles.map { it.encode() }.toSet(), DEFAULTS.styles.map { it.encode() }.toSet())
+    store(SettingsKeys.noteTypeId, s.noteTypeId, DEFAULTS.noteTypeId)
+    store(SettingsKeys.noteTypeVersion, s.noteTypeVersion, DEFAULTS.noteTypeVersion)
+    store(SettingsKeys.deckOverride, s.deckOverride.orEmpty(), DEFAULTS.deckOverride.orEmpty())
+    store(SettingsKeys.lastCheckAt, s.lastCheckAt, DEFAULTS.lastCheckAt)
 }
 
-private fun <T> MutablePreferences.setOrRemove(key: Preferences.Key<T>, value: T?) {
-    if (value == null) remove(key) else this[key] = value
+private fun <T> MutablePreferences.store(key: Preferences.Key<T>, value: T?, default: T?) {
+    if (value == null || value == default) remove(key) else this[key] = value
 }
 
 private fun parseServices(stored: String?): List<LlmService> =

@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import okhttp3.OkHttpClient
 import org.lattenwald.moonvocab.data.anki.AnkiDroidGateway
+import org.lattenwald.moonvocab.data.backup.BackupFinder
 import org.lattenwald.moonvocab.data.backup.BackupReader
 import org.lattenwald.moonvocab.data.books.FolderBookSource
 import org.lattenwald.moonvocab.data.books.SafBookFolder
@@ -31,6 +32,7 @@ class AppContainer(context: Context) {
     val settings = Settings(app.settingsDataStore)
     val anki = AnkiDroidGateway(app)
     val backupReader = BackupReader(app.cacheDir)
+    val backupFinder = BackupFinder(app.contentResolver, app.cacheDir, backupReader, io)
     private val ankiLock = Mutex()
     val sender = CardSender(db, anki, settings, ankiLock, clock = System::currentTimeMillis)
     val ankiCheck = AnkiCheck(db, anki, ankiLock)

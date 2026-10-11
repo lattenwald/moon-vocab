@@ -1,13 +1,16 @@
 package org.lattenwald.moonvocab.data.settings
 
 import android.net.Uri
+import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -22,8 +25,12 @@ class SettingsTest {
 
     private val openRouter = LlmService("openrouter", "OpenRouter", "https://openrouter.ai/api/v1", "", "anthropic/claude-haiku-5.5")
 
+    private lateinit var dataStore: DataStore<Preferences>
+
     private fun TestScope.store() =
-        PreferenceDataStoreFactory.create(scope = backgroundScope) { File(folder.root, "settings.preferences_pb") }
+        PreferenceDataStoreFactory.create(scope = backgroundScope) { File(folder.root, "settings.preferences_pb") }.also { dataStore = it }
+
+    private suspend fun rawPreferences() = dataStore.data.first()
 
     @Test fun emptyStoreGivesDefaults() = runTest {
         val read = Settings(store()).current()
@@ -85,5 +92,18 @@ class SettingsTest {
             listOf(openRouter.copy(baseUrl = "https://example.com/v1", apiKey = "sk-1", model = "m")),
             settings.current().services,
         )
+    }
+
+    @Test fun unchangedDefaultsAreNotStored() = runTest {
+        val settings = Settings(store())
+        settings.update { it.copy(targetLanguage = "de") }
+        val keys = rawPreferences().asMap().keys.map { it.name }.toSet()
+        assertEquals(setOf("targetLanguage"), keys)
+    }
+
+    @Test fun valueSetBackToDefaultIsRemoved() = runTest {
+        val settings = Settings(store())
+        settings.update { it.copy(deckOverride = null) }; settings.update { it.copy(deckOverride = "Moon+::Test") }
+        assertFalse("deckOverride" in rawPreferences().asMap().keys.map { it.name })
     }
 }

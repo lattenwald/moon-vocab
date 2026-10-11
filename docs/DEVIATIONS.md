@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: A picked backup is copied under a temporary name first
+
+- Plan said: M3 Task 5's `BackupFinder.open` copies the picked document into `cacheDir/backups` under its display name, reads the copy, and deletes it when the backup is incomplete.
+- Actual: `open` copies to `<display name>.part`, reads that, and renames it to the display name only when the backup is complete. An incomplete copy is deleted, and the previously chosen copy stays.
+- Reason: a picked file with the same name as the chosen backup would otherwise overwrite it, and an incomplete pick would then delete the backup the screen still uses.
+
 ## 2026-10-11: A wrong base URL or model stops the import
 
 - Plan said: Task 8's `LlmException.Stop.Kind` is `AUTH, CREDITS` (401/403, 402). Spec §5.3 stops the import only for 401, 403 and 402. Any other client error fails its batch.
