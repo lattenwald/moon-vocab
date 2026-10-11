@@ -66,6 +66,8 @@
 - Each item in the model's reply is parsed on its own. For a repeated id, the first valid result wins.
 - A blank `lemma` becomes the `headword`.
 - The model's `sourceLanguage` goes through `isoLanguage`.
+- Same-sense questions for a batch go in one request to the active service, at most 8 candidates each.
+- A judge's match is kept only when it is one of that question's own candidate refs.
 
 ## Storage and status
 - `mark.cardId` is a foreign key to `card.id` with `ON DELETE SET NULL`.
