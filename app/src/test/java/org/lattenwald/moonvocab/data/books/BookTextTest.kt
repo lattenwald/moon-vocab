@@ -109,4 +109,9 @@ class BookTextTest {
     @Test fun mobiIsUnsupported() = assertNull(readBookText(File(tmp, "n.mobi").apply { writeText("x") }, "n.mobi"))
 
     @Test fun languageCodes() { assertEquals("de", isoLanguage("de-DE")); assertEquals("en", isoLanguage("eng")); assertEquals("de", isoLanguage("ger")); assertNull(isoLanguage("")); assertNull(isoLanguage("UND")) }
+
+    @Test fun languageCodesMustBeIso6391() {
+        assertNull(isoLanguage("russian")); assertNull(isoLanguage("xx")); assertNull(isoLanguage("haw"))
+        assertEquals("ru", isoLanguage("RU")); assertEquals("en", isoLanguage("en_US")); assertEquals("de", isoLanguage("ger"))
+    }
 }

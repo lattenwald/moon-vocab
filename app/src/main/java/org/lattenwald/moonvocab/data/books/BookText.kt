@@ -42,12 +42,11 @@ private val twoLetterByThree: Map<String, String> by lazy {
     }
 }
 
+private val iso6391: Set<String> by lazy { Locale.getISOLanguages().toSet() }
+
 fun isoLanguage(tag: String?): String? {
     // Lowercased first: forLanguageTag maps only lowercase "und" to no language.
     val language = Locale.forLanguageTag(tag?.trim()?.lowercase()?.replace('_', '-') ?: return null).language
-    return when {
-        language.isEmpty() -> null
-        language.length == 3 -> twoLetterByThree[language] ?: language
-        else -> language
-    }
+    val code = if (language.length == 3) twoLetterByThree[language] else language
+    return code?.takeIf { it in iso6391 }
 }

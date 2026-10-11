@@ -27,7 +27,7 @@
 - FB2 chapters come from the first `<body>`, plus every later `<body>` without a `name`.
 - FB2 chapter text is the `p` and `v` lines, in document order.
 - A zip file named `.fb2` is read as a zipped FB2.
-- `isoLanguage` maps ISO 639-2/B codes to two-letter codes. A code it can't resolve is skipped.
+- `isoLanguage` maps ISO 639-2/B codes to two-letter codes and returns only codes in `Locale.getISOLanguages()`; anything else is null.
 - A book whose file can't be found, copied or parsed has no text. Its marks get model-written examples.
 - A books folder whose root can't be listed fails the import. Subfolders that can't be listed are skipped.
 
@@ -47,6 +47,7 @@
 - Otherwise the app cuts a window of N words around the focus.
 - The excerpt has no minimum length.
 - The `…` before and after an excerpt mark where the sentence was cut.
+- Two cards are compared for sense when their source languages are equal (null equals null) and their `senseKey(lemma)` values are equal.
 
 ## Translation
 - BYOK only. Settings hold a list of saved services `(id, name, baseUrl, apiKey, model)` and one active service id.
