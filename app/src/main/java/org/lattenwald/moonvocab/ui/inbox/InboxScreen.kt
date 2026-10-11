@@ -62,8 +62,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
@@ -97,20 +95,17 @@ fun InboxScreen(
     val allSelected = list.visibleIds.isNotEmpty() && selectedIds.size == list.visibleIds.size
 
     val snackbar = remember { SnackbarHostState() }
+    // One after another: a Sent snackbar and its Undo must outlast the SendFailed that can follow it.
     LaunchedEffect(vm, resources) {
-        var shown: Job? = null
         vm.events.collect { event ->
             val message = eventMessage(resources, event) ?: return@collect
             val undoable = event is InboxEvent.Sent || event is InboxEvent.Discarded
-            shown?.cancel()
-            shown = launch {
-                val result = snackbar.showSnackbar(
-                    message,
-                    actionLabel = if (undoable) resources.getString(R.string.inbox_undo) else null,
-                    duration = SnackbarDuration.Long,
-                )
-                if (result == SnackbarResult.ActionPerformed) vm.undo(event)
-            }
+            val result = snackbar.showSnackbar(
+                message,
+                actionLabel = if (undoable) resources.getString(R.string.inbox_undo) else null,
+                duration = SnackbarDuration.Long,
+            )
+            if (result == SnackbarResult.ActionPerformed) vm.undo(event)
         }
     }
     BackHandler(enabled = selecting, onBack = vm::clearSelection)
@@ -296,6 +291,7 @@ private fun eventMessage(r: Resources, event: InboxEvent): String? = when (event
     is InboxEvent.SendFailed -> r.getString(R.string.inbox_send_failed, event.message)
     is InboxEvent.UndoKept -> r.getQuantityString(R.plurals.inbox_undo_kept, event.count, event.count)
     is InboxEvent.Retranslating -> r.getQuantityString(R.plurals.inbox_retranslating, event.count, event.count)
+    is InboxEvent.Failed -> r.getString(R.string.inbox_action_failed, event.message)
 }
 
 private fun openAnkiDroidStore(context: Context) {

@@ -2,6 +2,18 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: A send that stops partway gives both Sent and SendFailed
+
+- Plan said: M3 Task 8's send maps any `error` to `SendFailed`, and `Sent` only when there is no error.
+- Actual: when `sentIds` isn't empty, `Sent(sentIds, stayed)` is emitted first, then `SendFailed(error)` if the send also stopped. `SendFailed` alone means nothing was sent. The Inbox shows its snackbars one after another instead of replacing the current one.
+- Reason: the cards that did go to AnkiDroid would otherwise leave the Inbox with no Undo, and the following `SendFailed` would replace the `Sent` snackbar.
+
+## 2026-10-12: The Inbox has a generic Failed event
+
+- Plan said: M3 Task 8's `InboxEvent` has seven cases, and only sending reports errors.
+- Actual: `InboxEvent.Failed(message)`, shown as `inbox_action_failed` ("Something went wrong: %1$s"), reports a failed discard, restore, translate again, or undo of a send.
+- Reason: UI calls to AnkiDroid or the database report errors in the screen, and none of the seven cases fits these actions.
+
 ## 2026-10-12: The Send button sits beside the floating toolbar
 
 - Plan said: M3 Task 8's `HorizontalFloatingToolbar(expanded = true)` holds a Send FAB in its `floatingActionButton` slot, showing `ic_send` and `inbox_send_n`.

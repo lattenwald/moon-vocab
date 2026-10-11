@@ -62,6 +62,7 @@ sealed interface InboxEvent {
     data class SendFailed(val message: String) : InboxEvent
     data class UndoKept(val count: Int) : InboxEvent
     data class Retranslating(val count: Int) : InboxEvent
+    data class Failed(val message: String) : InboxEvent
 }
 
 class InboxViewModel(
@@ -149,26 +150,29 @@ class InboxViewModel(
         if (ids.isEmpty()) return
         clearSelection()
         viewModelScope.launch {
-            val event = try {
-                sendEvent(ids, withContext(io) { sender.send(ids) })
+            val events = try {
+                sendEvents(ids, withContext(io) { sender.send(ids) })
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "send failed", e)
-                InboxEvent.SendFailed(e.message ?: e::class.java.simpleName)
+                listOf(InboxEvent.SendFailed(messageOf(e)))
             }
-            if (event !is InboxEvent.Sent) onStayed()
-            eventChannel.send(event)
+            if (events.none { it is InboxEvent.Sent }) onStayed()
+            for (event in events) eventChannel.send(event)
         }
     }
 
-    private fun sendEvent(ids: List<Long>, r: SendResult): InboxEvent {
-        r.unavailable?.let { return InboxEvent.Unavailable(it) }
+    private fun sendEvents(ids: List<Long>, r: SendResult): List<InboxEvent> {
+        r.unavailable?.let { return listOf(InboxEvent.Unavailable(it)) }
         missingFields.value = r.missingFields
-        return when {
-            r.error != null -> InboxEvent.SendFailed(r.error)
-            r.sentIds.isNotEmpty() -> InboxEvent.Sent(r.sentIds, stayed = ids.size - r.sentIds.size)
-            else -> InboxEvent.Stayed(ids.size)
+        return buildList {
+            if (r.sentIds.isNotEmpty()) add(InboxEvent.Sent(r.sentIds, stayed = ids.size - r.sentIds.size))
+            if (r.error != null) {
+                add(InboxEvent.SendFailed(r.error))
+            } else if (r.sentIds.isEmpty()) {
+                add(InboxEvent.Stayed(ids.size))
+            }
         }
     }
 
@@ -182,7 +186,9 @@ class InboxViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "discard failed", e)
-                emptyList()
+                onStayed()
+                eventChannel.send(InboxEvent.Failed(messageOf(e)))
+                return@launch
             }
             if (changed.isEmpty()) onStayed() else eventChannel.send(InboxEvent.Discarded(changed))
         }
@@ -198,6 +204,7 @@ class InboxViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "translate again failed", e)
+                eventChannel.send(InboxEvent.Failed(messageOf(e)))
                 return@launch
             }
             if (forgotten == 0) return@launch
@@ -217,6 +224,7 @@ class InboxViewModel(
                     throw e
                 } catch (e: Exception) {
                     Log.e(TAG, "restore failed", e)
+                    eventChannel.send(InboxEvent.Failed(messageOf(e)))
                 }
                 else -> Unit
             }
@@ -235,8 +243,10 @@ class InboxViewModel(
         throw e
     } catch (e: Exception) {
         Log.e(TAG, "undo send failed", e)
-        InboxEvent.SendFailed(e.message ?: e::class.java.simpleName)
+        InboxEvent.Failed(messageOf(e))
     }
+
+    private fun messageOf(e: Exception): String = e.message ?: e::class.java.simpleName
 
     companion object {
         private const val TAG = "InboxViewModel"

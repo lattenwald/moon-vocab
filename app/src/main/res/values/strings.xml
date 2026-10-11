@@ -89,6 +89,7 @@
     </plurals>
     <string name="inbox_send_failed">Couldn\'t send: %1$s</string>
     <string name="inbox_note_type_missing">The Moon+ Vocab note type in AnkiDroid is missing %1$s. Sending is stopped until it\'s back.</string>
+    <string name="inbox_action_failed">Something went wrong: %1$s</string>
     <plurals name="inbox_retranslating">
         <item quantity="one">Translating %d card again</item>
         <item quantity="other">Translating %d cards again</item>
