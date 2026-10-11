@@ -48,5 +48,6 @@ fun isoLanguage(tag: String?): String? {
     // Lowercased first: forLanguageTag maps only lowercase "und" to no language.
     val language = Locale.forLanguageTag(tag?.trim()?.lowercase()?.replace('_', '-') ?: return null).language
     val code = if (language.length == 3) twoLetterByThree[language] else language
-    return code?.takeIf { it in iso6391 }
+    // Android's list also carries some three-letter codes (haw, ast).
+    return code?.takeIf { it.length == 2 && it in iso6391 }
 }

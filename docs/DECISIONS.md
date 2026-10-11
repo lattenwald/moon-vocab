@@ -27,7 +27,7 @@
 - FB2 chapters come from the first `<body>`, plus every later `<body>` without a `name`.
 - FB2 chapter text is the `p` and `v` lines, in document order.
 - A zip file named `.fb2` is read as a zipped FB2.
-- `isoLanguage` maps ISO 639-2/B codes to two-letter codes and returns only codes in `Locale.getISOLanguages()`; anything else is null.
+- `isoLanguage` maps ISO 639-2/B codes to two-letter codes and returns only two-letter codes in `Locale.getISOLanguages()`; anything else is null.
 - A book whose file can't be found, copied or parsed has no text. Its marks get model-written examples.
 - A books folder whose root can't be listed fails the import. Subfolders that can't be listed are skipped.
 
