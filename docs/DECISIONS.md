@@ -135,6 +135,9 @@
 - The Inbox shows PENDING and FAILED cards.
 - Discard keeps the card's status in `previousStatus`. Restore puts it back and clears it.
 - Translate again deletes the chosen PENDING and FAILED cards that have no note, then starts a resume import without sending. Their marks get new cards.
+- Inbox groups are ordered by their newest mark. Cards in a group are ordered by newest mark, then id, both descending.
+- Language chips appear only when the Inbox holds two or more languages. A card with no language counts as Other, listed last.
+- A filter whose language left the Inbox falls back to All.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
