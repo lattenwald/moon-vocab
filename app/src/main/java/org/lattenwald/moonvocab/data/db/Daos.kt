@@ -81,6 +81,22 @@ interface CardDao {
     @Query("SELECT * FROM card ORDER BY id")
     fun observeAll(): Flow<List<CardEntity>>
 
+    @Query(
+        """
+        SELECT card.*, book.title AS bookTitle, book.author AS bookAuthor, MAX(mark.markedAt) AS markedAt
+        FROM card
+        JOIN book ON book.id = card.bookId
+        LEFT JOIN mark ON mark.cardId = card.id
+        WHERE card.status IN ('PENDING','FAILED')
+        GROUP BY card.id
+        ORDER BY card.id
+        """,
+    )
+    fun observeInbox(): Flow<List<InboxRow>>
+
+    @Query("SELECT * FROM card WHERE id IN (:ids) ORDER BY id")
+    suspend fun byIds(ids: List<Long>): List<CardEntity>
+
     @Query("SELECT * FROM card WHERE status != 'FAILED' AND sourceLanguage IS :language")
     suspend fun senseCandidates(language: String?): List<CardEntity>
 

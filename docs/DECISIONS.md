@@ -131,6 +131,11 @@
 - A send stopped by a note type with missing fields reports them in `SendResult.missingFields`.
 - `retryFailed` deletes FAILED cards, then resumes.
 
+## Inbox
+- The Inbox shows PENDING and FAILED cards.
+- Discard keeps the card's status in `previousStatus`. Restore puts it back and clears it.
+- Translate again deletes the chosen PENDING and FAILED cards that have no note, then starts a resume import without sending. Their marks get new cards.
+
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
