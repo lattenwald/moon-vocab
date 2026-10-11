@@ -1,0 +1,105 @@
+<resources>
+    <string name="app_name">Moon+ Vocab</string>
+
+    <string name="import_channel_name">Import progress</string>
+    <string name="import_notification_title">Importing marks</string>
+    <plurals name="import_progress">
+        <item quantity="one">%1$d of %2$d mark</item>
+        <item quantity="other">%1$d of %2$d marks</item>
+    </plurals>
+
+    <string name="debug_folders">Folders</string>
+    <string name="debug_choose_backup_folder">Choose backup folder</string>
+    <string name="debug_choose_books_folder">Choose books folder</string>
+    <string name="debug_folder_none">Not chosen</string>
+
+    <string name="debug_service">Translation service</string>
+    <string name="debug_service_add">Add service</string>
+    <string name="debug_service_custom">Custom</string>
+    <string name="debug_service_name">Name</string>
+    <string name="debug_service_base_url">Base URL</string>
+    <string name="debug_service_api_key">API key</string>
+    <string name="debug_service_model">Model</string>
+
+    <string name="debug_anki">AnkiDroid: %1$s</string>
+    <string name="debug_anki_checking">checking</string>
+    <string name="debug_anki_ready">ready</string>
+    <string name="debug_anki_not_installed">not installed</string>
+    <string name="debug_anki_no_permission">access not granted</string>
+    <string name="debug_anki_grant">Grant access</string>
+    <string name="debug_anki_check">Check AnkiDroid</string>
+    <plurals name="debug_anki_checked">
+        <item quantity="one">Check done: %d card changed</item>
+        <item quantity="other">Check done: %d cards changed</item>
+    </plurals>
+
+    <string name="debug_backup_find">Find newest backup</string>
+    <string name="debug_backup_searching">Reading backups…</string>
+    <string name="debug_backup_not_searched">No backup read yet</string>
+    <string name="debug_backup_newest">Newest backup: %1$s</string>
+    <string name="debug_backup_none">No complete backup found</string>
+    <string name="debug_backup_skipped">incomplete, skipped: %1$s</string>
+
+    <string name="debug_styles">Mark styles</string>
+    <string name="debug_style_combo">%1$s #%2$s: %3$s</string>
+    <plurals name="debug_marks">
+        <item quantity="one">%d mark</item>
+        <item quantity="other">%d marks</item>
+    </plurals>
+
+    <string name="debug_book_all">All books</string>
+    <string name="debug_book_option">%1$s (%2$s)</string>
+    <string name="debug_send_after">Send to Anki after translating</string>
+
+    <string name="debug_import">Import</string>
+    <string name="debug_import_waiting">Waiting to start</string>
+    <string name="debug_import_book">Book: %1$s</string>
+    <string name="debug_import_last">Last import</string>
+    <string name="debug_import_counts">%1$s, %2$s, %3$s</string>
+    <plurals name="debug_import_new">
+        <item quantity="one">%d new card</item>
+        <item quantity="other">%d new cards</item>
+    </plurals>
+    <plurals name="debug_import_failed">
+        <item quantity="one">%d failed</item>
+        <item quantity="other">%d failed</item>
+    </plurals>
+    <plurals name="debug_import_sent">
+        <item quantity="one">%d sent</item>
+        <item quantity="other">%d sent</item>
+    </plurals>
+    <string name="debug_import_incomplete">Backup incomplete: %1$s</string>
+    <string name="debug_import_stopped_auth">Stopped: the API key was rejected</string>
+    <string name="debug_import_stopped_credits">Stopped: no credits left</string>
+    <string name="debug_import_stopped_config">Stopped: check the service\'s base URL and model</string>
+    <string name="debug_import_send_error">Send error: %1$s</string>
+    <string name="debug_import_failed_with">Import failed: %1$s</string>
+    <string name="debug_import_cancelled">Import cancelled</string>
+    <string name="debug_retry_failed">Retry failed</string>
+
+    <string name="debug_send_pending">Send all pending</string>
+    <plurals name="debug_sent">
+        <item quantity="one">%d card sent</item>
+        <item quantity="other">%d cards sent</item>
+    </plurals>
+    <plurals name="debug_skipped">
+        <item quantity="one">%d skipped</item>
+        <item quantity="other">%d skipped</item>
+    </plurals>
+    <string name="debug_send_unavailable">AnkiDroid unavailable: %1$s</string>
+    <string name="debug_delete_all">Delete every note this build created</string>
+    <string name="debug_delete_title">Delete notes?</string>
+    <string name="debug_delete_text">This deletes every AnkiDroid note this build of Moon+ Vocab created. Sent cards go back to pending.</string>
+    <string name="debug_delete">Delete</string>
+    <string name="debug_cancel">Cancel</string>
+    <plurals name="debug_deleted">
+        <item quantity="one">%d note deleted</item>
+        <item quantity="other">%d notes deleted</item>
+    </plurals>
+    <string name="debug_error">Error: %1$s</string>
+
+    <plurals name="debug_cards">
+        <item quantity="one">%d card</item>
+        <item quantity="other">%d cards</item>
+    </plurals>
+</resources>

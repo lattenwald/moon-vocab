@@ -1,0 +1,16 @@
+.gradle
+/local.properties
+/.idea/
+*.iml
+**/build/
+/captures
+.externalNativeBuild
+.cxx
+.DS_Store
+.kotlin/
+
+# Agent config: ship project skills, keep local settings out
+/.claude/*
+!/.claude/skills/
+
+/CLAUDE.local.md
