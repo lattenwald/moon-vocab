@@ -107,7 +107,10 @@
 - `ImportPipeline` takes a book-source factory, called once per run.
 - Batches of 10 marks, newest first. They may cross books.
 - One transaction per batch: the cards are written and their marks linked.
-- Each card links exactly one mark.
+- A card links one or more marks. The mark that made it is the first; later same-sense marks only link to it.
+- Per batch: translate, merge same-sense marks, search other sources, then write and link in one transaction.
+- A sense `Stop` ends the import with nothing written for that batch. A sense `Failed` means no merges.
+- AnkiDroid availability is read once per run for the other-source search. A search error means no label.
 - A mark whose preparation or draft building throws becomes a FAILED card.
 - An incomplete backup still resumes the pending marks.
 - `Stop` ends the import with nothing written for that batch. `Failed` makes the batch's cards FAILED.

@@ -14,6 +14,7 @@ import org.lattenwald.moonvocab.data.books.SafBookFolder
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.llm.LlmClient
 import org.lattenwald.moonvocab.data.llm.LlmConfig
+import org.lattenwald.moonvocab.data.llm.LlmSenseJudge
 import org.lattenwald.moonvocab.data.llm.TranslationService
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.settingsDataStore
@@ -41,6 +42,8 @@ class AppContainer(context: Context) {
         reader = backupReader,
         books = { FolderBookSource(settings.current().booksTree?.let { SafBookFolder(app, it) }, app.cacheDir) },
         translator = TranslationService(llm),
+        judge = LlmSenseJudge(llm),
+        anki = anki,
         sender = sender,
         check = ankiCheck,
         settings = settings,

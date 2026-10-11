@@ -22,6 +22,7 @@ import org.lattenwald.moonvocab.data.books.BookText
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.DraftResult
+import org.lattenwald.moonvocab.domain.card.SenseJudge
 import org.lattenwald.moonvocab.domain.card.Translation
 import org.lattenwald.moonvocab.domain.card.TranslationItem
 import org.lattenwald.moonvocab.domain.card.Translator
@@ -56,7 +57,10 @@ abstract class ImportTestBase {
         translate: Translator = Translator { items, _, _ -> items.associate { it.id to tr(it) } },
         books: () -> BookSource = { fakeBooks },
         draft: (SentenceResult, Translation, Int) -> DraftResult = ::buildDraft,
-    ) = ImportPipeline(db, BackupReader(tmp), books, translate, sender, check, settings, StandardTestDispatcher(testScheduler), draft)
+        judge: SenseJudge = SenseJudge { emptyMap() },
+    ) = ImportPipeline(
+        db, BackupReader(tmp), books, translate, judge, fakeAnki, sender, check, settings, StandardTestDispatcher(testScheduler), draft,
+    )
 
     protected fun rows(n: Int, path: String = PATH, title: String = TITLE, from: Int = 0) = (from until from + n).map { i ->
         NoteRow(title, path, chapter = 0, position = i * SENTENCE.length, color = ORANGE, time = T0 + i, original = word(i), bak = "1")

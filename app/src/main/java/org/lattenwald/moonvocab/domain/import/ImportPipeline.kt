@@ -1,11 +1,14 @@
 package org.lattenwald.moonvocab.domain.import
 
+import android.util.Log
 import java.io.File
 import java.util.Locale
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import org.lattenwald.moonvocab.data.anki.AnkiAvailability
+import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.backup.BackupContents
 import org.lattenwald.moonvocab.data.backup.BackupReader
 import org.lattenwald.moonvocab.data.books.BookSource
@@ -22,11 +25,17 @@ import org.lattenwald.moonvocab.domain.card.CardDraft
 import org.lattenwald.moonvocab.domain.card.CardEvent
 import org.lattenwald.moonvocab.domain.card.CardStatus
 import org.lattenwald.moonvocab.domain.card.DraftResult
+import org.lattenwald.moonvocab.domain.card.KnownCard
+import org.lattenwald.moonvocab.domain.card.Merge
+import org.lattenwald.moonvocab.domain.card.NewCard
+import org.lattenwald.moonvocab.domain.card.SenseJudge
 import org.lattenwald.moonvocab.domain.card.Translation
 import org.lattenwald.moonvocab.domain.card.TranslationItem
 import org.lattenwald.moonvocab.domain.card.Translator
 import org.lattenwald.moonvocab.domain.card.buildDraft
 import org.lattenwald.moonvocab.domain.card.next
+import org.lattenwald.moonvocab.domain.card.resolveMerges
+import org.lattenwald.moonvocab.domain.card.senseQuestions
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.lattenwald.moonvocab.domain.mark.fileKey
@@ -42,6 +51,8 @@ data class ImportProgress(val done: Int, val total: Int, val bookTitle: String?)
 data class ImportSummary(
     val newCards: Int,
     val failed: Int,
+    val alreadyCard: Int,
+    val skippedDiscarded: Int,
     val sent: Int,
     val incompleteBackup: String?,
     val stopped: LlmException.Stop.Kind?,
@@ -53,6 +64,8 @@ class ImportPipeline(
     private val reader: BackupReader,
     private val books: suspend () -> BookSource,
     private val translator: Translator,
+    private val judge: SenseJudge,
+    private val anki: AnkiGateway,
     private val sender: CardSender,
     private val check: AnkiCheck,
     private val settings: Settings,
@@ -75,6 +88,8 @@ class ImportPipeline(
         var done = 0
         var newCards = 0
         var failed = 0
+        var alreadyCard = 0
+        var skippedDiscarded = 0
         var sent = 0
         var sendError: String? = null
         var stopped: LlmException.Stop.Kind? = null
@@ -93,20 +108,30 @@ class ImportPipeline(
             }
             for (p in ready) translations[p.item.id]?.let { run.learnLanguage(p.mark.bookId, it) }
 
-            val cards = prepared.map { p ->
+            val built = prepared.map { p ->
                 val book = run.book(p.mark.bookId)
+                val t = translations[p.item.id]
                 val card = try {
-                    card(p, book, failure, translations[p.item.id], s)
+                    card(p, book, failure, t, s)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     failedCard(p.mark, book, s, internalError(e))
                 }
-                card to listOf(p.mark.id)
+                Built(p, card, t?.focus)
             }
-            val ids = db.writeBatch(cards)
+            val merged = try {
+                merge(built)
+            } catch (e: LlmException.Stop) {
+                stopped = e.kind
+                break
+            }
+            val cards = search(merged.cards, run)
+            val ids = db.writeBatch(cards, merged.links)
             newCards += cards.count { it.first.status == CardStatus.PENDING }
             failed += cards.count { it.first.status == CardStatus.FAILED }
+            alreadyCard += merged.alreadyCard
+            skippedDiscarded += merged.skippedDiscarded
 
             if (request.sendToAnki) {
                 val toSend = ids.filterIndexed { i, _ -> cards[i].first.let { it.status == CardStatus.PENDING && it.elsewhereDeck == null } }
@@ -120,7 +145,7 @@ class ImportPipeline(
             progress(ImportProgress(done, todo.size, run.book(batch.last().bookId).title))
         }
         withContext(io) { check.run() }
-        return ImportSummary(newCards, failed, sent, incomplete, stopped, sendError)
+        return ImportSummary(newCards, failed, alreadyCard, skippedDiscarded, sent, incomplete, stopped, sendError)
     }
 
     suspend fun retryFailed(): ImportSummary {
@@ -144,6 +169,74 @@ class ImportPipeline(
             )
         }
         db.marks().insertIgnoringKnown(entities)
+    }
+
+    private suspend fun merge(built: List<Built>): Merged {
+        val batch = built.mapIndexedNotNull { i, b ->
+            val focus = b.focus ?: return@mapIndexedNotNull null
+            if (b.card.status != CardStatus.PENDING) return@mapIndexedNotNull null
+            NewCard(i, b.card.sourceLanguage, b.card.lemma, b.card.word, focus, b.prepared.item.sentence, b.card.translation, b.card.meaning)
+        }
+        val known = batch.map { it.language }.distinct().flatMap { db.cards().senseCandidates(it) }
+            .map { KnownCard(it.id, it.status, it.sourceLanguage, it.lemma, it.word, it.translation, it.meaning) }
+        val questions = senseQuestions(batch, known)
+        val answers = if (questions.isEmpty()) {
+            emptyMap()
+        } else {
+            try {
+                judge.judge(questions)
+            } catch (e: LlmException.Failed) {
+                emptyMap()
+            }
+        }
+        val merges = resolveMerges(batch, answers, known)
+
+        val markIds = built.map { mutableListOf(it.prepared.mark.id) }
+        val links = mutableListOf<Pair<Long, Long>>()
+        var alreadyCard = 0
+        var skippedDiscarded = 0
+        for ((i, merge) in merges) {
+            val markId = built[i].prepared.mark.id
+            when (merge) {
+                Merge.New -> Unit
+                is Merge.IntoBatch -> {
+                    markIds[merge.index] += markId
+                    alreadyCard++
+                }
+                is Merge.IntoKnown -> {
+                    links += markId to merge.cardId
+                    when (merge.status) {
+                        CardStatus.PENDING, CardStatus.SENT -> alreadyCard++
+                        CardStatus.DISCARDED, CardStatus.DELETED_IN_ANKI -> skippedDiscarded++
+                        CardStatus.FAILED -> Unit
+                    }
+                }
+            }
+        }
+        val kept = built.indices.filter { (merges[it] ?: Merge.New) == Merge.New }.map { built[it] to markIds[it].toList() }
+        return Merged(kept, links, alreadyCard, skippedDiscarded)
+    }
+
+    private suspend fun search(cards: List<Pair<Built, List<Long>>>, run: Run): List<Pair<CardEntity, List<Long>>> {
+        val searchable = cards.any { it.first.card.status == CardStatus.PENDING } && run.ankiReady()
+        return cards.map { (b, markIds) ->
+            val card = if (searchable && b.card.status == CardStatus.PENDING) b.card.copy(elsewhereDeck = elsewhere(b)) else b.card
+            card to markIds
+        }
+    }
+
+    private suspend fun elsewhere(b: Built): String? {
+        val lemma = b.card.lemma
+        val terms = listOfNotNull(lemma, b.focus?.takeUnless { it.equals(lemma, ignoreCase = true) }).filter { it.isNotBlank() }
+        if (terms.isEmpty()) return null
+        return try {
+            withContext(io) { anki.findElsewhere(terms) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "AnkiDroid search failed", e)
+            null
+        }
     }
 
     private fun card(p: Prepared, book: BookEntity, failure: String?, t: Translation?, s: SettingsSnapshot): CardEntity {
@@ -176,12 +269,25 @@ class ImportPipeline(
 
     private class Prepared(val mark: MarkEntity, val sentence: SentenceResult, val item: TranslationItem, val error: String? = null)
 
+    private class Built(val prepared: Prepared, val card: CardEntity, val focus: String?)
+
+    private class Merged(
+        val cards: List<Pair<Built, List<Long>>>,
+        val links: List<Pair<Long, Long>>,
+        val alreadyCard: Int,
+        val skippedDiscarded: Int,
+    )
+
     private fun internalError(e: Exception) = "internal error: " + (e.message ?: e::class.simpleName)
 
     private inner class Run(private val source: BookSource) {
         private val books = HashMap<Long, BookEntity>()
         private val texts = HashMap<Long, BookText?>()
         private val normalized = HashMap<Long, List<NormalizedText>>()
+        private var availability: AnkiAvailability? = null
+
+        suspend fun ankiReady(): Boolean =
+            (availability ?: withContext(io) { anki.availability() }.also { availability = it }) == AnkiAvailability.READY
 
         suspend fun book(id: Long): BookEntity = books.getOrPut(id) { checkNotNull(db.books().byId(id)) { "no book $id" } }
 
@@ -233,5 +339,6 @@ class ImportPipeline(
 
     private companion object {
         const val BATCH_SIZE = 10
+        const val TAG = "ImportPipeline"
     }
 }

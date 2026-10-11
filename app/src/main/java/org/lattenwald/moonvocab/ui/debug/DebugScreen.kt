@@ -390,6 +390,8 @@ private fun ImportSection(run: ImportState, enabled: Boolean, onImport: () -> Un
                 stringResource(
                     R.string.debug_import_counts,
                     pluralStringResource(R.plurals.debug_import_new, s.newCards, s.newCards),
+                    pluralStringResource(R.plurals.import_already_card, s.alreadyCard, s.alreadyCard),
+                    pluralStringResource(R.plurals.import_skipped_discarded, s.skippedDiscarded, s.skippedDiscarded),
                     pluralStringResource(R.plurals.debug_import_failed, s.failed, s.failed),
                     pluralStringResource(R.plurals.debug_import_sent, s.sent, s.sent),
                 ),
@@ -414,6 +416,7 @@ private fun CardRow(card: CardEntity) {
         Text(card.word, style = MaterialTheme.typography.titleSmall)
         if (card.translation.isNotEmpty()) Text(card.translation)
         Text(card.status.name, style = MaterialTheme.typography.labelMedium)
+        card.elsewhereDeck?.let { Text(stringResource(R.string.debug_elsewhere, it)) }
         card.error?.let { Text(stringResource(R.string.debug_error, it), color = MaterialTheme.colorScheme.error) }
         HorizontalDivider(Modifier.padding(top = 4.dp))
     }

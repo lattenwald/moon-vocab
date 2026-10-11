@@ -55,10 +55,18 @@
     <string name="debug_import_waiting">Waiting to start</string>
     <string name="debug_import_book">Book: %1$s</string>
     <string name="debug_import_last">Last import</string>
-    <string name="debug_import_counts">%1$s, %2$s, %3$s</string>
+    <string name="debug_import_counts">%1$s, %2$s, %3$s, %4$s, %5$s</string>
     <plurals name="debug_import_new">
         <item quantity="one">%d new card</item>
         <item quantity="other">%d new cards</item>
+    </plurals>
+    <plurals name="import_already_card">
+        <item quantity="one">%d already a card</item>
+        <item quantity="other">%d already a card</item>
+    </plurals>
+    <plurals name="import_skipped_discarded">
+        <item quantity="one">%d skipped, discarded earlier</item>
+        <item quantity="other">%d skipped, discarded earlier</item>
     </plurals>
     <plurals name="debug_import_failed">
         <item quantity="one">%d failed</item>
@@ -97,6 +105,7 @@
         <item quantity="other">%d notes deleted</item>
     </plurals>
     <string name="debug_error">Error: %1$s</string>
+    <string name="debug_elsewhere">Already in Anki: %1$s</string>
 
     <plurals name="debug_cards">
         <item quantity="one">%d card</item>

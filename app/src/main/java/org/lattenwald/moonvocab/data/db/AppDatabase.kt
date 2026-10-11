@@ -12,13 +12,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun marks(): MarkDao
     abstract fun cards(): CardDao
 
-    suspend fun writeBatch(batch: List<Pair<CardEntity, List<Long>>>): List<Long> = withTransaction {
-        batch.map { (card, markIds) ->
-            val id = cards().insert(card)
-            marks().link(markIds, id)
-            id
+    /** [links] are `(markId, existingCardId)` pairs. */
+    suspend fun writeBatch(batch: List<Pair<CardEntity, List<Long>>>, links: List<Pair<Long, Long>> = emptyList()): List<Long> =
+        withTransaction {
+            for ((markId, cardId) in links) marks().link(listOf(markId), cardId)
+            batch.map { (card, markIds) ->
+                val id = cards().insert(card)
+                marks().link(markIds, id)
+                id
+            }
         }
-    }
 
     companion object {
         const val NAME = "moon-vocab.db"

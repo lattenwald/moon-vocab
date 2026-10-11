@@ -75,6 +75,9 @@ interface CardDao {
     @Query("SELECT * FROM card ORDER BY id")
     fun observeAll(): Flow<List<CardEntity>>
 
+    @Query("SELECT * FROM card WHERE status != 'FAILED' AND sourceLanguage IS :language")
+    suspend fun senseCandidates(language: String?): List<CardEntity>
+
     @Query("SELECT * FROM card WHERE ankiNoteId IS NOT NULL ORDER BY id")
     suspend fun withNoteIds(): List<CardEntity>
 
