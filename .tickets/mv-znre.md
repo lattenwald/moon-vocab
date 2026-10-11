@@ -1,6 +1,6 @@
 ---
 id: mv-znre
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-10-11T20:41:28Z

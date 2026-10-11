@@ -1,7 +1,7 @@
 # Decisions
 
 ## Repository
-- Agents stage and commit each task while implementing a plan, on a feature branch. Otherwise the user stages, and agents commit only when asked. One-line subject, no attribution.
+- Agents stage and commit each task while implementing a plan, on the branch the plan names. Otherwise the user stages, and agents commit only when asked. One-line subject, no attribution.
 - `make release` builds the minified release APK, signed with `~/.android/debug.keystore`. `app/proguard-rules.pro` holds no app rules.
 - Robolectric tests run with `--add-exports=java.base/jdk.internal.access=ALL-UNNAMED`.
 - Tests that use MockWebServer run under `RobolectricTestRunner`. `isReturnDefaultValues` stays off.
@@ -119,14 +119,16 @@
 - `Stop` ends the import with nothing written for that batch. `Failed` makes the batch's cards FAILED.
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
+- `AppContainer` creates one `Mutex`, shared by `CardSender` and `AnkiCheck`. Sends, deletes, undo and the check run under it.
 - `CardSender`:
-  - one `Mutex` covers `send` and `deleteAllCreated`;
   - a gateway error stops the send and is reported in `SendResult.error`;
   - saving a sent card can't be cancelled;
   - the note type is ensured once per sender and again after a send error;
   - before adding, notes already in AnkiDroid with the card's AppId are adopted;
   - after a send error the import sends nothing more in that run.
 - `deleteAllCreated` resets a card only when AnkiDroid deleted its note.
+- `undoSend` deletes each sent card's note and returns the card to PENDING. A card whose note AnkiDroid doesn't delete stays SENT and counts as kept.
+- A send stopped by a note type with missing fields reports them in `SendResult.missingFields`.
 - `retryFailed` deletes FAILED cards, then resumes.
 
 ## App

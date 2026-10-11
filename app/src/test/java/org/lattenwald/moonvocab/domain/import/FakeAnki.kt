@@ -18,6 +18,9 @@ class FakeAnki : AnkiGateway {
     val searches = ArrayList<List<String>>()
     var failElsewhere = false
     var ensureCalls = 0
+    var onRead: (() -> Unit)? = null
+    var addError: Exception? = null
+    val refuseDelete = HashSet<Long>()
 
     private val decks = LinkedHashMap<Long, String>()
     private var nextId = 1_700_000_000_000L
@@ -33,6 +36,7 @@ class FakeAnki : AnkiGateway {
         decks.entries.firstOrNull { it.value == name }?.key ?: nextId++.also { decks[it] = name }
 
     override fun add(mid: Long, deckId: Long, fields: Map<String, String>, tags: Set<String>): Long {
+        addError?.let { throw it }
         if (++adds == failOnNthAdd) throw IllegalStateException("AnkiDroid refused to add the note")
         val id = nextId++
         notes[id] = Note(mid, decks.getValue(deckId), fields, tags, mod = 1)
@@ -44,9 +48,10 @@ class FakeAnki : AnkiGateway {
         notes[noteId] = note.copy(fields = note.fields + fields, tags = note.tags + tags, mod = note.mod + 1)
     }
 
-    override fun delete(noteId: Long): Boolean = notes.remove(noteId) != null
+    override fun delete(noteId: Long): Boolean = noteId !in refuseDelete && notes.remove(noteId) != null
 
     override fun read(noteIds: Collection<Long>): Map<Long, NoteSnapshot> {
+        onRead?.invoke()
         reads++
         if (failReads) throw NullPointerException()
         return noteIds.mapNotNull { id -> notes[id]?.let { id to NoteSnapshot(it.fields, it.tags, it.mod) } }.toMap()

@@ -2,6 +2,8 @@ package org.lattenwald.moonvocab.domain.import
 
 import android.util.Log
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.anki.ankiToPlain
@@ -20,7 +22,7 @@ sealed interface CheckResult {
     data class Unavailable(val availability: AnkiAvailability) : CheckResult
 }
 
-class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway) {
+class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway, private val lock: Mutex) {
     suspend fun run(): Int = try {
         (check() as? CheckResult.Changed)?.count ?: 0
     } catch (e: CancellationException) {
@@ -30,9 +32,9 @@ class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway) {
         0
     }
 
-    suspend fun check(): CheckResult {
+    suspend fun check(): CheckResult = lock.withLock {
         val availability = anki.availability()
-        return if (availability == AnkiAvailability.READY) CheckResult.Changed(reconcileSent()) else CheckResult.Unavailable(availability)
+        if (availability == AnkiAvailability.READY) CheckResult.Changed(reconcileSent()) else CheckResult.Unavailable(availability)
     }
 
     private suspend fun reconcileSent(): Int {

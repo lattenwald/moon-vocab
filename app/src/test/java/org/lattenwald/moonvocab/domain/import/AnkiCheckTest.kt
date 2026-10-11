@@ -4,12 +4,21 @@ import kotlin.test.assertFailsWith
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.domain.card.CardStatus.DELETED_IN_ANKI
 import org.lattenwald.moonvocab.domain.card.CardStatus.SENT
 
 class AnkiCheckTest : ImportTestBase() {
+    @Test fun checkHoldsTheAnkiLock() = runTest {
+        pipeline().run(req(backup(1), send = true), {})
+        var locked = false
+        fakeAnki.onRead = { locked = ankiLock.isLocked }
+        check.check()
+        assertTrue(locked)
+    }
+
     @Test fun editedNoteRefreshesCardAndMissingNoteMarksItDeleted() = runTest {
         pipeline().run(req(backup(2), send = true), {})
         assertEquals(0, check.run())

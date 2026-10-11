@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import org.junit.After
@@ -45,8 +46,9 @@ abstract class ImportTestBase {
     }
     protected val fakeAnki = FakeAnki()
     protected val fakeBooks = FakeBooks(mapOf(PATH to bookText(30)))
-    protected val sender by lazy { CardSender(db, fakeAnki, settings) { NOW } }
-    protected val check by lazy { AnkiCheck(db, fakeAnki) }
+    protected val ankiLock = Mutex()
+    protected val sender by lazy { CardSender(db, fakeAnki, settings, ankiLock) { NOW } }
+    protected val check by lazy { AnkiCheck(db, fakeAnki, ankiLock) }
 
     @After fun closeAll() {
         db.close()
