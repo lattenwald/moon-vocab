@@ -47,6 +47,19 @@ class AnkiTextTest {
 
     @Test fun coversEveryNoteTypeField() = assertEquals(NoteTypeSpec.FIELDS, card.ankiFields("B").keys.toList())
 
+    @Test fun storedFieldsArePlainExceptExcerptAndSentence() = assertEquals(
+        mapOf(
+            "Word" to card.word,
+            "Grammar" to card.grammar,
+            "Excerpt" to card.excerptHtml,
+            "Translation" to card.translation,
+            "Meaning" to card.meaning,
+            "Sentence" to card.sentenceHtml,
+            "Source" to card.sourceNote,
+        ),
+        card.storedFields(),
+    )
+
     @Test fun plainFieldsSurviveTheRoundTrip() {
         val fields = card.ankiFields("Q&A, <Anon>")
         assertEquals(

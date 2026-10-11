@@ -21,6 +21,16 @@ fun CardEntity.ankiFields(bookLine: String): Map<String, String> = mapOf(
     "AppId" to uuid,
 )
 
+fun CardEntity.storedFields(): Map<String, String> = mapOf(
+    "Word" to word,
+    "Grammar" to grammar,
+    "Excerpt" to excerptHtml,
+    "Translation" to translation,
+    "Meaning" to meaning,
+    "Sentence" to sentenceHtml,
+    "Source" to sourceNote,
+)
+
 fun ankiToPlain(html: String): String {
     val out = StringBuilder()
     Jsoup.parseBodyFragment(html).body().traverse(object : NodeVisitor {

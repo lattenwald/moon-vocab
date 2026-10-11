@@ -7,6 +7,9 @@ object NoteTypeSpec {
 
     val FIELDS = listOf("Word", "Grammar", "Excerpt", "Translation", "Meaning", "Sentence", "Book", "Source", "AppId")
 
+    val STORED_FIELDS = listOf("Word", "Grammar", "Excerpt", "Translation", "Meaning", "Sentence", "Source")
+    val HTML_FIELDS = setOf("Excerpt", "Sentence")
+
     const val FRONT = """<div class="word">{{Word}}</div><div class="gram">{{Grammar}}</div><div class="ex">{{Excerpt}}</div>"""
 
     const val BACK = """{{FrontSide}}<hr id="answer"><div class="tr">{{Translation}}</div>""" +

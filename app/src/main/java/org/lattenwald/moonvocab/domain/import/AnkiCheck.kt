@@ -4,8 +4,8 @@ import android.util.Log
 import kotlin.coroutines.cancellation.CancellationException
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
-import org.lattenwald.moonvocab.data.anki.ankiFields
 import org.lattenwald.moonvocab.data.anki.ankiToPlain
+import org.lattenwald.moonvocab.data.anki.storedFields
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.domain.card.CardEvent
@@ -38,8 +38,7 @@ class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway) {
     private suspend fun reconcileSent(): Int {
         val sent = db.cards().byStatus(CardStatus.SENT).filter { it.ankiNoteId != null }
         if (sent.isEmpty()) return 0
-        val lines = sent.map { it.bookId }.distinct().associateWith { id -> db.books().byId(id)?.let(::bookLine).orEmpty() }
-        val sentCards = sent.map { SentCard(it.id, checkNotNull(it.ankiNoteId), it.ankiFields(lines.getValue(it.bookId))) }
+        val sentCards = sent.map { SentCard(it.id, checkNotNull(it.ankiNoteId), it.storedFields()) }
         val byId = sent.associateBy { it.id }
         val actions = reconcile(sentCards, anki.read(sentCards.map { it.noteId }))
         for (action in actions) {

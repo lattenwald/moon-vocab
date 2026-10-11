@@ -90,7 +90,7 @@
 - `ankiFields` HTML-escapes Word, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid.
 - Book is `Title, Author`, or just `Title` when there is no author.
 - A field changed in Anki is read back into the card as plain text with `ankiToPlain`. Excerpt and Sentence are kept as raw HTML.
-- `reconcile` compares the note type's fields that are present on either side.
+- `reconcile` compares the fields the card stores (Word, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note: plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML.
 - `update` merges with the note's current note type in AnkiDroid, and writes the union of the note's tags and ours.
 - `ensureNoteType`:
   - uses the stored id while it is in AnkiDroid's model list;
