@@ -2,6 +2,18 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The Inbox state has a `loaded` flag
+
+- Plan said: M3 Task 7's `InboxState` is `(list, selection, import, anki, missingFields)`.
+- Actual: it also has `loaded`, false in the initial value and true from the first combined emission. The empty state shows only when `loaded` is true.
+- Reason: the initial value holds an empty list, so without the flag "All caught up" flashes before the first query result.
+
+## 2026-10-12: AnkiDroid's permission fallback is new code
+
+- Plan said: M3 Task 7's banner reuses `DebugScreen`'s permission handling, "including its fallback to app settings".
+- Actual: `DebugScreen` had no fallback. `ui/common/AnkiPermission.kt` adds `rememberAnkiPermissionRequest`, which opens the app's system settings when the request is denied without a rationale. The Inbox banner and `DebugScreen` both use it.
+- Reason: once the user denies the permission for good, the system answers without a dialog, and only the app's settings can grant it.
+
 ## 2026-10-12: The mark wave spans character boxes
 
 - Plan said: M3 Task 6's `MarkedExcerpt` runs the wave's x from `getHorizontalPosition(start)` to `getHorizontalPosition(end)` on each line the mark covers.

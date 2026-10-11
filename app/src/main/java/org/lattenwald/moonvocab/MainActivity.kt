@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import org.lattenwald.moonvocab.ui.debug.DebugScreen
+import org.lattenwald.moonvocab.ui.AppShell
 import org.lattenwald.moonvocab.ui.theme.MoonVocabTheme
 
 class MainActivity : AppCompatActivity() {
@@ -13,7 +13,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             MoonVocabTheme {
-                DebugScreen()
+                AppShell()
             }
         }
     }

@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
@@ -37,13 +36,12 @@ import org.lattenwald.moonvocab.domain.card.CardStatus
 import org.lattenwald.moonvocab.domain.import.AnkiCheck
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.domain.import.CheckResult
-import org.lattenwald.moonvocab.domain.import.ImportProgress
 import org.lattenwald.moonvocab.domain.import.ImportRequest
-import org.lattenwald.moonvocab.domain.import.ImportSummary
 import org.lattenwald.moonvocab.domain.import.SendResult
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.lattenwald.moonvocab.domain.mark.defaultStyles
 import org.lattenwald.moonvocab.domain.mark.fileKey
+import org.lattenwald.moonvocab.work.ImportState
 import org.lattenwald.moonvocab.work.ImportWork
 
 sealed interface Notice {
@@ -60,14 +58,6 @@ data class ComboCount(val combo: StyleCombo, val count: Int)
 data class BookCount(val fileKey: String, val title: String, val count: Int)
 
 data class BackupState(val searching: Boolean = false, val searched: Boolean = false, val name: String? = null, val skipped: List<String> = emptyList())
-
-data class ImportState(
-    val running: Boolean = false,
-    val progress: ImportProgress? = null,
-    val summary: ImportSummary? = null,
-    val failure: String? = null,
-    val cancelled: Boolean = false,
-)
 
 data class DebugState(
     val settings: SettingsSnapshot? = null,
@@ -127,7 +117,7 @@ class DebugViewModel(
                 .sortedBy { it.title.lowercase() },
             book = l.book,
             sendToAnki = l.sendToAnki,
-            importState = importState(infos.firstOrNull()),
+            importState = ImportWork.state(infos.firstOrNull()),
             cards = cards,
             busy = l.busy,
             notice = l.notice,
@@ -237,15 +227,6 @@ class DebugViewModel(
     }
 
     private fun showError(e: Throwable) = local.update { it.copy(notice = Notice.Error(e.message ?: e::class.simpleName.orEmpty())) }
-
-    private fun importState(info: WorkInfo?): ImportState = when (info?.state) {
-        null -> ImportState()
-        WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED ->
-            ImportState(running = true, progress = ImportWork.progress(info.progress))
-        WorkInfo.State.SUCCEEDED -> ImportState(summary = ImportWork.summary(info.outputData))
-        WorkInfo.State.FAILED -> ImportState(failure = ImportWork.failureMessage(info.outputData).orEmpty())
-        WorkInfo.State.CANCELLED -> ImportState(cancelled = true)
-    }
 
     companion object {
         private const val TEST_DECK = "Moon+::Test"

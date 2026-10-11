@@ -151,7 +151,7 @@
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
 - App data is excluded from cloud backup and device transfer.
-- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen.
+- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox query and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty Inbox.
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
 - The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
 - The debug screen's Send all pending skips cards with an `elsewhereDeck`.
@@ -161,3 +161,11 @@
 - Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
 - The theme follows the system's light or dark mode until Settings adds the choice in milestone 5.
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
+- The app opens on the Inbox. The bottom bar has Inbox and Settings. Settings shows the debug screen until milestone 5.
+- Tabs are plain Compose state. Navigation 3 arrives with the card page in milestone 4.
+- Tapping a card outside selection does nothing until milestone 4.
+- A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
+- An import stopped by the translation service shows its reason in the result card, with a button to Settings. The Translation service page comes in milestone 5.
+- The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.
+- The Inbox background is `surfaceContainer` with `surfaceContainerLowest` rows when the surface is light, and `surface` with `surfaceContainer` rows when it is dark.
+- Asking for AnkiDroid's permission opens the app's system settings when the request is denied and the system shows no rationale.

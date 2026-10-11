@@ -8,6 +8,55 @@
         <item quantity="other">%1$d of %2$d marks</item>
     </plurals>
 
+    <string name="nav_inbox">Inbox</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="inbox_title">Inbox</string>
+    <plurals name="inbox_to_review">
+        <item quantity="one">%d card to review</item>
+        <item quantity="other">%d cards to review</item>
+    </plurals>
+    <string name="inbox_all">All</string>
+    <string name="inbox_language_other">Other</string>
+    <string name="inbox_label_phrase">Widened to a phrase</string>
+    <string name="inbox_label_invented">Example written by the model, sentence not found</string>
+    <string name="inbox_label_failed">Translation failed. Translate again to retry.</string>
+    <string name="inbox_label_elsewhere">Already in Anki, deck %1$s</string>
+    <string name="inbox_label_elsewhere_unknown">Already in Anki</string>
+    <string name="inbox_empty_title">All caught up</string>
+    <string name="inbox_empty_text">New words show up here after you import a Moon+ backup.</string>
+
+    <string name="inbox_progress_reading">Reading the backup</string>
+    <string name="inbox_progress_title">Translating words from %1$s</string>
+    <string name="inbox_progress_count">%1$d of %2$d</string>
+    <string name="inbox_result_title">Import finished</string>
+    <plurals name="inbox_result_to_review">
+        <item quantity="one">%d new card to review</item>
+        <item quantity="other">%d new cards to review</item>
+    </plurals>
+    <plurals name="inbox_result_sent">
+        <item quantity="one">%d card sent to AnkiDroid</item>
+        <item quantity="other">%d cards sent to AnkiDroid</item>
+    </plurals>
+    <plurals name="inbox_result_failed">
+        <item quantity="one">%d failed. Translate it again to retry.</item>
+        <item quantity="other">%d failed. Translate them again to retry.</item>
+    </plurals>
+    <string name="inbox_result_incomplete">The backup was incomplete, so only marks saved earlier were translated.</string>
+    <string name="inbox_result_stopped_auth">Stopped: the translation service rejected the API key.</string>
+    <string name="inbox_result_stopped_credits">Stopped: no credits left with the translation service.</string>
+    <string name="inbox_result_stopped_config">Stopped: check the translation service\'s base URL and model.</string>
+    <string name="inbox_result_open_settings">Open Settings</string>
+    <string name="inbox_result_send_error">Sending stopped: %1$s</string>
+    <string name="inbox_result_nothing">Nothing new to import</string>
+    <string name="inbox_result_import_failed">Import failed: %1$s</string>
+    <string name="inbox_result_dismiss">Dismiss</string>
+
+    <string name="inbox_banner_not_installed">AnkiDroid isn\'t installed. Cards wait here until it is.</string>
+    <string name="inbox_banner_get">Get AnkiDroid</string>
+    <string name="inbox_banner_no_permission">Moon+ Vocab needs access to AnkiDroid to send cards.</string>
+    <string name="inbox_banner_allow">Allow</string>
+
     <string name="debug_folders">Folders</string>
     <string name="debug_choose_backup_folder">Choose backup folder</string>
     <string name="debug_choose_books_folder">Choose books folder</string>

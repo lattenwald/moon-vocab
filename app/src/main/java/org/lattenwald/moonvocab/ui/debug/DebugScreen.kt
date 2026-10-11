@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,7 +32,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -55,7 +54,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ichi2.anki.api.AddContentApi
 import java.time.LocalDate
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
@@ -65,9 +63,15 @@ import org.lattenwald.moonvocab.data.settings.LlmService
 import org.lattenwald.moonvocab.data.settings.SettingsSnapshot
 import org.lattenwald.moonvocab.domain.import.CheckResult
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
+import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
+import org.lattenwald.moonvocab.work.ImportState
 
 @Composable
-fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)) {
+fun DebugScreen(
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory),
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LifecycleResumeEffect(vm) {
@@ -77,7 +81,7 @@ fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
 
     val pickBackupTree = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::setBackupTree) }
     val pickBooksTree = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::setBooksTree) }
-    val grantAnki = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.refreshAvailability() }
+    val grantAnki = rememberAnkiPermissionRequest(onResult = vm::refreshAvailability)
     val notifyThenImport = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.startImport() }
     val notifyThenRetry = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.retryFailed() }
     val exportCards = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(vm::exportCards) }
@@ -85,97 +89,95 @@ fun DebugScreen(vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
     var confirmForget by remember { mutableStateOf(false) }
     val idle = !state.busy && !state.importState.running
 
-    Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            item {
-                Folders(
-                    state.settings,
-                    onBackup = { pickBackupTree.launch(null) },
-                    onBooks = { pickBooksTree.launch(null) },
-                )
-            }
-            state.settings?.let { s ->
-                item {
-                    Services(
-                        s,
-                        onSelect = vm::selectService,
-                        onEdit = vm::editService,
-                        onAdd = vm::addService,
-                    )
-                }
-            }
-            item {
-                AnkiRow(
-                    state.availability,
-                    enabled = idle,
-                    onGrant = { grantAnki.launch(AddContentApi.READ_WRITE_PERMISSION) },
-                    onCheck = vm::checkAnki,
-                )
-            }
-            if (state.notice is Notice.Checked || state.notice is Notice.Error) item { NoticeText(state.notice) }
-            item {
-                BackupRow(
-                    state.backup,
-                    enabled = state.settings?.backupTree != null && !state.backup.searching && !state.importState.running,
-                    onFind = vm::findNewestBackup,
-                )
-            }
-            if (state.combos.isNotEmpty()) item { Styles(state, onToggle = vm::toggleStyle) }
-            item { BookChoice(state, onSelect = vm::selectBook, onSend = vm::setSendToAnki) }
-            item {
-                ImportSection(
-                    state.importState,
-                    enabled = !state.importState.running && !state.backup.searching,
-                    onImport = {
-                        withNotifications(context, notifyThenImport, vm::startImport)
-                    },
-                )
-            }
-            item {
-                OutlinedButton(
-                    onClick = {
-                        withNotifications(context, notifyThenRetry, vm::retryFailed)
-                    },
-                    enabled = !state.importState.running,
-                ) { Text(stringResource(R.string.debug_retry_failed)) }
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = vm::sendAllPending, enabled = idle) { Text(stringResource(R.string.debug_send_pending)) }
-                    OutlinedButton(onClick = { confirmDelete = true }, enabled = idle) { Text(stringResource(R.string.debug_delete_all)) }
-                }
-            }
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.debug_test_deck), modifier = Modifier.weight(1f))
-                    Switch(
-                        checked = state.settings?.deckOverride != null,
-                        onCheckedChange = vm::setTestDeck,
-                        enabled = idle && state.settings != null,
-                    )
-                }
-            }
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { exportCards.launch(cardsExportName(LocalDate.now())) }, enabled = idle) {
-                        Text(stringResource(R.string.debug_export))
-                    }
-                    OutlinedButton(onClick = { confirmForget = true }, enabled = idle) { Text(stringResource(R.string.debug_forget_unsent)) }
-                }
-            }
-            if (state.notice !is Notice.Checked && state.notice != null) item { NoticeText(state.notice) }
-            item {
-                Text(
-                    pluralStringResource(R.plurals.debug_cards, state.cards.size, state.cards.size),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-            }
-            items(state.cards, key = { it.id }) { CardRow(it) }
+    LazyColumn(
+        modifier = modifier.fillMaxSize().padding(contentPadding).consumeWindowInsets(contentPadding).imePadding(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item {
+            Folders(
+                state.settings,
+                onBackup = { pickBackupTree.launch(null) },
+                onBooks = { pickBooksTree.launch(null) },
+            )
         }
+        state.settings?.let { s ->
+            item {
+                Services(
+                    s,
+                    onSelect = vm::selectService,
+                    onEdit = vm::editService,
+                    onAdd = vm::addService,
+                )
+            }
+        }
+        item {
+            AnkiRow(
+                state.availability,
+                enabled = idle,
+                onGrant = grantAnki,
+                onCheck = vm::checkAnki,
+            )
+        }
+        if (state.notice is Notice.Checked || state.notice is Notice.Error) item { NoticeText(state.notice) }
+        item {
+            BackupRow(
+                state.backup,
+                enabled = state.settings?.backupTree != null && !state.backup.searching && !state.importState.running,
+                onFind = vm::findNewestBackup,
+            )
+        }
+        if (state.combos.isNotEmpty()) item { Styles(state, onToggle = vm::toggleStyle) }
+        item { BookChoice(state, onSelect = vm::selectBook, onSend = vm::setSendToAnki) }
+        item {
+            ImportSection(
+                state.importState,
+                enabled = !state.importState.running && !state.backup.searching,
+                onImport = {
+                    withNotifications(context, notifyThenImport, vm::startImport)
+                },
+            )
+        }
+        item {
+            OutlinedButton(
+                onClick = {
+                    withNotifications(context, notifyThenRetry, vm::retryFailed)
+                },
+                enabled = !state.importState.running,
+            ) { Text(stringResource(R.string.debug_retry_failed)) }
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = vm::sendAllPending, enabled = idle) { Text(stringResource(R.string.debug_send_pending)) }
+                OutlinedButton(onClick = { confirmDelete = true }, enabled = idle) { Text(stringResource(R.string.debug_delete_all)) }
+            }
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.debug_test_deck), modifier = Modifier.weight(1f))
+                Switch(
+                    checked = state.settings?.deckOverride != null,
+                    onCheckedChange = vm::setTestDeck,
+                    enabled = idle && state.settings != null,
+                )
+            }
+        }
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { exportCards.launch(cardsExportName(LocalDate.now())) }, enabled = idle) {
+                    Text(stringResource(R.string.debug_export))
+                }
+                OutlinedButton(onClick = { confirmForget = true }, enabled = idle) { Text(stringResource(R.string.debug_forget_unsent)) }
+            }
+        }
+        if (state.notice !is Notice.Checked && state.notice != null) item { NoticeText(state.notice) }
+        item {
+            Text(
+                pluralStringResource(R.plurals.debug_cards, state.cards.size, state.cards.size),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+        items(state.cards, key = { it.id }) { CardRow(it) }
     }
 
     if (confirmDelete) {

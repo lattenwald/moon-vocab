@@ -3,6 +3,7 @@ package org.lattenwald.moonvocab.work
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import java.io.File
@@ -11,6 +12,14 @@ import org.lattenwald.moonvocab.domain.import.ImportProgress
 import org.lattenwald.moonvocab.domain.import.ImportRequest
 import org.lattenwald.moonvocab.domain.import.ImportSummary
 import org.lattenwald.moonvocab.domain.mark.parseStyleCombo
+
+data class ImportState(
+    val running: Boolean = false,
+    val progress: ImportProgress? = null,
+    val summary: ImportSummary? = null,
+    val failure: String? = null,
+    val cancelled: Boolean = false,
+)
 
 object ImportWork {
     const val NAME = "import"
@@ -91,4 +100,13 @@ object ImportWork {
     fun failure(message: String): Data = workDataOf(ERROR to message)
 
     fun failureMessage(data: Data): String? = data.getString(ERROR)
+
+    fun state(info: WorkInfo?): ImportState = when (info?.state) {
+        null -> ImportState()
+        WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED ->
+            ImportState(running = true, progress = progress(info.progress))
+        WorkInfo.State.SUCCEEDED -> ImportState(summary = summary(info.outputData))
+        WorkInfo.State.FAILED -> ImportState(failure = failureMessage(info.outputData).orEmpty())
+        WorkInfo.State.CANCELLED -> ImportState(cancelled = true)
+    }
 }
