@@ -138,6 +138,8 @@
 - Inbox groups are ordered by their newest mark. Cards in a group are ordered by newest mark, then id, both descending.
 - Language chips appear only when the Inbox holds two or more languages. A card with no language counts as Other, listed last.
 - A filter whose language left the Inbox falls back to All.
+- Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen only maps fingers to rows and calls it.
+- Long-press is 360 ms. Auto-scroll starts 72 dp from either list edge and moves at most 18 dp per frame.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
