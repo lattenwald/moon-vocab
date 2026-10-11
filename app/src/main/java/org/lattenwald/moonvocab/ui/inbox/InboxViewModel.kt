@@ -9,12 +9,17 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.work.WorkManager
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
@@ -22,10 +27,21 @@ import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
+import org.lattenwald.moonvocab.domain.import.CardSender
+import org.lattenwald.moonvocab.domain.import.ImportRequest
+import org.lattenwald.moonvocab.domain.import.SendResult
+import org.lattenwald.moonvocab.domain.inbox.InboxActions
 import org.lattenwald.moonvocab.domain.inbox.InboxList
 import org.lattenwald.moonvocab.domain.inbox.LanguageFilter
 import org.lattenwald.moonvocab.domain.inbox.Selection
+import org.lattenwald.moonvocab.domain.inbox.dragOver
+import org.lattenwald.moonvocab.domain.inbox.endDrag
 import org.lattenwald.moonvocab.domain.inbox.inboxList
+import org.lattenwald.moonvocab.domain.inbox.retain
+import org.lattenwald.moonvocab.domain.inbox.startDrag
+import org.lattenwald.moonvocab.domain.inbox.toggle
+import org.lattenwald.moonvocab.domain.inbox.toggleAll
+import org.lattenwald.moonvocab.domain.inbox.toggleGroup
 import org.lattenwald.moonvocab.work.ImportState
 import org.lattenwald.moonvocab.work.ImportWork
 
@@ -38,26 +54,47 @@ data class InboxState(
     val loaded: Boolean = false,
 )
 
+sealed interface InboxEvent {
+    data class Sent(val ids: List<Long>, val stayed: Int) : InboxEvent
+    data class Stayed(val count: Int) : InboxEvent
+    data class Discarded(val ids: List<Long>) : InboxEvent
+    data class Unavailable(val availability: AnkiAvailability) : InboxEvent
+    data class SendFailed(val message: String) : InboxEvent
+    data class UndoKept(val count: Int) : InboxEvent
+    data class Retranslating(val count: Int) : InboxEvent
+}
+
 class InboxViewModel(
     private val db: AppDatabase,
     private val settings: Settings,
     private val anki: AnkiGateway,
     private val workManager: WorkManager,
+    private val actions: InboxActions,
+    private val sender: CardSender,
     private val io: CoroutineDispatcher,
 ) : ViewModel() {
     private val filter = MutableStateFlow<LanguageFilter>(LanguageFilter.All)
     private val availability = MutableStateFlow<AnkiAvailability?>(null)
+    private val selection = MutableStateFlow(Selection())
+    private val missingFields = MutableStateFlow<List<String>>(emptyList())
+    private val eventChannel = Channel<InboxEvent>(Channel.BUFFERED)
+
+    val events: Flow<InboxEvent> = eventChannel.receiveAsFlow()
 
     private val rows = db.cards().observeInbox().catch { e ->
         Log.e(TAG, "inbox query failed", e)
         emit(emptyList())
     }
 
+    private val list = combine(rows, filter, ::inboxList).onEach { l -> selection.update { it.retain(l.visibleIds.toSet()) } }
+
     val state: StateFlow<InboxState> = combine(
-        rows, filter, workManager.getWorkInfosForUniqueWorkFlow(ImportWork.NAME), availability,
-    ) { r, f, infos, a ->
-        InboxState(list = inboxList(r, f), import = ImportWork.state(infos.firstOrNull()), anki = a, loaded = true)
+        list, selection, workManager.getWorkInfosForUniqueWorkFlow(ImportWork.NAME), availability, missingFields,
+    ) { l, s, infos, a, m ->
+        InboxState(list = l, selection = s, import = ImportWork.state(infos.firstOrNull()), anki = a, missingFields = m, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InboxState())
+
+    private val visibleIds: List<Long> get() = state.value.list.visibleIds
 
     fun setFilter(f: LanguageFilter) {
         filter.value = f
@@ -79,6 +116,128 @@ class InboxViewModel(
         workManager.pruneWork()
     }
 
+    fun startDrag(id: Long) {
+        val order = visibleIds
+        selection.update { it.startDrag(order, id) }
+    }
+
+    // The drag's order is a snapshot: a card that left the Inbox mid-drag must not come back.
+    fun dragOver(id: Long) {
+        val visible = visibleIds.toSet()
+        selection.update { it.dragOver(id).retain(visible) }
+    }
+
+    fun endDrag() = selection.update { it.endDrag() }
+
+    fun toggle(id: Long) = selection.update { it.toggle(id) }
+
+    fun toggleGroup(bookId: Long) {
+        val ids = state.value.list.groups.firstOrNull { it.bookId == bookId }?.cards?.map { it.id } ?: return
+        selection.update { it.toggleGroup(ids) }
+    }
+
+    fun toggleAll() {
+        val ids = visibleIds
+        selection.update { it.toggleAll(ids) }
+    }
+
+    fun clearSelection() {
+        selection.value = Selection()
+    }
+
+    fun send(ids: List<Long>, onStayed: () -> Unit = {}) {
+        if (ids.isEmpty()) return
+        clearSelection()
+        viewModelScope.launch {
+            val event = try {
+                sendEvent(ids, withContext(io) { sender.send(ids) })
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "send failed", e)
+                InboxEvent.SendFailed(e.message ?: e::class.java.simpleName)
+            }
+            if (event !is InboxEvent.Sent) onStayed()
+            eventChannel.send(event)
+        }
+    }
+
+    private fun sendEvent(ids: List<Long>, r: SendResult): InboxEvent {
+        r.unavailable?.let { return InboxEvent.Unavailable(it) }
+        missingFields.value = r.missingFields
+        return when {
+            r.error != null -> InboxEvent.SendFailed(r.error)
+            r.sentIds.isNotEmpty() -> InboxEvent.Sent(r.sentIds, stayed = ids.size - r.sentIds.size)
+            else -> InboxEvent.Stayed(ids.size)
+        }
+    }
+
+    fun discard(ids: List<Long>, onStayed: () -> Unit = {}) {
+        if (ids.isEmpty()) return
+        clearSelection()
+        viewModelScope.launch {
+            val changed = try {
+                withContext(io) { actions.discard(ids) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "discard failed", e)
+                emptyList()
+            }
+            if (changed.isEmpty()) onStayed() else eventChannel.send(InboxEvent.Discarded(changed))
+        }
+    }
+
+    fun translateAgain(ids: List<Long>) {
+        if (ids.isEmpty() || state.value.import.running) return
+        clearSelection()
+        viewModelScope.launch {
+            val forgotten = try {
+                withContext(io) { actions.forgetForRetranslation(ids) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "translate again failed", e)
+                return@launch
+            }
+            if (forgotten == 0) return@launch
+            val request = ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false)
+            ImportWork.enqueue(workManager, ImportWork.input(request))
+            eventChannel.send(InboxEvent.Retranslating(forgotten))
+        }
+    }
+
+    fun undo(event: InboxEvent) {
+        viewModelScope.launch {
+            when (event) {
+                is InboxEvent.Sent -> undoSend(event.ids)?.let { eventChannel.send(it) }
+                is InboxEvent.Discarded -> try {
+                    withContext(io) { actions.restore(event.ids) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "restore failed", e)
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    private suspend fun undoSend(ids: List<Long>): InboxEvent? = try {
+        val r = withContext(io) { sender.undoSend(ids) }
+        r.error?.let { Log.w(TAG, "undo send stopped: $it") }
+        when {
+            r.unavailable != null -> InboxEvent.Unavailable(r.unavailable)
+            r.kept > 0 -> InboxEvent.UndoKept(r.kept)
+            else -> null
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, "undo send failed", e)
+        InboxEvent.SendFailed(e.message ?: e::class.java.simpleName)
+    }
+
     companion object {
         private const val TAG = "InboxViewModel"
 
@@ -86,7 +245,7 @@ class InboxViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                InboxViewModel(c.db, c.settings, c.anki, c.workManager, c.io)
+                InboxViewModel(c.db, c.settings, c.anki, c.workManager, c.inboxActions, c.sender, c.io)
             }
         }
     }

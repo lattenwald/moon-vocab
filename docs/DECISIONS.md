@@ -141,6 +141,10 @@
 - A filter whose language left the Inbox falls back to All.
 - Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen only maps fingers to rows and calls it.
 - Long-press is 360 ms. Auto-scroll starts 72 dp from either list edge and moves at most 18 dp per frame.
+- Swipe is off while selecting.
+- Translate again is disabled while an import runs.
+- Send and discard offer Undo in a snackbar. Undoing a send deletes the notes it created.
+- Cards labelled "Already in Anki" can be sent from the Inbox.
 
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.

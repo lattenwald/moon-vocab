@@ -2,6 +2,24 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The Send button sits beside the floating toolbar
+
+- Plan said: M3 Task 8's `HorizontalFloatingToolbar(expanded = true)` holds a Send FAB in its `floatingActionButton` slot, showing `ic_send` and `inbox_send_n`.
+- Actual: the toolbar holds Discard and Translate again. A 64 dp `ExtendedFloatingActionButton` with `ic_send` and "Send N" sits 10 dp to its right in a `Row`, as in the prototype. With nothing selected it is drawn at 45 % alpha, marked disabled for accessibility, and ignores taps.
+- Reason: the toolbar's slot measures the FAB as a fixed square (56–80 dp), so "Send N" can't fit. FABs have no `enabled` parameter.
+
+## 2026-10-12: Swipe state is not saveable, and send and discard report a stay
+
+- Plan said: M3 Task 8's rows take their state from `rememberSwipeToDismissBoxState(positionalThreshold = { it * 0.35f })`, and the ViewModel's actions are `send(ids)` and `discard(ids)`.
+- Actual: each row builds `SwipeToDismissBoxState(Settled, positionalThreshold = { it * 0.35f })` in `remember(card.id)`. `send` and `discard` take an optional `onStayed` callback, which runs when the cards stay in the Inbox; the swiped row passes one that snaps it back.
+- Reason: `SwipeToDismissBox` calls `onDismiss` from an effect keyed on the settled value, and the list keeps saveable state per key. An undone card would come back in its dismissed state and be sent or discarded again. Events don't say which row a `Stayed` or error belongs to, so the row learns it through the callback.
+
+## 2026-10-12: "N selected" is a plural
+
+- Plan said: M3 Task 8's `inbox_selected` is a string, `%1$d selected`.
+- Actual: it is a `plurals` with the same text for `one` and `other`.
+- Reason: counts go through `plurals`, and lint flags the string as `PluralsCandidate`.
+
 ## 2026-10-12: The Inbox state has a `loaded` flag
 
 - Plan said: M3 Task 7's `InboxState` is `(list, selection, import, anki, missingFields)`.

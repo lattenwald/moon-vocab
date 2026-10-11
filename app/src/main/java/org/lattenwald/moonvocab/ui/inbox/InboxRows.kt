@@ -1,7 +1,16 @@
 package org.lattenwald.moonvocab.ui.inbox
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +19,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -17,6 +27,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.triStateToggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -28,20 +40,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +76,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
+import kotlinx.coroutines.launch
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.llm.LlmException
@@ -68,6 +95,7 @@ private val OuterCorner = 24.dp
 private val InnerCorner = 6.dp
 private val PanelShape = RoundedCornerShape(24.dp)
 private val RowPadding = PaddingValues(start = 14.dp, top = 14.dp, end = 18.dp, bottom = 15.dp)
+private const val SWIPE_THRESHOLD = 0.35f
 
 internal data class InboxColors(val screen: Color, val row: Color)
 
@@ -80,67 +108,175 @@ internal fun inboxColors(): InboxColors {
 // SegmentedListItem's outer, selected and pressed corners come from the theme's large shape.
 internal fun Shapes.forInboxList(): Shapes = copy(large = RoundedCornerShape(OuterCorner))
 
+private fun rowShape(index: Int, count: Int) = RoundedCornerShape(
+    topStart = if (index == 0) OuterCorner else InnerCorner,
+    topEnd = if (index == 0) OuterCorner else InnerCorner,
+    bottomEnd = if (index == count - 1) OuterCorner else InnerCorner,
+    bottomStart = if (index == count - 1) OuterCorner else InnerCorner,
+)
+
 @Composable
-internal fun InboxCardRow(card: InboxCard, index: Int, count: Int, containerColor: Color, modifier: Modifier = Modifier) {
+internal fun SwipeableCardRow(
+    card: InboxCard,
+    index: Int,
+    count: Int,
+    containerColor: Color,
+    selecting: Boolean,
+    selected: Boolean,
+    onToggle: () -> Unit,
+    onSend: (onStayed: () -> Unit) -> Unit,
+    onDiscard: (onStayed: () -> Unit) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Not rememberSaveable: a restored dismissed state would run onDismiss again when an undone card returns.
+    val state = remember(card.id) { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, positionalThreshold = { it * SWIPE_THRESHOLD }) }
+    val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(state) {
+        snapshotFlow { state.targetValue }.collect {
+            if (it != SwipeToDismissBoxValue.Settled) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        }
+    }
+    val snapBack: () -> Unit = { scope.launch { state.reset() } }
+    SwipeToDismissBox(
+        state = state,
+        backgroundContent = { SwipeBackground(state) },
+        modifier = modifier.clip(rowShape(index, count)),
+        enableDismissFromStartToEnd = !selecting,
+        enableDismissFromEndToStart = !selecting,
+        gesturesEnabled = !selecting,
+        onDismiss = { value ->
+            when (value) {
+                SwipeToDismissBoxValue.StartToEnd -> onSend(snapBack)
+                SwipeToDismissBoxValue.EndToStart -> onDiscard(snapBack)
+                SwipeToDismissBoxValue.Settled -> Unit
+            }
+        },
+    ) {
+        InboxCardRow(card, index, count, containerColor, selecting, selected, onToggle)
+    }
+}
+
+@Composable
+private fun SwipeBackground(state: SwipeToDismissBoxState) {
+    val armed = state.targetValue != SwipeToDismissBoxValue.Settled
+    val scale by animateFloatAsState(if (armed) 1.3f else 1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+    val direction = state.dismissDirection
+    if (direction == SwipeToDismissBoxValue.Settled) return
+    val colors = MaterialTheme.colorScheme
+    val send = direction == SwipeToDismissBoxValue.StartToEnd
+    val content = if (send) colors.onPrimary else colors.onErrorContainer
+    Row(
+        Modifier.fillMaxSize().background(if (send) colors.primary else colors.errorContainer).padding(horizontal = 24.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, if (send) Alignment.Start else Alignment.End),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val icon = @Composable { id: Int -> Icon(painterResource(id), contentDescription = null, modifier = Modifier.scale(scale), tint = content) }
+        val label = @Composable { id: Int -> Text(stringResource(id), color = content, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+        if (send) {
+            icon(R.drawable.ic_send)
+            label(R.string.inbox_swipe_send)
+        } else {
+            label(R.string.inbox_swipe_discard)
+            icon(R.drawable.ic_delete)
+        }
+    }
+}
+
+@Composable
+private fun LeadCheck(visible: Boolean, selected: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    AnimatedVisibility(visible, enter = expandHorizontally() + fadeIn(), exit = shrinkHorizontally() + fadeOut()) {
+        val fill by animateColorAsState(if (selected) colors.primary else Color.Transparent)
+        val border by animateColorAsState(if (selected) colors.primary else colors.outline)
+        val checkScale by animateFloatAsState(if (selected) 1f else 0f, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+        Box(Modifier.padding(start = 2.dp, end = 14.dp).size(22.dp).border(2.dp, border, CircleShape).background(fill, CircleShape), contentAlignment = Alignment.Center) {
+            Icon(painterResource(R.drawable.ic_check), contentDescription = null, modifier = Modifier.size(16.dp).scale(checkScale), tint = colors.onPrimary)
+        }
+    }
+}
+
+@Composable
+internal fun InboxCardRow(
+    card: InboxCard,
+    index: Int,
+    count: Int,
+    containerColor: Color,
+    selecting: Boolean,
+    selected: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = MaterialTheme.colorScheme
     SegmentedListItem(
+        selected = selected,
+        onClick = { if (selecting) onToggle() },
         shapes = ListItemDefaults.segmentedShapes(index, count, ListItemDefaults.shapes(shape = RoundedCornerShape(InnerCorner))),
         modifier = modifier,
-        colors = ListItemDefaults.segmentedColors(containerColor = containerColor),
+        colors = ListItemDefaults.segmentedColors(containerColor = containerColor, selectedContainerColor = colors.secondaryContainer),
         contentPadding = RowPadding,
     ) {
-        Column {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row {
+            LeadCheck(selecting, selected)
+            CardText(card)
+        }
+    }
+}
+
+@Composable
+private fun CardText(card: InboxCard) {
+    val colors = MaterialTheme.colorScheme
+    Column {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                card.word,
+                modifier = Modifier.alignByBaseline().weight(1f, fill = false),
+                color = colors.onSurface,
+                fontSize = 18.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (card.grammar.isNotBlank()) {
                 Text(
-                    card.word,
-                    modifier = Modifier.alignByBaseline().weight(1f, fill = false),
-                    color = colors.onSurface,
-                    fontSize = 18.sp,
-                    lineHeight = 24.sp,
-                    fontWeight = FontWeight.Medium,
+                    card.grammar,
+                    modifier = Modifier.alignByBaseline(),
+                    color = colors.onSurfaceVariant,
+                    fontSize = 14.sp,
+                    fontFamily = BookFontFamily,
+                    fontStyle = FontStyle.Italic,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (card.grammar.isNotBlank()) {
-                    Text(
-                        card.grammar,
-                        modifier = Modifier.alignByBaseline(),
-                        color = colors.onSurfaceVariant,
-                        fontSize = 14.sp,
-                        fontFamily = BookFontFamily,
-                        fontStyle = FontStyle.Italic,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
-            if (card.failed) {
-                Text(stringResource(R.string.inbox_label_failed), Modifier.padding(top = 1.dp), color = colors.error, fontSize = 14.sp, lineHeight = 20.sp)
-            } else if (card.translation.isNotBlank()) {
-                Text(card.translation, Modifier.padding(top = 1.dp), color = colors.onSurface, fontSize = 15.sp, lineHeight = 20.sp)
-            }
-            if (!card.failed && card.excerpt != null) {
-                MarkedExcerpt(
-                    card.excerpt,
-                    modifier = Modifier.padding(top = 6.dp),
-                    style = TextStyle(fontFamily = BookFontFamily, fontSize = 14.sp, lineHeight = 21.sp),
-                    maxLines = 2,
+        }
+        if (card.failed) {
+            Text(stringResource(R.string.inbox_label_failed), Modifier.padding(top = 1.dp), color = colors.error, fontSize = 14.sp, lineHeight = 20.sp)
+        } else if (card.translation.isNotBlank()) {
+            Text(card.translation, Modifier.padding(top = 1.dp), color = colors.onSurface, fontSize = 15.sp, lineHeight = 20.sp)
+        }
+        if (!card.failed && card.excerpt != null) {
+            MarkedExcerpt(
+                card.excerpt,
+                modifier = Modifier.padding(top = 6.dp),
+                style = TextStyle(fontFamily = BookFontFamily, fontSize = 14.sp, lineHeight = 21.sp),
+                maxLines = 2,
+            )
+        }
+        for (label in card.labels) {
+            when (label) {
+                RowLabel.Phrase -> RowFlag(R.drawable.ic_add, stringResource(R.string.inbox_label_phrase))
+                RowLabel.Invented -> RowFlag(R.drawable.ic_edit, stringResource(R.string.inbox_label_invented))
+                is RowLabel.Elsewhere -> RowFlag(
+                    R.drawable.ic_school,
+                    if (label.deck.isEmpty()) {
+                        stringResource(R.string.inbox_label_elsewhere_unknown)
+                    } else {
+                        stringResource(R.string.inbox_label_elsewhere, label.deck)
+                    },
                 )
-            }
-            for (label in card.labels) {
-                when (label) {
-                    RowLabel.Phrase -> RowFlag(R.drawable.ic_add, stringResource(R.string.inbox_label_phrase))
-                    RowLabel.Invented -> RowFlag(R.drawable.ic_edit, stringResource(R.string.inbox_label_invented))
-                    is RowLabel.Elsewhere -> RowFlag(
-                        R.drawable.ic_school,
-                        if (label.deck.isEmpty()) {
-                            stringResource(R.string.inbox_label_elsewhere_unknown)
-                        } else {
-                            stringResource(R.string.inbox_label_elsewhere, label.deck)
-                        },
-                    )
-                    RowLabel.Failed -> Unit
-                }
+                RowLabel.Failed -> Unit
             }
         }
     }
@@ -156,12 +292,20 @@ private fun RowFlag(icon: Int, text: String) {
 }
 
 @Composable
-internal fun GroupHeader(group: InboxGroup, modifier: Modifier = Modifier) {
+internal fun GroupHeader(group: InboxGroup, selecting: Boolean, checked: ToggleableState, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     val variant = MaterialTheme.colorScheme.onSurfaceVariant
     Row(
-        modifier.fillMaxWidth().heightIn(min = 44.dp).padding(start = 8.dp, top = 6.dp, end = 6.dp, bottom = 10.dp),
+        modifier.fillMaxWidth()
+            .clip(PanelShape)
+            .then(if (selecting) Modifier.triStateToggleable(checked, role = Role.Checkbox, onClick = onToggle) else Modifier)
+            .heightIn(min = 44.dp)
+            .padding(start = 8.dp, top = 6.dp, end = 6.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // No onClick: the header is the toggle, and a 48 dp touch target would shift the rows below.
+        AnimatedVisibility(selecting, enter = expandHorizontally() + fadeIn(), exit = shrinkHorizontally() + fadeOut()) {
+            TriStateCheckbox(state = checked, onClick = null, modifier = Modifier.padding(end = 8.dp))
+        }
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 group.title,
@@ -337,6 +481,23 @@ internal fun AnkiBanner(availability: AnkiAvailability, onGet: () -> Unit, onAll
             Text(stringResource(text), color = colors.onSecondaryContainer, fontSize = 14.sp, lineHeight = 20.sp)
         }
         TextButton(onClick = onClick, modifier = Modifier.align(Alignment.End)) { Text(stringResource(action)) }
+    }
+}
+
+@Composable
+internal fun NoteTypeBanner(missingFields: List<String>, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    Row(
+        modifier.fillMaxWidth().background(colors.errorContainer, PanelShape).padding(start = 18.dp, top = 16.dp, end = 18.dp, bottom = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(painterResource(R.drawable.ic_error), contentDescription = null, tint = colors.onErrorContainer)
+        Text(
+            stringResource(R.string.inbox_note_type_missing, missingFields.joinToString(", ")),
+            color = colors.onErrorContainer,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+        )
     }
 }
 

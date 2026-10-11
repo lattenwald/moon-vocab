@@ -1,5 +1,10 @@
 package org.lattenwald.moonvocab.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -17,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -33,28 +39,36 @@ private enum class Tab { INBOX, SETTINGS }
 fun AppShell() {
     var tab by rememberSaveable { mutableStateOf(Tab.INBOX) }
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
-    val total = inbox.state.collectAsStateWithLifecycle().value.list.total
+    val inboxState by inbox.state.collectAsStateWithLifecycle()
+    val total = inboxState.list.total
+    val selecting = tab == Tab.INBOX && inboxState.selection.active
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
         bottomBar = {
-            ShortNavigationBar {
-                ShortNavigationBarItem(
-                    selected = tab == Tab.INBOX,
-                    onClick = { tab = Tab.INBOX },
-                    icon = {
-                        BadgedBox(badge = { if (total > 0) Badge { Text(total.toString()) } }) {
-                            Icon(painterResource(R.drawable.ic_inbox), contentDescription = null)
-                        }
-                    },
-                    label = { Text(stringResource(R.string.nav_inbox)) },
-                )
-                ShortNavigationBarItem(
-                    selected = tab == Tab.SETTINGS,
-                    onClick = { tab = Tab.SETTINGS },
-                    icon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_settings)) },
-                )
+            AnimatedVisibility(
+                visible = !selecting,
+                enter = slideInVertically { it } + expandVertically(expandFrom = Alignment.Top),
+                exit = slideOutVertically { it } + shrinkVertically(shrinkTowards = Alignment.Top),
+            ) {
+                ShortNavigationBar {
+                    ShortNavigationBarItem(
+                        selected = tab == Tab.INBOX,
+                        onClick = { tab = Tab.INBOX },
+                        icon = {
+                            BadgedBox(badge = { if (total > 0) Badge { Text(total.toString()) } }) {
+                                Icon(painterResource(R.drawable.ic_inbox), contentDescription = null)
+                            }
+                        },
+                        label = { Text(stringResource(R.string.nav_inbox)) },
+                    )
+                    ShortNavigationBarItem(
+                        selected = tab == Tab.SETTINGS,
+                        onClick = { tab = Tab.SETTINGS },
+                        icon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_settings)) },
+                    )
+                }
             }
         },
     ) { padding ->

@@ -57,6 +57,43 @@
     <string name="inbox_banner_no_permission">Moon+ Vocab needs access to AnkiDroid to send cards.</string>
     <string name="inbox_banner_allow">Allow</string>
 
+    <plurals name="inbox_selected">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="inbox_select_all">Select all</string>
+    <string name="inbox_clear_selection">Clear selection</string>
+    <string name="inbox_stop_selecting">Stop selecting</string>
+    <string name="inbox_send_n">Send %1$d</string>
+    <string name="inbox_discard">Discard</string>
+    <string name="inbox_translate_again">Translate again</string>
+    <string name="inbox_swipe_send">Send</string>
+    <string name="inbox_swipe_discard">Discard</string>
+    <plurals name="inbox_sent">
+        <item quantity="one">%d card sent to AnkiDroid</item>
+        <item quantity="other">%d cards sent to AnkiDroid</item>
+    </plurals>
+    <plurals name="inbox_stayed">
+        <item quantity="one">%d without a translation stayed in Inbox</item>
+        <item quantity="other">%d without a translation stayed in Inbox</item>
+    </plurals>
+    <string name="inbox_sent_and_stayed">%1$s. %2$s</string>
+    <plurals name="inbox_discarded">
+        <item quantity="one">%d card discarded</item>
+        <item quantity="other">%d cards discarded</item>
+    </plurals>
+    <string name="inbox_undo">Undo</string>
+    <plurals name="inbox_undo_kept">
+        <item quantity="one">%d card stays in AnkiDroid: it didn\'t delete the note</item>
+        <item quantity="other">%d cards stay in AnkiDroid: it didn\'t delete their notes</item>
+    </plurals>
+    <string name="inbox_send_failed">Couldn\'t send: %1$s</string>
+    <string name="inbox_note_type_missing">The Moon+ Vocab note type in AnkiDroid is missing %1$s. Sending is stopped until it\'s back.</string>
+    <plurals name="inbox_retranslating">
+        <item quantity="one">Translating %d card again</item>
+        <item quantity="other">Translating %d cards again</item>
+    </plurals>
+
     <string name="debug_folders">Folders</string>
     <string name="debug_choose_backup_folder">Choose backup folder</string>
     <string name="debug_choose_books_folder">Choose books folder</string>
