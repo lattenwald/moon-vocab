@@ -278,12 +278,15 @@ class ImportPipeline(
         val skippedDiscarded: Int,
     )
 
+    private class LoadedBook(val text: BookText?, var normalized: List<NormalizedText>? = null)
+
     private fun internalError(e: Exception) = "internal error: " + (e.message ?: e::class.simpleName)
 
     private inner class Run(private val source: BookSource) {
         private val books = HashMap<Long, BookEntity>()
-        private val texts = HashMap<Long, BookText?>()
-        private val normalized = HashMap<Long, List<NormalizedText>>()
+        private val loaded = object : LinkedHashMap<Long, LoadedBook>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, LoadedBook>) = size > BOOKS_IN_MEMORY
+        }
         private var availability: AnkiAvailability? = null
 
         suspend fun ankiReady(): Boolean =
@@ -292,7 +295,8 @@ class ImportPipeline(
         suspend fun book(id: Long): BookEntity = books.getOrPut(id) { checkNotNull(db.books().byId(id)) { "no book $id" } }
 
         suspend fun prepare(mark: MarkEntity): Prepared {
-            val text = text(mark.bookId) // outside the guard: an unlistable books folder must fail the import
+            val loadedBook = load(mark.bookId) // outside the guard: an unlistable books folder must fail the import
+            val text = loadedBook.text
             val book = book(mark.bookId)
             fun item(sentence: String?) = TranslationItem(mark.id.toString(), mark.text, sentence, book.title, book.language)
             return try {
@@ -300,8 +304,8 @@ class ImportPipeline(
                     SentenceResult.NotFound
                 } else {
                     val locale = book.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
-                    val chapters = normalized[mark.bookId]
-                        ?: withContext(io) { text.chapters.map(::normalize) }.also { normalized[mark.bookId] = it }
+                    val chapters = loadedBook.normalized
+                        ?: withContext(io) { text.chapters.map(::normalize) }.also { loadedBook.normalized = it }
                     withContext(io) { findSentence(chapters, text.chapters, mark.chapter, mark.position, mark.text, locale) }
                 }
                 Prepared(mark, sentence, item((sentence as? SentenceResult.Found)?.let { normalize(it.sentence).text }))
@@ -316,14 +320,14 @@ class ImportPipeline(
             if (book(bookId).language == null) isoLanguage(t.sourceLanguage)?.let { setLanguage(bookId, it) }
         }
 
-        private suspend fun text(bookId: Long): BookText? {
-            if (bookId in texts) return texts[bookId]
+        private suspend fun load(bookId: Long): LoadedBook {
+            loaded[bookId]?.let { return it }
             val book = book(bookId)
             val text = withContext(io) { source.text(book.relativePath ?: book.fileKey) }
-            texts[bookId] = text
+            val loadedBook = LoadedBook(text).also { loaded[bookId] = it }
             if (book.language == null) isoLanguage(text?.language)?.let { setLanguage(bookId, it) }
             if (book.author == null) text?.author?.takeIf { it.isNotBlank() }?.let { setAuthor(bookId, it) }
-            return text
+            return loadedBook
         }
 
         private suspend fun setAuthor(bookId: Long, author: String) {
@@ -339,6 +343,7 @@ class ImportPipeline(
 
     private companion object {
         const val BATCH_SIZE = 10
+        const val BOOKS_IN_MEMORY = 3
         const val TAG = "ImportPipeline"
     }
 }

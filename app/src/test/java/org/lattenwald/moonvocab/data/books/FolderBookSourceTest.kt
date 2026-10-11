@@ -16,7 +16,11 @@ import org.robolectric.RobolectricTestRunner
 class FolderBookSourceTest {
     @get:Rule val folder = TemporaryFolder()
 
-    private class FakeFolder(private val files: Map<String, File>, private val listingFails: Boolean = false) : BookFolder {
+    private class FakeFolder(
+        private val files: Map<String, File>,
+        private val listingFails: Boolean = false,
+        private val outOfMemory: String? = null,
+    ) : BookFolder {
         var listings = 0
         var copies = 0
 
@@ -28,11 +32,12 @@ class FolderBookSourceTest {
 
         override fun copyToCache(relativePath: String, cacheDir: File): File {
             copies++
+            if (relativePath == outOfMemory) throw OutOfMemoryError("Java heap space")
             return files.getValue(relativePath).copyTo(File(cacheDir, "copy-$copies"))
         }
     }
 
-    @Test fun locatedBookIsCopiedReadOnceAndCleanedUp() {
+    @Test fun locatedBookIsCopiedAndCleanedUp() {
         val books = folder.newFolder("books")
         val cache = folder.newFolder("cache")
         val fake = FakeFolder(mapOf("Greg Egan/Diaspora.epub" to BookFixtures.epub(books, chapters = listOf("<p>Myopia.</p>"))))
@@ -40,10 +45,8 @@ class FolderBookSourceTest {
 
         val first = source.text("/sdcard/Books/Greg Egan/Diaspora.epub")
         assertTrue("Myopia." in first!!.chapters.single())
-        assertEquals(first, source.text("/sdcard/Books/Greg Egan/Diaspora.epub"))
         assertNull(source.text("/sdcard/Books/Missing.epub"))
         assertEquals(1, fake.listings)
-        assertEquals(1, fake.copies)
         assertTrue(cache.listFiles()!!.isEmpty())
     }
 
@@ -73,7 +76,17 @@ class FolderBookSourceTest {
         assertNull(source.text("/sdcard/broken.epub"))
         assertNull(source.text("/sdcard/broken.epub"))
         assertNotNull(source.text("/sdcard/good.epub"))
-        assertEquals(2, fake.copies)
+        assertEquals(3, fake.copies)
         assertTrue(cache.listFiles()!!.isEmpty())
+    }
+
+    @Test fun outOfMemoryOnOneBookGivesItNoText() {
+        val books = folder.newFolder("books")
+        val fake = FakeFolder(mapOf("huge.epub" to File(books, "huge.epub"), "good.epub" to BookFixtures.epub(books, name = "good.epub")),
+            outOfMemory = "huge.epub")
+        val source = FolderBookSource(fake, folder.newFolder("cache"))
+
+        assertNull(source.text("/sdcard/huge.epub"))
+        assertNotNull(source.text("/sdcard/good.epub"))
     }
 }

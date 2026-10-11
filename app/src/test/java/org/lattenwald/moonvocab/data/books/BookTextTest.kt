@@ -86,6 +86,12 @@ class BookTextTest {
         assertEquals(listOf("Haupttext."), readBookText(f, "y.fb2")!!.chapters)
     }
 
+    @Test fun fb2StopsAtTheFirstBinary() {
+        val tail = """<binary id="c.jpg" content-type="image/jpeg">/9j/4AAQSkZJRgABAQ==</binary><body><section><p>after</p></section></body>"""
+        val f = BookFixtures.fb2(tmp, sections = listOf(listOf("Haupttext.")), afterBodies = tail)
+        assertEquals(listOf("Haupttext."), readBookText(f, "y.fb2")!!.chapters)
+    }
+
     @Test fun zippedFb2NamedFb2IsRead() {
         val inner = BookFixtures.fb2(tmp, sections = listOf(listOf("Im Zip.")))
         val f = BookFixtures.zip(tmp, "y.fb2", mapOf("0a1b.fb2" to inner.readBytes()))

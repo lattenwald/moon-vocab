@@ -9,13 +9,8 @@ interface BookSource {
 
 class FolderBookSource(private val folder: BookFolder?, private val cacheDir: File) : BookSource {
     private val locator: BookLocator by lazy { BookLocator(folder?.listRelativePaths().orEmpty()) }
-    private val texts = HashMap<String, BookText?>()
 
-    override fun text(bookPath: String): BookText? {
-        if (folder == null) return null
-        if (bookPath !in texts) texts[bookPath] = read(folder, bookPath)
-        return texts[bookPath]
-    }
+    override fun text(bookPath: String): BookText? = folder?.let { read(it, bookPath) }
 
     private fun read(folder: BookFolder, bookPath: String): BookText? {
         val relativePath = locator.locate(bookPath) ?: return null
@@ -28,6 +23,9 @@ class FolderBookSource(private val folder: BookFolder?, private val cacheDir: Fi
             }
         } catch (e: Exception) {
             Log.w(TAG, "cannot read $relativePath", e)
+            null
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "out of memory reading $relativePath", e)
             null
         }
     }

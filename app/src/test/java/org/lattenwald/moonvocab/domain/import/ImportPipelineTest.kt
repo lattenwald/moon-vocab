@@ -99,6 +99,24 @@ class ImportPipelineTest : ImportTestBase() {
         assertEquals(ImportProgress(25, 25, TITLE), progress.last())
     }
 
+    @Test fun threeBooksStayInMemory() = runTest {
+        val books = FakeBooks(listOf(A, B, C).associateWith { bookText(30) })
+        pipeline(books = { books }).run(req(MrproFixture.build(tmp, marksInBookOrder(A, B, C, A))), {})
+        assertEquals(1, books.reads.getValue(A))
+    }
+
+    @Test fun fourthBookEvictsTheOldest() = runTest {
+        val books = FakeBooks(listOf(A, B, C, D).associateWith { bookText(30) })
+        pipeline(books = { books }).run(req(MrproFixture.build(tmp, marksInBookOrder(A, B, C, D, A))), {})
+        assertEquals(2, books.reads.getValue(A))
+    }
+
+    // The pipeline takes marks newest first.
+    private fun marksInBookOrder(vararg paths: String) = paths.mapIndexed { i, path ->
+        val title = path.substringAfterLast('/')
+        NoteRow(title, path, chapter = 0, position = i * SENTENCE.length, color = ORANGE, time = T0 + paths.size - i, original = word(i), bak = "1")
+    }
+
     @Test fun bookTextGivesSentenceAndBookLanguage() = runTest {
         val seen = mutableListOf<TranslationItem>()
         pipeline(translate = { items, _, _ -> seen += items; items.associate { it.id to tr(it) } }).run(req(backup(2)), {})
@@ -169,5 +187,12 @@ class ImportPipelineTest : ImportTestBase() {
         assertEquals(listOf(word(10), word(11), word(12)), db.cards().byStatus(PENDING).map { it.word }.sorted())
         assertEquals(2, db.marks().withoutCard(null).size)
         assertNull(s.stopped)
+    }
+
+    private companion object {
+        const val A = "/sdcard/Books/A.epub"
+        const val B = "/sdcard/Books/B.epub"
+        const val C = "/sdcard/Books/C.epub"
+        const val D = "/sdcard/Books/D.epub"
     }
 }

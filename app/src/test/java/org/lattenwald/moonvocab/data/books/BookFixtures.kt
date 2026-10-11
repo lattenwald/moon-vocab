@@ -69,6 +69,7 @@ $body
         encoding: String = "UTF-8",
         name: String = "book.fb2",
         mainBodyName: String? = null,
+        afterBodies: String = "",
     ): File {
         fun section(paragraphs: List<String>) =
             "<section>${paragraphs.joinToString("") { if (it.startsWith("<")) it else "<p>$it</p>" }}</section>"
@@ -84,6 +85,7 @@ $body
   </description>
   <body${mainBodyName?.let { " name=\"$it\"" }.orEmpty()}>${sections.joinToString("") { section(it) }}</body>
   $notesBody
+  $afterBodies
 </FictionBook>"""
         return File(dir, name).apply { writeBytes(xml.toByteArray(Charset.forName(encoding))) }
     }
