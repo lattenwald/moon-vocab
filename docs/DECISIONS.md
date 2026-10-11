@@ -1,7 +1,7 @@
 # Decisions
 
 ## Repository
-- Agents stage and commit each task while implementing a plan, on the branch the plan names. Otherwise the user stages, and agents commit only when asked. One-line subject, no attribution.
+- Agents stage and commit their own changes throughout development: one commit per task while implementing a plan, on the branch the plan names. Agents never push unasked. One-line subject, no attribution.
 - `make release` builds the minified release APK, signed with `~/.android/debug.keystore`. `app/proguard-rules.pro` holds no app rules.
 - Robolectric tests run with `--add-exports=java.base/jdk.internal.access=ALL-UNNAMED`.
 - Tests that use MockWebServer run under `RobolectricTestRunner`. `isReturnDefaultValues` stays off.
