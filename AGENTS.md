@@ -9,10 +9,11 @@ Design source of truth: `docs/superpowers/specs/2026-10-11-moon-vocab-design.md`
 ## Non-negotiables
 
 - **No test theater.** A test exists only to catch a defect in this app's own logic. Never test Room, Compose, OkHttp, AnkiDroid, Kotlin, or any library behaving as documented. If a test's value is doubtful, don't write it; if you can't decide, ask instead of writing it. False confidence is worse than no test.
-- **The user stages and commits.** Never `git add`; commit only when asked, with a one-line subject and no attribution.
+- **Commits.** While implementing a plan, stage and commit each task's changes yourself. Otherwise never `git add`, and commit only when asked. Always a one-line subject and no attribution.
 - **Work is tracked in tickets.** `tk` in `.tickets/` (`tk help`). Anything deferred, discovered, or out of scope becomes a ticket, not a TODO comment or a note in chat.
 - **Ask before touching the phone.** Never install, launch, or run anything on a device or emulator, and never run `adb`, without the user's go-ahead in this session.
 - **Scope is the deliverable.** Build what was asked, make routine judgment calls yourself, and voice disagreement in a sentence rather than acting on it.
+- **`docs/DECISIONS.md` lists current decisions only.** One line per decision, no reasons, nothing superseded: when a decision changes, edit or delete its line. Add a line whenever you make or are given a decision that later work must follow.
 - **`docs/DEVIATIONS.md` holds deviations only.** An entry exists when a plan or the spec said "do A" and the implementing agent did B. Format: dated, newest on top, `Plan said:` / `Actual:` / `Reason:`. Delete an entry when it stops being true. Progress notes, changelogs, and "done" lists never go there.
 
 ## Conventions
