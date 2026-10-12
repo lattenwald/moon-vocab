@@ -123,9 +123,13 @@ private fun ServiceRow(
         },
         trailingContent = { Icon(painterResource(R.drawable.ic_chevron_right), contentDescription = null) },
     ) {
-        Text(service.name.ifBlank { service.baseUrl }, fontSize = 16.sp, lineHeight = 22.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(serviceTitle(service), fontSize = 16.sp, lineHeight = 22.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+
+@Composable
+internal fun serviceTitle(service: LlmService): String =
+    service.name.ifBlank { service.baseUrl }.ifBlank { stringResource(R.string.service_unnamed) }
 
 @Composable
 private fun AddService(onAdd: (ServiceTemplate, String) -> Unit) {

@@ -213,10 +213,10 @@
 - The Services page lists the saved services with a radio for the active one. A row shows the name and the model, or `services_no_model`. The radio selects; the row opens the service page.
 - "Add service" opens a menu of the templates. The new service opens at once.
 - The service page has name, address, API key (show/hide), model (with suggestions) and Test connection, with Duplicate and Delete in its overflow menu.
-- Service edits are saved as typed, in keystroke order. The fields keep local `remember` state keyed by the service id.
+- Service edits are saved as typed, in keystroke order, on `appScope`, so leaving the page never drops one. The fields keep local `remember` state keyed by the service id.
 - Delete asks first and is disabled for the last service. A service page whose service is gone pops.
-- Duplicate replaces the page with the copy's page.
-- Model suggestions are fetched when the service page opens and again 600 ms after the address or key stops changing. The model field shows at most 50 that contain the typed text, ignoring case.
+- Duplicate replaces the page with the copy's page. A service's title is its name, else its address, else `service_unnamed`.
+- Model suggestions are fetched when the service page opens and again 600 ms after the address or key stops changing; a change clears them at once. The model field shows at most 50 that contain the typed text, ignoring case.
 - Changing the address, key or model clears the test result and cancels a running test.
 - Test seconds show one decimal, formatted in the UI locale.
 

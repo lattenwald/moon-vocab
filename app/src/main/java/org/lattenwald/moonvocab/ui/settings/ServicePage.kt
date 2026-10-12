@@ -93,7 +93,7 @@ fun ServicePage(
                 },
                 actions = {
                     if (service != null) {
-                        val copyName = stringResource(R.string.service_copy_name, service.name)
+                        val copyName = stringResource(R.string.service_copy_name, serviceTitle(service))
                         MoreActions(
                             canDelete = services.size > 1,
                             onDuplicate = { vm.duplicate(id, copyName, onOpen) },
@@ -252,27 +252,25 @@ private fun KeyField(id: String, initial: String, onChange: (String) -> Unit) {
 private fun ModelField(id: String, initial: String, models: List<String>, onChange: (String) -> Unit) {
     var value by remember(id) { mutableStateOf(initial) }
     var expanded by remember(id) { mutableStateOf(false) }
-    val query = value.trim()
-    val matches = remember(models, query) {
-        models.filter { it != query && it.contains(query, ignoreCase = true) }.take(ServicesViewModel.MAX_SUGGESTIONS)
-    }
+    val matches = remember(models, value) { suggestions(models, value) }
+    LaunchedEffect(matches.isEmpty()) { if (matches.isEmpty()) expanded = false }
     val set: (String) -> Unit = {
         value = it
         onChange(it)
     }
-    ExposedDropdownMenuBox(expanded = expanded && matches.isNotEmpty(), onExpandedChange = { expanded = it }) {
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it && matches.isNotEmpty() }) {
         OutlinedTextField(
             value = value,
             onValueChange = {
                 set(it)
-                expanded = true
+                expanded = suggestions(models, it).isNotEmpty()
             },
             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             label = { Text(stringResource(R.string.service_model)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
         )
-        ExposedDropdownMenu(expanded = expanded && matches.isNotEmpty(), onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             for (model in matches) {
                 DropdownMenuItem(
                     text = { Text(model, maxLines = 1) },
@@ -284,6 +282,11 @@ private fun ModelField(id: String, initial: String, models: List<String>, onChan
             }
         }
     }
+}
+
+private fun suggestions(models: List<String>, text: String): List<String> {
+    val query = text.trim()
+    return models.filter { it != query && it.contains(query, ignoreCase = true) }.take(ServicesViewModel.MAX_SUGGESTIONS)
 }
 
 @Composable
@@ -336,5 +339,5 @@ private fun resultText(result: TestResult): String = when (result) {
         LlmException.Stop.Kind.CONFIG -> stringResource(R.string.service_test_config)
         null -> stringResource(R.string.service_test_failed, result.message)
     }
-    TestResult.NoTranslation -> stringResource(R.string.service_test_failed, stringResource(R.string.service_test_no_translation))
+    TestResult.NoTranslation -> stringResource(R.string.service_test_no_translation)
 }

@@ -359,6 +359,7 @@
     <string name="services_add">Add service</string>
     <string name="services_no_model">No model set</string>
     <string name="service_custom">Custom</string>
+    <string name="service_unnamed">Unnamed service</string>
     <string name="service_title">Translation service</string>
     <string name="service_more">More actions</string>
     <string name="service_duplicate">Duplicate</string>
@@ -380,5 +381,5 @@
     <string name="service_test_credits">No credits left on this account.</string>
     <string name="service_test_config">Check the address and the model.</string>
     <string name="service_test_failed">The test failed: %1$s</string>
-    <string name="service_test_no_translation">the service sent no translation</string>
+    <string name="service_test_no_translation">The test failed: the service sent no translation.</string>
 </resources>

@@ -9,8 +9,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import java.io.IOException
 import java.util.UUID
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -56,12 +59,13 @@ class ServicesViewModel(
     private val catalog: ModelCatalog,
     private val connectionTest: ConnectionTest,
     private val io: CoroutineDispatcher,
+    private val appScope: CoroutineScope,
 ) : ViewModel() {
     val snapshot: StateFlow<SettingsSnapshot?> = settings.snapshot
         .flowOn(io)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    // A fair lock taken on the main thread: writes land in keystroke order, and a test sees them all.
+    // A fair lock reached undispatched from the main thread: writes land in keystroke order, and a test sees them all.
     private val writes = Mutex()
 
     private val watched = MutableStateFlow<String?>(null)
@@ -75,7 +79,10 @@ class ServicesViewModel(
             .filterNotNull()
             .distinctUntilChanged()
             .transformLatest { (baseUrl, apiKey) ->
-                if (!first) delay(MODELS_DEBOUNCE_MS)
+                if (!first) {
+                    emit(emptyList())
+                    delay(MODELS_DEBOUNCE_MS)
+                }
                 first = false
                 emit(catalog.models(baseUrl, apiKey))
             }
@@ -142,16 +149,18 @@ class ServicesViewModel(
         _test.value = ServiceTest.Idle
     }
 
-    private fun write(onDone: () -> Unit = {}, transform: (SettingsSnapshot) -> SettingsSnapshot) {
-        viewModelScope.launch {
+    // In appScope, so a write queued when the page closes still lands.
+    private fun write(onDone: (() -> Unit)? = null, transform: (SettingsSnapshot) -> SettingsSnapshot) {
+        val written = appScope.async(start = CoroutineStart.UNDISPATCHED) {
             try {
                 writes.withLock { withContext(io) { settings.update(transform) } }
+                true
             } catch (e: IOException) {
                 Log.e(TAG, "settings write failed", e)
-                return@launch
+                false
             }
-            onDone()
         }
+        if (onDone != null) viewModelScope.launch { if (written.await()) onDone() }
     }
 
     private fun SettingsSnapshot.list() = ServiceList(services, activeServiceId)
@@ -167,7 +176,7 @@ class ServicesViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                ServicesViewModel(c.settings, c.modelCatalog, c.connectionTest, c.io)
+                ServicesViewModel(c.settings, c.modelCatalog, c.connectionTest, c.io, c.appScope)
             }
         }
     }
