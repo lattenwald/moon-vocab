@@ -14,7 +14,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class CardKey(val cardId: Long) : NavKey
 
-@Serializable data class PreviewKey(val cardId: Long) : NavKey
+// A null card id previews the sample card.
+@Serializable data class PreviewKey(val cardId: Long?) : NavKey
 
 enum class LanguageKind { TARGET, APP }
 
@@ -23,6 +24,8 @@ enum class LanguageKind { TARGET, APP }
 @Serializable data object ServicesKey : NavKey
 
 @Serializable data class ServiceKey(val id: String) : NavKey
+
+@Serializable data object CardsSettingsKey : NavKey
 
 val TabKeys: List<NavKey> = listOf(InboxKey, LibraryKey, SettingsKey)
 

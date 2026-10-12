@@ -2,6 +2,24 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: A blank deck or tag field shows its default when it loses focus
+
+- Plan said: a blank field saves its default, and the field shows the default again after the write.
+- Actual: the default is saved as soon as the field is blank, and the field shows it when it loses focus.
+- Reason: the fields save as typed, so refilling the field on the write would put the default back while the user is clearing it to type a new pattern.
+
+## 2026-10-12: The sample card's sentence has a straight apostrophe
+
+- Plan said: the sample card uses the prototype's `SAMPLE_FULL` sentence without brackets.
+- Actual: the same sentence, with `people's` written with a straight apostrophe.
+- Reason: a card's sentence is the normalized sentence, which has straight quotes.
+
+## 2026-10-12: The Cards page drops the prototype's 30-word slider and its front switch
+
+- Plan said: the prototype's Cards page has an "Excerpt on the front" switch and a "Longest excerpt" slider from 6 to 30.
+- Actual: no switch; the slider goes from 6 to 15 (decision 8).
+- Reason: the spec's range is 6 to 15 words (§3.6), and the front always shows the excerpt.
+
 ## 2026-10-12: `ServicePage` takes an `onOpen` callback
 
 - Plan said: `ServicePage(id: String, onBack: () -> Unit)`.

@@ -382,4 +382,19 @@
     <string name="service_test_config">Check the address and the model.</string>
     <string name="service_test_failed">The test failed: %1$s</string>
     <string name="service_test_no_translation">The test failed: the service sent no translation.</string>
+
+    <string name="cards_title">Cards</string>
+    <plurals name="cards_longest">
+        <item quantity="one">Longest excerpt: %d word</item>
+        <item quantity="other">Longest excerpt: %d words</item>
+    </plurals>
+    <string name="cards_longest_help">Longer sentences are cut around the word.</string>
+    <string name="cards_example">Example front</string>
+    <string name="cards_deck">Deck</string>
+    <string name="cards_deck_help">{language} becomes English, German and so on: one deck per language.</string>
+    <string name="cards_test_deck">Test deck is on: cards go to %1$s. Turn it off in Developer tools.</string>
+    <string name="cards_tag">Book tag</string>
+    <string name="cards_tag_help">{title} becomes the book title.</string>
+    <string name="cards_design">Card design</string>
+    <string name="cards_design_help">Front and back as AnkiDroid shows them</string>
 </resources>

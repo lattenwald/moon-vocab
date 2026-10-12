@@ -220,6 +220,14 @@
 - Changing the address, key or model clears the test result and cancels a running test.
 - Test seconds show one decimal, formatted in the UI locale.
 
+## Cards settings page
+- Longest excerpt is a slider from 6 to 15 words, with no switch for the excerpt on the front.
+- The example front is the sample card, cut with `cutExcerpt` and drawn by the card page's `FrontFace`. It follows the slider while dragging; `maxExcerptWords` is saved when the drag ends.
+- The deck and book tag patterns are saved as typed. A blank field saves its default and shows it once the field loses focus.
+- When the test deck is on, the deck field's help line names it.
+- Card design opens the preview (`PreviewKey(null)`) with the sample card, cut to the stored longest excerpt.
+- The sample card is "get the upper hand" in a Moby-Dick sentence that keeps its leading and trailing `…`.
+
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.

@@ -47,26 +47,36 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.ankiFields
 import org.lattenwald.moonvocab.data.db.AppDatabase
+import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.previewHtml
+import org.lattenwald.moonvocab.domain.card.sampleCardFields
 import org.lattenwald.moonvocab.domain.import.bookLine
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
 
-class PreviewViewModel(cardId: Long, db: AppDatabase, io: CoroutineDispatcher) : ViewModel() {
-    val fields: StateFlow<Map<String, String>?> = flow {
-        val card = db.cards().byIds(listOf(cardId)).firstOrNull()
-        val book = card?.let { db.books().byId(it.bookId) }
-        emit(if (card != null && book != null) card.ankiFields(bookLine(book)) else null)
+class PreviewViewModel(cardId: Long?, db: AppDatabase, settings: Settings, io: CoroutineDispatcher) : ViewModel() {
+    private val source: Flow<Map<String, String>?> = if (cardId == null) {
+        settings.snapshot.map { sampleCardFields(it.maxExcerptWords) }
+    } else {
+        flow {
+            val card = db.cards().byIds(listOf(cardId)).firstOrNull()
+            val book = card?.let { db.books().byId(it.bookId) }
+            emit(if (card != null && book != null) card.ankiFields(bookLine(book)) else null)
+        }
     }
+
+    val fields: StateFlow<Map<String, String>?> = source
         .flowOn(io)
         .catch { e ->
             Log.e(TAG, "preview query failed", e)
@@ -77,11 +87,11 @@ class PreviewViewModel(cardId: Long, db: AppDatabase, io: CoroutineDispatcher) :
     companion object {
         private const val TAG = "PreviewViewModel"
 
-        fun factory(cardId: Long): ViewModelProvider.Factory = viewModelFactory {
+        fun factory(cardId: Long?): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                PreviewViewModel(cardId, c.db, c.io)
+                PreviewViewModel(cardId, c.db, c.settings, c.io)
             }
         }
     }
@@ -89,7 +99,7 @@ class PreviewViewModel(cardId: Long, db: AppDatabase, io: CoroutineDispatcher) :
 
 @Composable
 fun PreviewPage(
-    cardId: Long,
+    cardId: Long?,
     onBack: () -> Unit,
     vm: PreviewViewModel = viewModel(factory = PreviewViewModel.factory(cardId)),
 ) {

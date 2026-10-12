@@ -44,6 +44,7 @@ import org.lattenwald.moonvocab.ui.inbox.InboxViewModel
 import org.lattenwald.moonvocab.ui.library.BookPage
 import org.lattenwald.moonvocab.ui.library.LibraryScreen
 import org.lattenwald.moonvocab.ui.library.LibraryViewModel
+import org.lattenwald.moonvocab.ui.settings.CardsPage
 import org.lattenwald.moonvocab.ui.settings.LanguagePicker
 import org.lattenwald.moonvocab.ui.settings.ServicePage
 import org.lattenwald.moonvocab.ui.settings.ServicesPage
@@ -165,6 +166,12 @@ fun AppShell() {
                                 backStack.add(ServiceKey(id))
                             }
                         },
+                    )
+                }
+                entry<CardsSettingsKey> { key ->
+                    CardsPage(
+                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
+                        onPreview = { if (backStack.lastOrNull() == key) backStack.add(PreviewKey(null)) },
                     )
                 }
                 entry<SettingsKey>(metadata = TabTransitions) { DebugScreen(contentPadding = shellPadding, vm = debug) }

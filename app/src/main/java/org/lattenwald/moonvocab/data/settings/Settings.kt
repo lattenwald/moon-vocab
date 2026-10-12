@@ -56,6 +56,8 @@ private val DEFAULT_SERVICE = LlmService(
     id = "openrouter", name = "OpenRouter", baseUrl = "https://openrouter.ai/api/v1", apiKey = "", model = "anthropic/claude-haiku-5.5",
 )
 private const val DEFAULT_DECK_OVERRIDE = "Moon+::Test"
+const val DEFAULT_DECK_PATTERN = "Moon+::{language}"
+const val DEFAULT_TAG_PATTERN = "book::{title}"
 
 internal object SettingsKeys {
     val backupTree = stringPreferencesKey("backupTree")
@@ -103,8 +105,8 @@ private fun Preferences.toSnapshot() = SettingsSnapshot(
     activeServiceId = this[SettingsKeys.activeServiceId] ?: DEFAULT_SERVICE.id,
     targetLanguage = this[SettingsKeys.targetLanguage] ?: "ru",
     maxExcerptWords = this[SettingsKeys.maxExcerptWords] ?: 15,
-    deckPattern = this[SettingsKeys.deckPattern] ?: "Moon+::{language}",
-    tagPattern = this[SettingsKeys.tagPattern] ?: "book::{title}",
+    deckPattern = this[SettingsKeys.deckPattern] ?: DEFAULT_DECK_PATTERN,
+    tagPattern = this[SettingsKeys.tagPattern] ?: DEFAULT_TAG_PATTERN,
     reviewFirst = this[SettingsKeys.reviewFirst] ?: true,
     styles = this[SettingsKeys.styles].orEmpty().mapNotNull(::parseStyleCombo).toSet(),
     noteTypeId = this[SettingsKeys.noteTypeId],
