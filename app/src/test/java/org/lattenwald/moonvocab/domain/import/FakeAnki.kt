@@ -20,6 +20,7 @@ class FakeAnki : AnkiGateway {
     var ensureCalls = 0
     var onRead: (() -> Unit)? = null
     var addError: Exception? = null
+    var updateError: Exception? = null
     val refuseDelete = HashSet<Long>()
 
     private val decks = LinkedHashMap<Long, String>()
@@ -44,6 +45,7 @@ class FakeAnki : AnkiGateway {
     }
 
     override fun update(noteId: Long, mid: Long, fields: Map<String, String>, tags: Set<String>) {
+        updateError?.let { throw it }
         val note = notes.getValue(noteId)
         notes[noteId] = note.copy(fields = note.fields + fields, tags = note.tags + tags, mod = note.mod + 1)
     }

@@ -158,7 +158,10 @@
 - In the edit form, the excerpt's and the sentence's focus is written in square brackets. A field left unchanged keeps its stored HTML.
 - Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs none or one.
 - Changed form values are trimmed. A blank sentence is saved empty.
-- Saving writes only the fields the user changed. A changed field that also changed in AnkiDroid since the page read it is not written; the page shows AnkiDroid's text instead.
+- Saving writes only the fields the user changed. When any changed field also changed in AnkiDroid since the page read it, nothing is written to AnkiDroid; the page shows AnkiDroid's text for the conflicting fields.
+- A sent card's page reads its note when it opens, under the AnkiDroid lock. A missing note makes the card DELETED_IN_ANKI.
+- Save sends AnkiDroid only the changed fields and no tags. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
+- A pending card's edits are saved in the app only while it is still PENDING.
 
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.

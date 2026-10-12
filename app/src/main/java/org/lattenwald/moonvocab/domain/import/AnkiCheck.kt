@@ -6,10 +6,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
-import org.lattenwald.moonvocab.data.anki.ankiToPlain
 import org.lattenwald.moonvocab.data.anki.storedFields
 import org.lattenwald.moonvocab.data.db.AppDatabase
-import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardEvent
 import org.lattenwald.moonvocab.domain.card.CardStatus
@@ -17,6 +15,7 @@ import org.lattenwald.moonvocab.domain.card.ReconcileAction
 import org.lattenwald.moonvocab.domain.card.SentCard
 import org.lattenwald.moonvocab.domain.card.next
 import org.lattenwald.moonvocab.domain.card.reconcile
+import org.lattenwald.moonvocab.domain.card.refreshed
 
 sealed interface CheckResult {
     data class Changed(val count: Int) : CheckResult
@@ -69,17 +68,6 @@ class AnkiCheck(
         }
         return actions.size
     }
-
-    private fun CardEntity.refreshed(fields: Map<String, String>, mod: Long) = copy(
-        word = fields["Word"]?.let(::ankiToPlain) ?: word,
-        grammar = fields["Grammar"]?.let(::ankiToPlain) ?: grammar,
-        excerptHtml = fields["Excerpt"] ?: excerptHtml,
-        translation = fields["Translation"]?.let(::ankiToPlain) ?: translation,
-        meaning = fields["Meaning"]?.let(::ankiToPlain) ?: meaning,
-        sentenceHtml = fields["Sentence"] ?: sentenceHtml,
-        sourceNote = fields["Source"]?.let(::ankiToPlain) ?: sourceNote,
-        ankiMod = mod,
-    )
 
     private companion object {
         const val TAG = "AnkiCheck"
