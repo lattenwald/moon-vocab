@@ -10,6 +10,7 @@ import org.lattenwald.moonvocab.data.anki.ankiToPlain
 import org.lattenwald.moonvocab.data.anki.storedFields
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.CardEntity
+import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardEvent
 import org.lattenwald.moonvocab.domain.card.CardStatus
 import org.lattenwald.moonvocab.domain.card.ReconcileAction
@@ -22,7 +23,19 @@ sealed interface CheckResult {
     data class Unavailable(val availability: AnkiAvailability) : CheckResult
 }
 
-class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway, private val lock: Mutex) {
+class AnkiCheck(
+    private val db: AppDatabase,
+    private val anki: AnkiGateway,
+    private val lock: Mutex,
+    private val settings: Settings,
+    private val clock: () -> Long,
+) {
+    suspend fun runIfDue(): Boolean {
+        if (clock() - settings.current().lastCheckAt < START_INTERVAL_MS) return false
+        run()
+        return true
+    }
+
     suspend fun run(): Int = try {
         (check() as? CheckResult.Changed)?.count ?: 0
     } catch (e: CancellationException) {
@@ -34,7 +47,10 @@ class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway, priv
 
     suspend fun check(): CheckResult = lock.withLock {
         val availability = anki.availability()
-        if (availability == AnkiAvailability.READY) CheckResult.Changed(reconcileSent()) else CheckResult.Unavailable(availability)
+        if (availability != AnkiAvailability.READY) return@withLock CheckResult.Unavailable(availability)
+        val changed = reconcileSent()
+        settings.update { it.copy(lastCheckAt = clock()) }
+        CheckResult.Changed(changed)
     }
 
     private suspend fun reconcileSent(): Int {
@@ -67,5 +83,6 @@ class AnkiCheck(private val db: AppDatabase, private val anki: AnkiGateway, priv
 
     private companion object {
         const val TAG = "AnkiCheck"
+        const val START_INTERVAL_MS = 10 * 60_000L
     }
 }

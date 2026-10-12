@@ -4,12 +4,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.NoteTypeChanged
+import org.lattenwald.moonvocab.domain.card.CardStatus.DELETED_IN_ANKI
+import org.lattenwald.moonvocab.domain.card.CardStatus.DISCARDED
 import org.lattenwald.moonvocab.domain.card.CardStatus.PENDING
 import org.lattenwald.moonvocab.domain.card.CardStatus.SENT
+import org.lattenwald.moonvocab.domain.inbox.InboxActions
 
 class CardSenderTest : ImportTestBase() {
     @Test fun undoSendDeletesNotesAndReturnsCardsToPending() = runTest {
@@ -117,5 +122,59 @@ class CardSenderTest : ImportTestBase() {
         assertEquals(2, fakeAnki.notes.size)
         assertEquals(FakeAnki.MID, settings.current().noteTypeId)
         assertTrue(db.cards().byStatus(SENT).all { it.sentAt == NOW && it.ankiNoteId in fakeAnki.notes })
+    }
+
+    @Test fun sendAsNewSendsACardDeletedInAnki() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val id = db.cards().byStatus(PENDING).single().id
+        sender.send(listOf(id))
+        fakeAnki.notes.clear()
+        check.run()
+        assertEquals(DELETED_IN_ANKI, db.cards().byIds(listOf(id)).single().status)
+        val r = sender.send(listOf(id))
+        assertEquals(listOf(id), r.sentIds)
+        val card = db.cards().byIds(listOf(id)).single()
+        assertEquals(SENT, card.status)
+        assertEquals(fakeAnki.notes.keys.single(), card.ankiNoteId)
+    }
+
+    @Test fun deleteFromAnkiDeletesTheNoteAndDiscardsTheCard() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val id = db.cards().byStatus(PENDING).single().id
+        sender.send(listOf(id))
+        assertEquals(DeleteResult(deleted = true, unavailable = null, error = null), sender.deleteFromAnki(id))
+        val card = db.cards().byIds(listOf(id)).single()
+        assertEquals(DISCARDED, card.status)
+        assertEquals(PENDING, card.previousStatus)
+        assertNull(card.ankiNoteId); assertNull(card.sentAt); assertNull(card.ankiMod)
+        assertTrue(fakeAnki.notes.isEmpty())
+    }
+
+    @Test fun restoreAfterDeleteFromAnkiReturnsTheCardToPending() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val id = db.cards().byStatus(PENDING).single().id
+        sender.send(listOf(id))
+        sender.deleteFromAnki(id)
+        InboxActions(db, ankiLock).restore(listOf(id))
+        assertEquals(PENDING, db.cards().byIds(listOf(id)).single().status)
+    }
+
+    @Test fun deleteFromAnkiKeepsTheCardWhenAnkiDroidRefuses() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val id = db.cards().byStatus(PENDING).single().id
+        sender.send(listOf(id))
+        val before = db.cards().byIds(listOf(id)).single()
+        fakeAnki.refuseDelete += before.ankiNoteId!!
+        assertFalse(sender.deleteFromAnki(id).deleted)
+        assertEquals(before, db.cards().byIds(listOf(id)).single())
+    }
+
+    @Test fun deleteFromAnkiChangesNothingWhileAnkiDroidIsUnavailable() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val id = db.cards().byStatus(PENDING).single().id
+        sender.send(listOf(id))
+        fakeAnki.availability = AnkiAvailability.NO_PERMISSION
+        assertEquals(DeleteResult(false, AnkiAvailability.NO_PERMISSION, null), sender.deleteFromAnki(id))
+        assertEquals(SENT, db.cards().byIds(listOf(id)).single().status)
     }
 }

@@ -120,14 +120,17 @@
 - `Stop` ends the import with nothing written for that batch. `Failed` makes the batch's cards FAILED.
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
+- A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created fresh, the check runs if the last one is 10 minutes old or more.
 - `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck` and `InboxActions`. Sends, deletes, undo, the check, and the Inbox's discard, restore and translate again run under it.
 - `CardSender`:
+  - `send` sends PENDING cards and cards deleted in AnkiDroid. Other ids count as skipped;
   - a gateway error stops the send and is reported in `SendResult.error`;
   - saving a sent card can't be cancelled;
   - the note type is ensured once per sender and again after a send error;
   - before adding, notes already in AnkiDroid with the card's AppId are adopted;
   - after a send error the import sends nothing more in that run.
 - `deleteAllCreated` resets a card only when AnkiDroid deleted its note.
+- `deleteFromAnki` discards a sent card only when AnkiDroid deleted its note. Its previous status becomes PENDING.
 - `undoSend` deletes each sent card's note and returns the card to PENDING. A card whose note AnkiDroid doesn't delete stays SENT and counts as kept.
 - A send stopped by a note type with missing fields reports them in `SendResult.missingFields`.
 - `retryFailed` deletes FAILED cards, then resumes.

@@ -48,7 +48,7 @@ abstract class ImportTestBase {
     protected val fakeBooks = FakeBooks(mapOf(PATH to bookText(30)))
     protected val ankiLock = Mutex()
     protected val sender by lazy { CardSender(db, fakeAnki, settings, ankiLock) { NOW } }
-    protected val check by lazy { AnkiCheck(db, fakeAnki, ankiLock) }
+    protected val check by lazy { AnkiCheck(db, fakeAnki, ankiLock, settings) { NOW } }
 
     @After fun closeAll() {
         db.close()

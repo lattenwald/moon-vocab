@@ -30,6 +30,8 @@ data class SendResult(
 
 data class UndoResult(val restored: Int, val kept: Int, val unavailable: AnkiAvailability?, val error: String?)
 
+data class DeleteResult(val deleted: Boolean, val unavailable: AnkiAvailability?, val error: String?)
+
 class CardSender(
     private val db: AppDatabase,
     private val anki: AnkiGateway,
@@ -46,13 +48,15 @@ class CardSender(
 
     suspend fun undoSend(cardIds: List<Long>): UndoResult = lock.withLock { undoSendLocked(cardIds) }
 
+    suspend fun deleteFromAnki(cardId: Long): DeleteResult = lock.withLock { deleteFromAnkiLocked(cardId) }
+
     private suspend fun sendLocked(cardIds: List<Long>): SendResult {
         val availability = anki.availability()
         if (availability != AnkiAvailability.READY) return SendResult(0, cardIds.size, availability, null)
         val wanted = cardIds.toSet()
-        val pending = db.cards().byStatus(CardStatus.PENDING).filter { it.id in wanted }
-        val skipped = wanted.size - pending.size
-        if (pending.isEmpty()) return SendResult(0, skipped, null, null)
+        val sendable = db.cards().byIds(cardIds).filter { it.status in SENDABLE }
+        val skipped = wanted.size - sendable.size
+        if (sendable.isEmpty()) return SendResult(0, skipped, null, null)
 
         val sentIds = ArrayList<Long>()
         try {
@@ -63,11 +67,11 @@ class CardSender(
                 }
                 noteType = mid to version
             }
-            // Process death between add and save leaves the note in AnkiDroid and the card PENDING.
-            val existing = anki.findByAppIds(mid, pending.map { it.uuid })
+            // Process death between add and save leaves the note in AnkiDroid and the card unsent.
+            val existing = anki.findByAppIds(mid, sendable.map { it.uuid })
             val books = HashMap<Long, BookEntity>()
             val decks = HashMap<String, Long>()
-            for (card in pending) {
+            for (card in sendable) {
                 val noteId = existing[card.uuid] ?: run {
                     val book = books.getOrPut(card.bookId) { checkNotNull(db.books().byId(card.bookId)) { "no book ${card.bookId}" } }
                     val deck = deckName(s.deckPattern, card.sourceLanguage, s.deckOverride)
@@ -76,7 +80,8 @@ class CardSender(
                 }
                 save(
                     card.copy(
-                        status = next(card.status, CardEvent.SEND), ankiNoteId = noteId, sentAt = clock(), ankiMod = null, error = null,
+                        status = next(card.status, SENDABLE.getValue(card.status)),
+                        ankiNoteId = noteId, sentAt = clock(), ankiMod = null, error = null,
                     ),
                 )
                 sentIds += card.id
@@ -114,6 +119,30 @@ class CardSender(
         return UndoResult(restored, sent.size - restored, null, null)
     }
 
+    private suspend fun deleteFromAnkiLocked(cardId: Long): DeleteResult {
+        val availability = anki.availability()
+        if (availability != AnkiAvailability.READY) return DeleteResult(false, availability, null)
+        val card = db.cards().byIds(listOf(cardId)).singleOrNull()
+            ?.takeIf { it.status == CardStatus.SENT && it.ankiNoteId != null }
+            ?: return DeleteResult(false, null, null)
+        val deleted = try {
+            anki.delete(checkNotNull(card.ankiNoteId))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return DeleteResult(false, null, e.message ?: e::class.simpleName)
+        }
+        if (deleted) {
+            save(
+                card.copy(
+                    status = next(card.status, CardEvent.DELETE_FROM_ANKI), previousStatus = CardStatus.PENDING,
+                    ankiNoteId = null, sentAt = null, ankiMod = null,
+                ),
+            )
+        }
+        return DeleteResult(deleted, null, null)
+    }
+
     private suspend fun deleteAllCreatedLocked(): Int {
         if (anki.availability() != AnkiAvailability.READY) return 0
         var deleted = 0
@@ -128,6 +157,10 @@ class CardSender(
 
     // AnkiDroid already holds the note; a write lost to cancellation would send it again.
     private suspend fun save(card: CardEntity) = withContext(NonCancellable) { db.cards().update(card) }
+
+    private companion object {
+        val SENDABLE = mapOf(CardStatus.PENDING to CardEvent.SEND, CardStatus.DELETED_IN_ANKI to CardEvent.SEND_AS_NEW)
+    }
 }
 
 internal fun bookLine(book: BookEntity): String =

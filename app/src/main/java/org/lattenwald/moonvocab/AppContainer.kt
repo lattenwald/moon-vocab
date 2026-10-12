@@ -5,7 +5,9 @@ import androidx.room.Room
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.sync.Mutex
 import okhttp3.OkHttpClient
 import org.lattenwald.moonvocab.data.anki.AnkiDroidGateway
@@ -29,6 +31,7 @@ class AppContainer(context: Context) {
     private val app = context.applicationContext
 
     val io: CoroutineDispatcher = Dispatchers.IO
+    val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + io)
     val db: AppDatabase = Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).build()
     val settings = Settings(app.settingsDataStore)
     val anki = AnkiDroidGateway(app)
@@ -36,7 +39,7 @@ class AppContainer(context: Context) {
     val backupFinder = BackupFinder(app.contentResolver, app.cacheDir, backupReader, io)
     private val ankiLock = Mutex()
     val sender = CardSender(db, anki, settings, ankiLock, clock = System::currentTimeMillis)
-    val ankiCheck = AnkiCheck(db, anki, ankiLock)
+    val ankiCheck = AnkiCheck(db, anki, ankiLock, settings, clock = System::currentTimeMillis)
     val inboxActions = InboxActions(db, ankiLock)
 
     // LlmClient does its own retries; OkHttp's silent retry would add attempts.
