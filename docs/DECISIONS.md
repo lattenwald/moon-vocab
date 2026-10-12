@@ -172,6 +172,8 @@
 ## Library
 - The Library lists every book with at least one card, grouped by the book's language: most books first, Other last. Within a group, newest mark first.
 - A book page shows To review (pending and failed), In AnkiDroid (the latest 50 by send time), and Discarded, which also holds cards deleted in AnkiDroid.
+- `LibraryViewModel` is activity-scoped, created in `AppShell`.
+- The Library and the book page use the Inbox's row shapes and colours. A book page's Discarded section starts collapsed, and its open state is saveable.
 
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
@@ -188,7 +190,7 @@
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
 - App data is excluded from cloud backup and device transfer.
-- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox query and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty Inbox.
+- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox, Library and book page queries and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty screen.
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
 - The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
 - The debug screen's Send all pending skips cards with an `elsewhereDeck`.
@@ -198,7 +200,7 @@
 - Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
 - The theme follows the system's light or dark mode until Settings adds the choice in milestone 5.
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
-- The app opens on the Inbox. The bottom bar has Inbox and Settings. Settings shows the debug screen until milestone 5.
+- The app opens on the Inbox. The bottom bar has Inbox, Library and Settings. Settings shows the debug screen until milestone 5.
 - Navigation 3 holds one back stack that starts with the Inbox. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
 - The bottom bar shows only on tabs. Tab switches cross-fade.
 - `DebugViewModel` is activity-scoped, created in `AppShell`, until milestone 5 replaces the debug screen.

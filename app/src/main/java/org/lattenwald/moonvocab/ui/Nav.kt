@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class PreviewKey(val cardId: Long) : NavKey
 
-val TabKeys: List<NavKey> = listOf(InboxKey, SettingsKey)
+val TabKeys: List<NavKey> = listOf(InboxKey, LibraryKey, SettingsKey)
 
 fun NavBackStack<NavKey>.selectTab(tab: NavKey) {
     if (lastOrNull() == tab) return

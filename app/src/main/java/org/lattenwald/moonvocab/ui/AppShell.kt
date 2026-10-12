@@ -40,6 +40,9 @@ import org.lattenwald.moonvocab.ui.debug.DebugScreen
 import org.lattenwald.moonvocab.ui.debug.DebugViewModel
 import org.lattenwald.moonvocab.ui.inbox.InboxScreen
 import org.lattenwald.moonvocab.ui.inbox.InboxViewModel
+import org.lattenwald.moonvocab.ui.library.BookPage
+import org.lattenwald.moonvocab.ui.library.LibraryScreen
+import org.lattenwald.moonvocab.ui.library.LibraryViewModel
 
 private val TabTransitions =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
@@ -51,6 +54,7 @@ fun AppShell() {
     val backStack = rememberNavBackStack(InboxKey)
     val top = backStack.last()
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
+    val library: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)
     val debug: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
     val inboxState by inbox.state.collectAsStateWithLifecycle()
     val total = inboxState.list.total
@@ -74,6 +78,12 @@ fun AppShell() {
                             }
                         },
                         label = { Text(stringResource(R.string.nav_inbox)) },
+                    )
+                    ShortNavigationBarItem(
+                        selected = top == LibraryKey,
+                        onClick = { backStack.selectTab(LibraryKey) },
+                        icon = { Icon(painterResource(R.drawable.ic_menu_book), contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_library)) },
                     )
                     ShortNavigationBarItem(
                         selected = top == SettingsKey,
@@ -106,7 +116,22 @@ fun AppShell() {
                         vm = inbox,
                     )
                 }
+                entry<LibraryKey>(metadata = TabTransitions) {
+                    val bottom = PaddingValues(bottom = shellPadding.calculateBottomPadding())
+                    LibraryScreen(
+                        onOpenBook = { id -> if (backStack.lastOrNull() == LibraryKey) backStack.add(BookKey(id)) },
+                        modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
+                        vm = library,
+                    )
+                }
                 // The page's own Scaffold handles the insets; a late onBack pops only this page.
+                entry<BookKey> { key ->
+                    BookPage(
+                        key.bookId,
+                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
+                        onOpenCard = { id -> if (backStack.lastOrNull() == key) backStack.add(CardKey(id)) },
+                    )
+                }
                 entry<CardKey> { key ->
                     CardPage(key.cardId, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() }, onPreview = null)
                 }

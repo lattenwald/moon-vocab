@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.SegmentedListItem
@@ -61,7 +62,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -75,7 +75,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.Locale
 import kotlinx.coroutines.launch
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
@@ -88,6 +87,7 @@ import org.lattenwald.moonvocab.domain.inbox.InboxList
 import org.lattenwald.moonvocab.domain.inbox.LanguageFilter
 import org.lattenwald.moonvocab.domain.inbox.RowLabel
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
+import org.lattenwald.moonvocab.ui.common.languageName
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
 import org.lattenwald.moonvocab.work.ImportState
 
@@ -107,6 +107,10 @@ internal fun inboxColors(): InboxColors {
 
 // SegmentedListItem's outer, selected and pressed corners come from the theme's large shape.
 internal fun Shapes.forInboxList(): Shapes = copy(large = RoundedCornerShape(OuterCorner))
+
+@Composable
+internal fun segmentedRowShapes(index: Int, count: Int): ListItemShapes =
+    ListItemDefaults.segmentedShapes(index, count, ListItemDefaults.shapes(shape = RoundedCornerShape(InnerCorner)))
 
 private fun rowShape(index: Int, count: Int) = RoundedCornerShape(
     topStart = if (index == 0) OuterCorner else InnerCorner,
@@ -214,7 +218,7 @@ internal fun InboxCardRow(
         selected = selected,
         // DragSelect.guardTap swallows the lift after a long-press that starts selection.
         onClick = { if (selecting) onToggle() else onOpen() },
-        shapes = ListItemDefaults.segmentedShapes(index, count, ListItemDefaults.shapes(shape = RoundedCornerShape(InnerCorner))),
+        shapes = segmentedRowShapes(index, count),
         modifier = modifier,
         colors = ListItemDefaults.segmentedColors(containerColor = containerColor, selectedContainerColor = colors.secondaryContainer),
         contentPadding = RowPadding,
@@ -330,7 +334,6 @@ internal fun GroupHeader(group: InboxGroup, selecting: Boolean, checked: Togglea
 
 @Composable
 internal fun LanguageChips(list: InboxList, onFilter: (LanguageFilter) -> Unit, modifier: Modifier = Modifier) {
-    val locale = LocalConfiguration.current.locales[0]
     Row(
         modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -338,14 +341,10 @@ internal fun LanguageChips(list: InboxList, onFilter: (LanguageFilter) -> Unit, 
         LanguageChip(stringResource(R.string.inbox_all), list.total, list.filter == LanguageFilter.All) { onFilter(LanguageFilter.All) }
         for (chip in list.chips) {
             val filter = LanguageFilter.Only(chip.language)
-            val name = chip.language?.let { languageName(it, locale) } ?: stringResource(R.string.inbox_language_other)
-            LanguageChip(name, chip.count, list.filter == filter) { onFilter(filter) }
+            LanguageChip(languageName(chip.language), chip.count, list.filter == filter) { onFilter(filter) }
         }
     }
 }
-
-private fun languageName(code: String, locale: Locale): String =
-    Locale.forLanguageTag(code).getDisplayLanguage(locale).ifEmpty { code }.replaceFirstChar { it.titlecase(locale) }
 
 @Composable
 private fun LanguageChip(name: String, count: Int, selected: Boolean, onClick: () -> Unit) {
@@ -506,6 +505,11 @@ internal fun NoteTypeBanner(missingFields: List<String>, modifier: Modifier = Mo
 
 @Composable
 internal fun EmptyInbox(modifier: Modifier = Modifier) {
+    EmptyState(R.drawable.ic_inbox, R.string.inbox_empty_title, R.string.inbox_empty_text, modifier)
+}
+
+@Composable
+internal fun EmptyState(icon: Int, title: Int, text: Int, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     Column(
         modifier.fillMaxWidth().padding(horizontal = 36.dp, vertical = 72.dp),
@@ -516,11 +520,11 @@ internal fun EmptyInbox(modifier: Modifier = Modifier) {
             Modifier.padding(bottom = 10.dp).size(96.dp).rotate(-8f).background(colors.primaryContainer, RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(R.drawable.ic_inbox), contentDescription = null, modifier = Modifier.size(44.dp).rotate(8f), tint = colors.onPrimaryContainer)
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(44.dp).rotate(8f), tint = colors.onPrimaryContainer)
         }
-        Text(stringResource(R.string.inbox_empty_title), fontSize = 22.sp, lineHeight = 28.sp, textAlign = TextAlign.Center)
+        Text(stringResource(title), fontSize = 22.sp, lineHeight = 28.sp, textAlign = TextAlign.Center)
         Text(
-            stringResource(R.string.inbox_empty_text),
+            stringResource(text),
             modifier = Modifier.widthIn(max = 240.dp),
             color = colors.onSurfaceVariant,
             fontSize = 14.5.sp,
