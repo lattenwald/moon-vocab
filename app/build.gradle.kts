@@ -99,6 +99,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.jsoup)
+    // The HTML parser Moon+ Reader builds its text with; positions depend on how it splits and repairs markup.
+    implementation(libs.tagsoup)
     implementation(libs.ankidroid.api)
 
     testImplementation(libs.junit)

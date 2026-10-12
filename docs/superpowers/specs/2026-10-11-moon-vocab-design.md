@@ -162,7 +162,7 @@ Backup listing: the newest `*.mrpro` in the folder by modification time; if it i
 
 `BookLocator` maps a mark's `filename` to a document in the books folder: it indexes the folder tree once per import (relative path → document URI) and matches the longest common path suffix. `/sdcard/Books/Greg Egan/Diaspora.epub` matches `Greg Egan/Diaspora.epub` under the chosen folder.
 
-`EpubText` and `Fb2Text` turn a book into chapters of plain text and report the book's language (`dc:language` for EPUB, `title-info/lang` for FB2, normalized to an ISO 639-1 code). `.fb2.epub` is an EPUB; `.fb2.zip` is an FB2 inside a zip. Other formats yield nothing.
+`EpubText` and `Fb2Text` turn a book into chapters of plain text and report the book's language (`dc:language` for EPUB, `title-info/lang` for FB2, normalized to an ISO 639-1 code). `.fb2.epub` is an EPUB; `.fb2.zip` is an FB2 inside a zip. MOBI, AZW and PRC files in the KF7 format (PalmDOC or uncompressed) are read through the Moon+ port only; KF8/AZW3, HUFF/CDIC and DRM files and other formats yield nothing.
 
 Text normalization is applied to the book text and to `original` before searching. It:
 
@@ -172,6 +172,8 @@ Text normalization is applied to the book text and to `original` before searchin
 - makes curly and straight apostrophes and quotes equal.
 
 The normalized text keeps an offset map back to the original, so the sentence shown on the card is the book's own text.
+
+A mark is first looked up in Moon+ Reader's own text, rebuilt by a port of Moon+ Reader Pro 10.7's book code (decompiled from the user's APK): its chapter list (EPUB from the TOC with untitled spine files merged in; FB2 sections with a `<title>`; MOBI as the EPUB libmobi makes of it), its split of chapter HTML longer than 100 000 characters into parts (`lastSplitIndex`), and its HTML-to-text conversion (TagSoup, the book's CSS margins deciding one or two line breaks per paragraph). The sentence comes from that text at `lastPosition` when `original` is there, else at the nearest occurrence within 200 characters, which is where Moon+ itself shows a moved note. Only when neither holds does the search below run.
 
 `SentenceFinder.find(book, mark): Found(sentence, markSpan) | NotFound`:
 

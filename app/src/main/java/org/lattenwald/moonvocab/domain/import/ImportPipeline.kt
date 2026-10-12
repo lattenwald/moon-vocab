@@ -42,6 +42,7 @@ import org.lattenwald.moonvocab.domain.mark.fileKey
 import org.lattenwald.moonvocab.domain.text.MarkLocator
 import org.lattenwald.moonvocab.domain.text.NoteRef
 import org.lattenwald.moonvocab.domain.text.SentenceResult
+import org.lattenwald.moonvocab.domain.text.moonNoteStart
 import org.lattenwald.moonvocab.domain.text.normalize
 import org.lattenwald.moonvocab.domain.text.sentenceAt
 
@@ -317,12 +318,18 @@ class ImportPipeline(
                     SentenceResult.NotFound
                 } else {
                     val locale = book.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
-                    val locator = loadedBook.locator ?: withContext(io) {
-                        MarkLocator(text.chapters.map(::normalize), notes[book.fileKey].orEmpty(), text.chaptersMatchMoonReader)
-                    }.also { loadedBook.locator = it }
-                    withContext(io) {
-                        locator.locate(mark.chapter, mark.position, mark.text)
-                            ?.let { sentenceAt(text.chapters, locator.chapters, it, locale) } ?: SentenceResult.NotFound
+                    val part = text.moon?.part(mark.chapter, mark.split, mark.markedAt)
+                    val start = part?.let { moonNoteStart(it, mark.position, mark.text) }
+                    if (part != null && start != null) {
+                        sentenceAt(part, start, start + mark.text.length, locale)
+                    } else {
+                        val locator = loadedBook.locator ?: withContext(io) {
+                            MarkLocator(text.chapters.map(::normalize), notes[book.fileKey].orEmpty(), text.chaptersMatchMoonReader)
+                        }.also { loadedBook.locator = it }
+                        withContext(io) {
+                            locator.locate(mark.chapter, mark.position, mark.text)
+                                ?.let { sentenceAt(text.chapters, locator.chapters, it, locale) } ?: SentenceResult.NotFound
+                        }
                     }
                 }
                 Prepared(mark, sentence, item((sentence as? SentenceResult.Found)?.let { normalize(it.sentence).text }))

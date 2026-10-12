@@ -18,7 +18,6 @@ import org.lattenwald.moonvocab.data.books.BookCopy
 import org.lattenwald.moonvocab.data.books.BookText
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.fileKey
-import org.lattenwald.moonvocab.domain.text.NoteRef
 import org.lattenwald.moonvocab.domain.text.PositionCheck
 import org.lattenwald.moonvocab.domain.text.checkPosition
 
@@ -49,7 +48,7 @@ fun writePositionReport(
             val bookCopy = copy(bookPath)
             try {
                 val text = bookCopy?.let(read)
-                val checks = text?.let { t -> bookMarks.map { it to checkPosition(t.chapters, NoteRef(it.chapter, it.position, it.text)) } }
+                val checks = text?.let { t -> bookMarks.map { it to check(t, it) } }
                 notes += bookMarks.size
                 exact += checks.orEmpty().count { it.second.exact }
                 val missed = checks == null || checks.any { !it.second.exact }
@@ -77,6 +76,13 @@ fun writePositionReport(
     return PositionReportSummary(notes, exact)
 }
 
+private fun parts(text: BookText): List<List<String>> = text.moon?.parts ?: text.chapters.map { listOf(it) }
+
+private fun check(text: BookText, mark: RawMark): PositionCheck {
+    val part = text.moon?.part(mark.chapter, mark.split, mark.markedAt) ?: text.chapters.getOrNull(mark.chapter).takeIf { text.moon == null && mark.split == 0 }
+    return checkPosition(parts(text), part, mark.position, mark.text)
+}
+
 private fun bookJson(
     bookPath: String,
     bookCopy: BookCopy?,
@@ -92,11 +98,14 @@ private fun bookJson(
     put("notes", marks.size)
     if (text == null || checks == null) return@buildJsonObject
     put("exact", checks.count { it.second.exact })
-    put("chaptersMatchMoonReader", text.chaptersMatchMoonReader)
+    put("reanchored", checks.count { !it.second.exact && it.second.shownAt != null })
+    put("moonText", text.moon != null)
     putJsonArray("chapters") {
-        for (chapter in text.chapters) addJsonObject {
-            put("length", chapter.length)
-            put("start", chapter.take(CHAPTER_HEAD))
+        for (splits in parts(text)) addJsonArray {
+            for (part in splits) addJsonObject {
+                put("length", part.length)
+                put("start", part.take(CHAPTER_HEAD))
+            }
         }
     }
     putJsonArray("misses") {
@@ -106,11 +115,14 @@ private fun bookJson(
             put("position", mark.position)
             put("text", mark.text)
             put("style", mark.combo.style.name)
+            put("markedAt", mark.markedAt)
+            put("shownAt", check.shownAt)
             put("atPosition", check.atPosition)
             put("around", check.around)
             putJsonArray("occurrences") {
                 for (o in check.occurrences) addJsonArray {
                     add(o.chapter)
+                    add(o.split)
                     add(o.position)
                 }
             }

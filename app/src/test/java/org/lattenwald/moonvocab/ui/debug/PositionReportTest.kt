@@ -50,7 +50,7 @@ class PositionReportTest {
         val bad = books.single { it.jsonObject.getValue("bookPath").jsonPrimitive.content.endsWith("bad.epub") }.jsonObject
         val miss = bad.getValue("misses").jsonArray.single().jsonObject
         assertEquals("day", miss.getValue("text").jsonPrimitive.content)
-        assertEquals(listOf(0, 7), miss.getValue("occurrences").jsonArray.single().jsonArray.map { it.jsonPrimitive.int })
+        assertEquals(listOf(0, 0, 7), miss.getValue("occurrences").jsonArray.single().jsonArray.map { it.jsonPrimitive.int })
         assertEquals("<b>sentence</b>", miss.getValue("cardSentence").jsonPrimitive.content)
     }
 

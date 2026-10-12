@@ -1,32 +1,32 @@
 package org.lattenwald.moonvocab.domain.text
 
-data class Occurrence(val chapter: Int, val position: Int)
+data class Occurrence(val chapter: Int, val split: Int, val position: Int)
 
 data class PositionCheck(
-    val note: NoteRef,
     val exact: Boolean,
+    val shownAt: Int?,
     val atPosition: String?,
     val around: String?,
     val occurrences: List<Occurrence>,
 )
 
-fun checkPosition(chapters: List<String>, note: NoteRef): PositionCheck {
-    val chapter = chapters.getOrNull(note.chapter)
-    val position = note.position.takeIf { chapter != null && it in 0..chapter.length }
-    val exact = position != null && note.text.isNotEmpty() && chapter!!.startsWith(note.text, position)
-    val atPosition = position?.let { chapter!!.substring(it, minOf(chapter.length, it + note.text.length)) }
-    val around = position?.let { chapter!!.substring(maxOf(0, it - CONTEXT), minOf(chapter.length, it + note.text.length + CONTEXT)) }
-    val occurrences = if (exact || note.text.isEmpty()) emptyList() else occurrences(chapters, note.text)
-    return PositionCheck(note, exact, atPosition, around, occurrences)
+fun checkPosition(parts: List<List<String>>, part: String?, position: Int, text: String): PositionCheck {
+    val inPart = position.takeIf { part != null && it in 0..part.length }
+    val exact = inPart != null && text.isNotEmpty() && part!!.startsWith(text, inPart)
+    val shownAt = part?.let { moonNoteStart(it, position, text) }
+    val atPosition = inPart?.let { part!!.substring(it, minOf(part.length, it + text.length)) }
+    val around = inPart?.let { part!!.substring(maxOf(0, it - CONTEXT), minOf(part.length, it + text.length + CONTEXT)) }
+    val occurrences = if (exact || text.isEmpty()) emptyList() else occurrences(parts, text)
+    return PositionCheck(exact, shownAt, atPosition, around, occurrences)
 }
 
-private fun occurrences(chapters: List<String>, text: String): List<Occurrence> = buildList {
-    for ((index, chapter) in chapters.withIndex()) {
-        var from = chapter.indexOf(text)
+private fun occurrences(parts: List<List<String>>, text: String): List<Occurrence> = buildList {
+    for ((chapter, splits) in parts.withIndex()) for ((split, part) in splits.withIndex()) {
+        var from = part.indexOf(text)
         while (from >= 0) {
             if (size == MAX_OCCURRENCES) return@buildList
-            add(Occurrence(index, from))
-            from = chapter.indexOf(text, from + 1)
+            add(Occurrence(chapter, split, from))
+            from = part.indexOf(text, from + 1)
         }
     }
 }

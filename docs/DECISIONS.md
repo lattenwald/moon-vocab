@@ -39,6 +39,11 @@
 - A mark is located only as the spec §5.2 evidence allows; otherwise it gets no sentence.
 - Anchors come from every note of the book in the current run's backup. A run without a backup has none.
 - A mark stores Moon+ `lastSplitIndex` as `split`; an import refreshes `split` on marks already stored.
+- A mark's sentence comes first from the Moon+ text port (`MoonEpub`, `MoonFb2`, `MoonMobi`, `moonText`): the part `chapter`/`split`, at `position` or the nearest occurrence within 200 characters. The anchor search runs only when that fails.
+- The Moon+ text port uses the user's Moon+ settings: trimBlankSpace off, indentParagraph on, maxHtmlChapterSize5 100000, CSS margins applied.
+- EPUB page labels ("Page N ") count only for marks made at or after 1 700 000 000 000 ms.
+- Block images: EPUB when width × 2.75 (capped at 1000) exceeds 1000/3; FB2 when the larger side is at least 30 px.
+- HTML is parsed with TagSoup 1.2.1, as in Moon+ Reader.
 - A sentence never crosses a paragraph `\n`. Widening a short sentence stays inside its paragraph.
 - A mark that spans a paragraph break is its own sentence.
 - Each run keeps the text and normalized chapters of at most 3 books, least recently used out.

@@ -14,9 +14,12 @@ private val SOFT_HYPHEN_CHAR = Char(0x00AD)
 // normalized[i] must be normalize(chapters[i]).
 fun sentenceAt(chapters: List<String>, normalized: List<NormalizedText>, spot: Spot, locale: Locale): SentenceResult.Found {
     val norm = normalized[spot.chapter]
-    val text = chapters[spot.chapter]
-    val markStart = norm.originalIndex(spot.start)
-    var markEnd = norm.originalIndex(spot.end)
+    return sentenceAt(chapters[spot.chapter], norm.originalIndex(spot.start), norm.originalIndex(spot.end), locale)
+}
+
+fun sentenceAt(text: String, start: Int, end: Int, locale: Locale): SentenceResult.Found {
+    val markStart = start
+    var markEnd = end
     while (markEnd > markStart && text[markEnd - 1] == SOFT_HYPHEN_CHAR) markEnd--
 
     // ICU (Android) breaks sentences at LF, the JDK BreakIterator doesn't.

@@ -11,7 +11,19 @@ import org.w3c.dom.Node
 import org.xml.sax.InputSource
 
 // Port of Moon+ Reader Pro 10.7's Epub.java: the chapters a note's lastChapter counts, and their HTML.
-class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
+// A MOBI comes in as the EPUB libmobi builds from it: Epub.java then allows a 3 MB file for preloading and drops pagebreaks.
+class MoonEpub internal constructor(
+    entries: List<String>,
+    private val bytes: (String) -> ByteArray?,
+    private val fileSize: Long,
+    private val mobi: Boolean = false,
+) {
+    constructor(zip: ZipFile, fileSize: Long) : this(
+        zip.entries().asSequence().filter { !it.isDirectory }.map { it.name }.toList(),
+        { name -> zip.getEntry(name)?.let { e -> zip.getInputStream(e).use { it.readBytes() } } },
+        fileSize,
+    )
+
     private class Chapter(var name: String, val file: String, var text: String) {
         var idTag: String? = null
         var indent = 0
@@ -21,8 +33,7 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
         var broken = false
     }
 
-    private val files: List<String> = zip.entries().asSequence().filter { !it.isDirectory }.map { it.name }.toList()
-        .sortedWith(compareBy<String>({ folder(it) }, { it.lowercase() }))
+    private val files: List<String> = entries.sortedWith(compareBy<String>({ folder(it) }, { it.lowercase() }))
     private val pure: Map<String, String> = files.groupBy(::fileName).filterValues { it.size == 1 }.mapValues { it.value.single() }
     private val raw = HashMap<String, String>()
     private var hasIdStr = false
@@ -53,8 +64,11 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
 
     fun parts(chapter: Int): List<String> = splitHtml(chapterText(chapter))
 
+    /** The file whose stylesheets style the whole chapter, merged files included. */
+    fun file(chapter: Int): String = chapters[chapter].file
+
     private fun read(name: String): String = raw.getOrPut(name) {
-        zip.getEntry(name)?.let { e -> zip.getInputStream(e).use { it.readBytes().decodeToString() } }.orEmpty()
+        bytes(name)?.decodeToString().orEmpty()
     }
 
     private fun body(name: String) = htmlBody(read(name))
@@ -110,7 +124,7 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
 
     private fun chapter(href: String?, name: String?): Chapter? {
         if (href == null || name == null) return null
-        val title = name.replace("\n", "").replace("\r", "").trim()
+        val title = name.replace("\n", "").replace("\r", "").javaTrim()
         val c = if ('#' !in href) {
             Chapter(title, resolve(href) ?: return null, UN_LOAD_TAG)
         } else {
@@ -123,7 +137,7 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
 
     private fun parseToc(name: String): MutableList<Chapter> {
         val out = mutableListOf<Chapter>()
-        val root = parseXml(zip, name)?.documentElement ?: return out
+        val root = parseXml(bytes(name))?.documentElement ?: return out
         val pre = root.tagName.let { if (':' in it) it.substring(0, it.indexOf(':') + 1) else "" }
         var tree = false
 
@@ -199,7 +213,7 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
             if (!lazyReload && !before) ch.used += c.file
             if (!defer) {
                 val h = body(c.file)
-                val short = h.length <= 100 && htmlText(h).isBlank()
+                val short = h.length <= 100 && htmlText(h).isJavaBlank()
                 sb.append("<a name=").append(fileName(c.file)).append('>').append(if (k <= 0 || short) "" else PAGE_BREAK).append(h)
             } else if (sb.isEmpty()) {
                 sb.append("#MORE#_").append(a).append('|').append(b)
@@ -222,7 +236,7 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
     }
 
     private fun spineChapters(): List<Chapter> {
-        val root = parseXml(zip, opfFileName() ?: return emptyList())?.documentElement ?: return emptyList()
+        val root = parseXml(bytes(opfFileName() ?: return emptyList()))?.documentElement ?: return emptyList()
         val pre = root.tagName.let { if (':' in it) it.substring(0, it.indexOf(':') + 1) else "" }
         val items = root.getElementsByTagName(pre + "item").list().ifEmpty { root.getElementsByTagName("opf:item").list() }
         val hrefs = items.map { it as Element }.filter { it.hasAttribute("id") && it.hasAttribute("href") }
@@ -270,7 +284,7 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
             files.filter { it.substringAfterLast('.', "").lowercase() in setOf("htm", "html", "xhtml") }
                 .forEachIndexed { k, n -> chapters += Chapter("${k + 1}", n, UN_LOAD_TAG) }
         }
-        if (hasIdStr && chapters.size < 60 && fileSize < 1_000_000) {
+        if (hasIdStr && chapters.size < 60 && fileSize < if (mobi) 3_000_000 else 1_000_000) {
             for (i in chapters.indices) if (chapters[i].idTag != null) chapters[i].text = chapterText(i)
             val broken = chapters.count { it.broken }
             if (broken in 3 until chapters.size) chapters.removeAll { it.broken }
@@ -382,7 +396,8 @@ class MoonEpub(private val zip: ZipFile, private val fileSize: Long) {
             }
         }
         var s = deleteHtmlComments(t)
-        if (s.length < 200 && "<im" !in s && ch.name !in s && htmlText(s).isBlank()) s = "<center><h2>${ch.name}</h2></center>"
+        if (s.length < 200 && "<im" !in s && ch.name !in s && htmlText(s).isJavaBlank()) s = "<center><h2>${ch.name}</h2></center>"
+        if (mobi) s = s.replace("<mbp:pagebreak/>", "")
         ch.text = s
         return s
     }
@@ -415,8 +430,8 @@ private fun decode(s: String): String = runCatching { URLDecoder.decode(s.replac
 
 private fun org.w3c.dom.NodeList.list(): List<Node> = List(length, ::item)
 
-private fun parseXml(zip: ZipFile, name: String): Document? = runCatching {
-    val bytes = zip.getInputStream(zip.getEntry(name) ?: return null).use { it.readBytes() }
+private fun parseXml(bytes: ByteArray?): Document? = runCatching {
+    if (bytes == null) return null
     val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
     builder.setEntityResolver { _, _ -> InputSource(StringReader("")) } // never fetch a DTD
     builder.parse(ByteArrayInputStream(bytes))
@@ -475,23 +490,9 @@ private fun textBeforeTag(s: String, p: Int, minText: Int): String? {
 
 private const val MAX_HTML_CHAPTER_SIZE = 100_000
 
-// A.cleanHtml for HTML content, with the user's trimBlankSpace off.
-private fun cleanHtml(html: String): String {
-    val s = html.replace("­", "")
-    if (s.length > 100_000) return s
-    var t = s.trim()
-    while (true) {
-        t = when {
-            t.endsWith("<br>") -> t.dropLast(4)
-            t.endsWith("　") || t.endsWith(" ") -> t.dropLast(1)
-            else -> return t
-        }
-    }
-}
-
 /** A.adjustChapterHtml + A.createSplitHtmls: the parts `lastSplitIndex` numbers. */
 internal fun splitHtml(s: String, max: Int = MAX_HTML_CHAPTER_SIZE): List<String> {
-    if (s.length <= max) return listOf(cleanHtml(s))
+    if (s.length <= max) return listOf(moonCleanHtml(s))
     val out = mutableListOf<String>()
     val n = s.length
     var i2 = max
@@ -507,8 +508,8 @@ internal fun splitHtml(s: String, max: Int = MAX_HTML_CHAPTER_SIZE): List<String
         }
         var part = s.substring(i3, j)
         if (part.length > max * 5) part = part.substring(0, max * 2)
-        part = cleanHtml(part)
-        if (!(part.length < 200 && htmlText(part).isBlank())) {
+        part = moonCleanHtml(part)
+        if (!(part.length < 200 && htmlText(part).isJavaBlank())) {
             out += (carry ?: "") + part
             val lo = part.lowercase().takeIf { it.length == part.length } ?: part
             val k = lo.lastIndexOf("<div", i2) // sic: Moon+ uses the chapter offset as an index into the part

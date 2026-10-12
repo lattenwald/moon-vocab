@@ -1,5 +1,6 @@
 package org.lattenwald.moonvocab.data.books
 
+import android.util.Log
 import java.io.File
 import java.io.IOException
 import java.net.URLDecoder
@@ -27,8 +28,16 @@ internal object EpubText {
             // XML, not HTML, parsing: the HTML parser reads a self-closing <title/> as an open title that swallows the body.
             .map { entry -> entry?.let { xml(it).selectFirst("*|body")?.let(::text) }.orEmpty() }
         fun meta(tag: String) = opf.selectFirst("*|metadata *|$tag")?.text()?.trim()?.ifEmpty { null }
-        BookText(title = meta("title"), author = meta("creator"), language = isoLanguage(meta("language")), chapters = chapters)
+        val moon = try {
+            MoonEpubText(zip, file.length()).chapters()
+        } catch (e: Exception) {
+            Log.w(TAG, "no Moon+ text for ${file.name}", e)
+            null
+        }
+        BookText(title = meta("title"), author = meta("creator"), language = isoLanguage(meta("language")), chapters = chapters, moon = moon)
     }
+
+    private const val TAG = "EpubText"
 
     private const val BLOCKS = "p, div, h1, h2, h3, h4, h5, h6, li, blockquote, pre, tr, dt, dd, br, " +
         "section, article, aside, header, footer, figcaption, caption, td, th, hr, ul, ol, dl, table, address"

@@ -7,28 +7,30 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PositionCheckTest {
-    private val chapters = listOf("Cover", "He wore long hose and a doublet. The hose was red.")
+    private val text = "He wore long hose and a doublet. The hose was red."
+    private val parts = listOf(listOf("Cover"), listOf(text, "Part two: hose again."))
 
     @Test fun noteAtItsSavedPlaceIsExact() {
-        val check = checkPosition(chapters, NoteRef(1, 13, "hose"))
+        val check = checkPosition(parts, text, 13, "hose")
         assertTrue(check.exact)
-        assertEquals("hose", check.atPosition)
+        assertEquals(13, check.shownAt)
         assertEquals(emptyList<Occurrence>(), check.occurrences)
     }
 
     @Test fun missShowsWhatIsThereAndWhereTheTextOccurs() {
-        val check = checkPosition(chapters, NoteRef(1, 8, "hose"))
+        val check = checkPosition(parts, text, 8, "hose")
         assertFalse(check.exact)
+        assertEquals(13, check.shownAt)
         assertEquals("long", check.atPosition)
-        assertEquals(chapters[1], check.around)
-        assertEquals(listOf(Occurrence(1, 13), Occurrence(1, 37)), check.occurrences)
+        assertEquals(text, check.around)
+        assertEquals(listOf(Occurrence(1, 0, 13), Occurrence(1, 0, 37), Occurrence(1, 1, 10)), check.occurrences)
     }
 
-    @Test fun missingChapterHasNothingAtThePosition() {
-        val check = checkPosition(chapters, NoteRef(7, 0, "hose"))
+    @Test fun missingPartHasNothingAtThePosition() {
+        val check = checkPosition(parts, null, 0, "hose")
         assertFalse(check.exact)
+        assertNull(check.shownAt)
         assertNull(check.atPosition)
-        assertNull(check.around)
-        assertEquals(2, check.occurrences.size)
+        assertEquals(3, check.occurrences.size)
     }
 }
