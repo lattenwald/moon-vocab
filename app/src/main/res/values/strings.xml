@@ -103,6 +103,9 @@
     <string name="card_edit">Edit card</string>
     <string name="card_done">Done editing</string>
     <string name="card_preview">Preview in AnkiDroid</string>
+    <string name="preview_title">Card in AnkiDroid</string>
+    <string name="preview_show_answer">Show answer</string>
+    <string name="preview_show_question">Show question</string>
     <string name="card_more">More actions</string>
     <string name="card_navigate_back">Back</string>
     <string name="card_send">Send to Anki</string>

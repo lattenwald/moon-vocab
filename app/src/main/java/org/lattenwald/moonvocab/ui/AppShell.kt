@@ -36,6 +36,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
+import org.lattenwald.moonvocab.ui.card.PreviewPage
 import org.lattenwald.moonvocab.ui.debug.DebugScreen
 import org.lattenwald.moonvocab.ui.debug.DebugViewModel
 import org.lattenwald.moonvocab.ui.inbox.InboxScreen
@@ -133,7 +134,14 @@ fun AppShell() {
                     )
                 }
                 entry<CardKey> { key ->
-                    CardPage(key.cardId, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() }, onPreview = null)
+                    CardPage(
+                        key.cardId,
+                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
+                        onPreview = { id -> if (backStack.lastOrNull() == key) backStack.add(PreviewKey(id)) },
+                    )
+                }
+                entry<PreviewKey> { key ->
+                    PreviewPage(key.cardId, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
                 }
                 entry<SettingsKey>(metadata = TabTransitions) { DebugScreen(contentPadding = shellPadding, vm = debug) }
             },

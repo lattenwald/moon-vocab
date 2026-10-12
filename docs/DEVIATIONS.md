@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The card preview has no grade buttons
+
+- Plan said: the prototype's preview has AnkiDroid's grade buttons, which step to the next card.
+- Actual: Show answer and Show question only.
+- Reason: the grade buttons did nothing real, and the preview shows one card.
+
 ## 2026-10-12: The card page stays open after its actions
 
 - Plan said: the prototype closes the card page after Send, Discard and Save.

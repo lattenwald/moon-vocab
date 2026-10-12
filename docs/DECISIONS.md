@@ -168,6 +168,8 @@
 - Card page actions keep the page open and show their result there, with Undo for send and discard.
 - A pending card's edits are saved in the app on Done or Back. A sent card's edits wait for Save.
 - Delete from AnkiDroid asks first.
+- The preview fills the note type's front and back templates and CSS with the card's fields, in a WebView with JavaScript off. Its background is the Inbox row colour and its text colour the theme's `onSurface`. Dark mode adds `nightMode`.
+- Preview is off while the page has unsaved changes.
 
 ## Library
 - The Library lists every book with at least one card, grouped by the book's language: most books first, Other last. Within a group, newest mark first.
@@ -190,7 +192,7 @@
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
 - App data is excluded from cloud backup and device transfer.
-- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox, Library and book page queries and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty screen.
+- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox, Library, book page and preview queries and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty screen.
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
 - The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
 - The debug screen's Send all pending skips cards with an `elsewhereDeck`.
