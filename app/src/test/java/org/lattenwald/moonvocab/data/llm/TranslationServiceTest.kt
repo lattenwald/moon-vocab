@@ -91,7 +91,7 @@ class TranslationServiceTest {
         reply("""{"items":[]}""")
         service().translate(listOf(TranslationItem("a", "hypos", "my hypos", "Moby-Dick", "en"), TranslationItem("b", "spleen", null, "Moby-Dick", null)), "ru", 15)
         val body = Json.parseToJsonElement(server.takeRequest().body!!.utf8()).jsonObject
-        assertEquals(800, body["max_tokens"]!!.jsonPrimitive.int)
+        assertEquals(2800, body["max_tokens"]!!.jsonPrimitive.int)
         val expected = Json.parseToJsonElement("""[
             {"id":"a","marked":"hypos","sentence":"my hypos","bookTitle":"Moby-Dick","sourceLanguage":"en"},
             {"id":"b","marked":"spleen","sentence":null,"bookTitle":"Moby-Dick","sourceLanguage":null}]""")

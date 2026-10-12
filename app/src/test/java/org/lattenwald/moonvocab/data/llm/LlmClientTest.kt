@@ -1,5 +1,6 @@
 package org.lattenwald.moonvocab.data.llm
 
+import java.net.InetAddress
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineStart
@@ -64,13 +65,31 @@ class LlmClientTest {
                 addJsonObject { put("role", "system"); put("content", "sys") }
                 addJsonObject { put("role", "user"); put("content", "usr") }
             }
-            put("max_tokens", 123)
+            put("max_tokens", 2123)
             putJsonObject("response_format") {
                 put("type", "json_schema")
                 putJsonObject("json_schema") { put("name", "cards"); put("strict", true); put("schema", schema) }
             }
         }
         assertEquals(expected, Json.parseToJsonElement(request.body!!.utf8()).jsonObject)
+    }
+
+    @Test fun openRouterRequestTurnsReasoningOff() = runTest {
+        server.enqueue(ok("x"))
+        val openRouter = LlmClient(
+            OkHttpClient.Builder().dns { listOf(InetAddress.getLoopbackAddress()) }.build(),
+            { LlmConfig("http://openrouter.ai:${server.port}/api/v1", apiKey, "test/model") },
+            {},
+        )
+        openRouter.complete("s", "u", schema, 100)
+        val body = Json.parseToJsonElement(server.takeRequest().body!!.utf8()).jsonObject
+        assertEquals(buildJsonObject { put("enabled", false) }, body["reasoning"])
+    }
+
+    @Test fun replyCutOffAtTokenLimitFails() = runTest {
+        server.enqueue(MockResponse(code = 200, body = """{"choices":[{"finish_reason":"length","message":{"content":"{\"items\":[{\"id\":\"a\""}}]}"""))
+        val message = assertFailsWith<LlmException.Failed> { client().complete("s", "u", schema, 100) }.message!!
+        assertTrue(message, "cut off" in message)
     }
 
     @Test fun retriesAfterRetryAfter() = runTest {

@@ -56,6 +56,7 @@
 ## Translation
 - BYOK only. Settings hold a list of saved services `(id, name, baseUrl, apiKey, model)` and one active service id.
 - The default service is OpenRouter, `https://openrouter.ai/api/v1`, `anthropic/claude-haiku-5.5`, with an empty key.
+- Requests to the `openrouter.ai` host send `reasoning: {enabled: false}`. Every request adds 2000 tokens to the caller's `max_tokens` as thinking headroom. A reply with `finish_reason: length` fails as cut off.
 - The services list is never empty.
 - Every `LlmService` field except `id` has a default.
 - The stored services JSON is rewritten only when the services change.

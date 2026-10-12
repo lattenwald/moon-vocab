@@ -42,12 +42,13 @@ class LlmClient(
         val cfg = config()
         val url = (cfg.baseUrl.trimEnd('/') + "/chat/completions").toHttpUrlOrNull()
             ?: throw LlmException.Stop(LlmException.Stop.Kind.CONFIG, "Invalid base URL")
-        var reply = sendWithRetries(url, cfg.apiKey, requestBody(cfg.model, system, user, maxTokens, schema))
+        val openRouter = url.host == "openrouter.ai"
+        var reply = sendWithRetries(url, cfg.apiKey, requestBody(cfg.model, system, user, maxTokens, schema, openRouter))
         if (reply.code == 400 && ("response_format" in reply.body || "json_schema" in reply.body)) {
-            reply = sendWithRetries(url, cfg.apiKey, requestBody(cfg.model, system, user, maxTokens, schema = null))
+            reply = sendWithRetries(url, cfg.apiKey, requestBody(cfg.model, system, user, maxTokens, schema = null, openRouter))
         }
         return when (reply.code) {
-            in 200..299 -> content(reply.body, cfg.apiKey)
+            in 200..299 -> content(reply.body, cfg.apiKey, maxTokens)
             401, 403 -> throw LlmException.Stop(LlmException.Stop.Kind.AUTH, describe(reply, cfg.apiKey))
             402 -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, describe(reply, cfg.apiKey))
             // A wrong path, or OpenRouter's answer for an unknown model.
@@ -104,14 +105,16 @@ class LlmClient(
         })
     }
 
-    private fun requestBody(model: String, system: String, user: String, maxTokens: Int, schema: JsonObject?): String =
+    private fun requestBody(model: String, system: String, user: String, maxTokens: Int, schema: JsonObject?, openRouter: Boolean): String =
         buildJsonObject {
             put("model", model)
             putJsonArray("messages") {
                 addJsonObject { put("role", "system"); put("content", system) }
                 addJsonObject { put("role", "user"); put("content", user) }
             }
-            put("max_tokens", maxTokens)
+            put("max_tokens", maxTokens + THINKING_TOKENS)
+            // Other OpenAI-compatible APIs reject this field; Haiku 5.5 on OpenRouter thinks unless told not to.
+            if (openRouter) putJsonObject("reasoning") { put("enabled", false) }
             if (schema != null) putJsonObject("response_format") {
                 put("type", "json_schema")
                 putJsonObject("json_schema") {
@@ -122,13 +125,16 @@ class LlmClient(
             }
         }.toString()
 
-    private fun content(body: String, apiKey: String): String {
-        val content = try {
-            Json.parseToJsonElement(body).jsonObject["choices"]?.jsonArray?.firstOrNull()
-                ?.jsonObject?.get("message")?.jsonObject?.get("content")?.jsonPrimitive?.contentOrNull
+    private fun content(body: String, apiKey: String, maxTokens: Int): String {
+        val choice = try {
+            Json.parseToJsonElement(body).jsonObject["choices"]?.jsonArray?.firstOrNull()?.jsonObject
         } catch (_: IllegalArgumentException) {
             null
         }
+        if (choice?.get("finish_reason")?.jsonPrimitive?.contentOrNull == "length") {
+            throw LlmException.Failed("Reply cut off at the ${maxTokens + THINKING_TOKENS}-token limit")
+        }
+        val content = choice?.get("message")?.jsonObject?.get("content")?.jsonPrimitive?.contentOrNull
         return content ?: throw LlmException.Failed("Response has no message content: ${excerpt(body, apiKey)}")
     }
 
@@ -148,6 +154,7 @@ class LlmClient(
         val BACKOFF_MS = longArrayOf(2_000, 8_000)
         const val MAX_RETRY_AFTER_S = 60L
         const val EXCERPT_CHARS = 200
+        const val THINKING_TOKENS = 2000
         val WHITESPACE = Regex("\\s+")
     }
 }

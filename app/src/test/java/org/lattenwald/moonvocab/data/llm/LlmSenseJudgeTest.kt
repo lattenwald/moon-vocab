@@ -66,7 +66,7 @@ class LlmSenseJudgeTest {
     @Test fun requestCarriesCandidatesAndBudget() = runTest {
         reply("""{"items":[]}"""); judge().judge(listOf(q("0", "k7"), q("1", "b0")))
         val body = Json.parseToJsonElement(server.takeRequest().body!!.utf8()).jsonObject
-        assertEquals(220, body["max_tokens"]!!.jsonPrimitive.int)
+        assertEquals(2220, body["max_tokens"]!!.jsonPrimitive.int)
         assertTrue("\"ref\":\"k7\"" in body["messages"]!!.jsonArray[1].jsonObject["content"]!!.jsonPrimitive.content)
     }
 
