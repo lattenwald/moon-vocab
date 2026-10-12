@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: `ServicePage` takes an `onOpen` callback
+
+- Plan said: `ServicePage(id: String, onBack: () -> Unit)`.
+- Actual: `ServicePage(id, onBack, onOpen: (String) -> Unit)`; Duplicate opens the copy in place of the original's page.
+- Reason: the copy becomes active, and the user duplicates a service to change it; staying on the original would edit the wrong one.
+
 ## 2026-10-12: The picker reads the phone's languages with `LocaleManagerCompat.getSystemLocales`
 
 - Plan said: the device languages for Suggested come from `LocaleListCompat.getAdjustedDefault()`.

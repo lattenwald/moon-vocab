@@ -209,6 +209,17 @@
 - App language offers Same as phone (with the phone's language), English and Русский, without search. English and Русский are shown in their own names.
 - Picking an app language calls `AppCompatDelegate.setApplicationLocales` (empty for Same as phone), then pops. The current choice comes from `AppCompatDelegate.getApplicationLocales()`.
 
+## Translation services pages
+- The Services page lists the saved services with a radio for the active one. A row shows the name and the model, or `services_no_model`. The radio selects; the row opens the service page.
+- "Add service" opens a menu of the templates. The new service opens at once.
+- The service page has name, address, API key (show/hide), model (with suggestions) and Test connection, with Duplicate and Delete in its overflow menu.
+- Service edits are saved as typed, in keystroke order. The fields keep local `remember` state keyed by the service id.
+- Delete asks first and is disabled for the last service. A service page whose service is gone pops.
+- Duplicate replaces the page with the copy's page.
+- Model suggestions are fetched when the service page opens and again 600 ms after the address or key stops changing. The model field shows at most 50 that contain the typed text, ignoring case.
+- Changing the address, key or model clears the test result and cancels a running test.
+- Test seconds show one decimal, formatted in the UI locale.
+
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.

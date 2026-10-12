@@ -20,6 +20,10 @@ enum class LanguageKind { TARGET, APP }
 
 @Serializable data class LanguageKey(val kind: LanguageKind) : NavKey
 
+@Serializable data object ServicesKey : NavKey
+
+@Serializable data class ServiceKey(val id: String) : NavKey
+
 val TabKeys: List<NavKey> = listOf(InboxKey, LibraryKey, SettingsKey)
 
 fun NavBackStack<NavKey>.selectTab(tab: NavKey) {

@@ -45,6 +45,8 @@ import org.lattenwald.moonvocab.ui.library.BookPage
 import org.lattenwald.moonvocab.ui.library.LibraryScreen
 import org.lattenwald.moonvocab.ui.library.LibraryViewModel
 import org.lattenwald.moonvocab.ui.settings.LanguagePicker
+import org.lattenwald.moonvocab.ui.settings.ServicePage
+import org.lattenwald.moonvocab.ui.settings.ServicesPage
 
 private val TabTransitions =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
@@ -146,6 +148,24 @@ fun AppShell() {
                 }
                 entry<LanguageKey> { key ->
                     LanguagePicker(key.kind, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                }
+                entry<ServicesKey> { key ->
+                    ServicesPage(
+                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
+                        onOpen = { id -> if (backStack.lastOrNull() == key) backStack.add(ServiceKey(id)) },
+                    )
+                }
+                entry<ServiceKey> { key ->
+                    ServicePage(
+                        key.id,
+                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
+                        onOpen = { id ->
+                            if (backStack.lastOrNull() == key) {
+                                backStack.removeLastOrNull()
+                                backStack.add(ServiceKey(id))
+                            }
+                        },
+                    )
                 }
                 entry<SettingsKey>(metadata = TabTransitions) { DebugScreen(contentPadding = shellPadding, vm = debug) }
             },

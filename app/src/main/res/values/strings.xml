@@ -354,4 +354,31 @@
     <string name="picker_none">No language matches “%1$s”</string>
     <string name="picker_same_phone">Same as phone (%1$s)</string>
     <string name="settings_target_note">Changing this affects only new cards.</string>
+
+    <string name="services_title">Translation services</string>
+    <string name="services_add">Add service</string>
+    <string name="services_no_model">No model set</string>
+    <string name="service_custom">Custom</string>
+    <string name="service_title">Translation service</string>
+    <string name="service_more">More actions</string>
+    <string name="service_duplicate">Duplicate</string>
+    <string name="service_copy_name">%1$s copy</string>
+    <string name="service_delete">Delete</string>
+    <string name="service_delete_title">Delete this service?</string>
+    <string name="service_cancel">Cancel</string>
+    <string name="service_name">Name</string>
+    <string name="service_address">Address</string>
+    <string name="service_key">API key</string>
+    <string name="service_key_help">Stored only on this phone.</string>
+    <string name="service_model">Model</string>
+    <string name="service_show_key">Show key</string>
+    <string name="service_hide_key">Hide key</string>
+    <string name="service_test">Test connection</string>
+    <string name="service_testing">Checking</string>
+    <string name="service_test_ok">Connected. “%1$s” came back as “%2$s” in %3$s s.</string>
+    <string name="service_test_auth">The service rejected the key.</string>
+    <string name="service_test_credits">No credits left on this account.</string>
+    <string name="service_test_config">Check the address and the model.</string>
+    <string name="service_test_failed">The test failed: %1$s</string>
+    <string name="service_test_no_translation">the service sent no translation</string>
 </resources>
