@@ -41,7 +41,7 @@ data class InboxList(
     val visibleIds: List<Long>,
 )
 
-private val NEWEST_FIRST = compareByDescending<InboxCard> { it.markedAt }.thenByDescending { it.id }
+internal val NEWEST_FIRST = compareByDescending<InboxCard> { it.markedAt }.thenByDescending { it.id }
 
 fun inboxList(rows: List<InboxRow>, filter: LanguageFilter): InboxList {
     val present = rows.mapTo(HashSet()) { it.card.sourceLanguage }
@@ -69,7 +69,7 @@ private fun languageChips(rows: List<InboxRow>): List<LanguageChip> {
         .sortedWith(compareBy<LanguageChip> { it.language == null }.thenByDescending { it.count }.thenBy { it.language })
 }
 
-private fun inboxCard(row: InboxRow): InboxCard {
+internal fun inboxCard(row: InboxRow): InboxCard {
     val card = row.card
     val failed = card.status == CardStatus.FAILED
     return InboxCard(

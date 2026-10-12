@@ -103,6 +103,30 @@ interface CardDao {
     )
     fun observeInbox(): Flow<List<InboxRow>>
 
+    @Query(
+        """
+        SELECT b.id AS bookId, b.title, b.author, b.language,
+          (SELECT COUNT(*) FROM card WHERE card.bookId = b.id AND card.status = 'SENT') AS inAnki,
+          (SELECT COUNT(*) FROM card WHERE card.bookId = b.id AND card.status IN ('PENDING','FAILED')) AS toReview,
+          (SELECT MAX(mark.markedAt) FROM mark WHERE mark.bookId = b.id) AS newestMark
+        FROM book b WHERE EXISTS (SELECT 1 FROM card WHERE card.bookId = b.id)
+        """,
+    )
+    fun observeLibrary(): Flow<List<LibraryRow>>
+
+    @Query(
+        """
+        SELECT card.*, book.title AS bookTitle, book.author AS bookAuthor, MAX(mark.markedAt) AS markedAt
+        FROM card
+        JOIN book ON book.id = card.bookId
+        LEFT JOIN mark ON mark.cardId = card.id
+        WHERE card.bookId = :bookId
+        GROUP BY card.id
+        ORDER BY card.id
+        """,
+    )
+    fun observeBook(bookId: Long): Flow<List<InboxRow>>
+
     @Query("SELECT * FROM card WHERE id IN (:ids) ORDER BY id")
     suspend fun byIds(ids: List<Long>): List<CardEntity>
 
