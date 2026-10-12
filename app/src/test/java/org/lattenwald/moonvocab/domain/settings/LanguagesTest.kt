@@ -16,12 +16,17 @@ class LanguagesTest {
         }
     }
 
+    @Test fun searchMatchesTheCodeAlone() {
+        assertTrue("zh" in searchLanguages(LANGUAGE_CODES, "zh", Locale.ENGLISH))
+    }
+
     @Test fun searchWithNoMatchIsEmpty() {
         assertEquals(emptyList<String>(), searchLanguages(LANGUAGE_CODES, "qqq", Locale.ENGLISH))
     }
 
     @Test fun sortFollowsTheUiLocale() {
-        val sorted = sortedLanguages(listOf("de", "en"), Locale.forLanguageTag("ru"))
-        assertEquals(listOf("en", "de"), sorted)
+        // Испанский < Немецкий; by code, English name or own name the order is reversed.
+        val sorted = sortedLanguages(listOf("de", "es"), Locale.forLanguageTag("ru"))
+        assertEquals(listOf("es", "de"), sorted)
     }
 }
