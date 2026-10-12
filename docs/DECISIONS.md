@@ -272,7 +272,9 @@
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
 - The app opens on the Inbox, or on setup while `setupDone` is false. The bottom bar has Inbox, Library and Settings. Settings shows the settings page.
 - Navigation 3 holds one back stack that starts with the Inbox, or with `SetupKey` until setup finishes. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
-- The bottom bar shows only on tabs. Tab switches cross-fade.
+- The bottom bar shows only on tabs.
+- Motion: tab switches, and setup's replacement by the Inbox, cross-fade. A pushed page slides in from the end edge, full width, on a spring with no bounce, while the page below slides a third of the way toward the start edge. Pop reverses it; predictive back runs the pop with the gesture. Each page keeps its own opaque background.
+- Predictive back is on (`android:enableOnBackInvokedCallback="true"`). Back closes, in order: the sheet, then selection mode, then the page.
 - The debug screen is the Developer tools page (`DeveloperKey`), pushed from the last row of Settings, with its own top bar. It keeps all its tools. `DebugViewModel` is scoped to its entry.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
 - An import stopped by the translation service shows its reason in the result card, with a button that opens the Services page on top of the Settings tab.

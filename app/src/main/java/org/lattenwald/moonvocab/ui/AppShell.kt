@@ -1,11 +1,18 @@
 package org.lattenwald.moonvocab.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,8 +34,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -58,6 +68,15 @@ private val TabTransitions =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
         NavDisplay.popTransitionSpec { fadeIn() togetherWith fadeOut() } +
         NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
+
+private fun pageSlide(push: Boolean, spec: FiniteAnimationSpec<IntOffset>, layoutDirection: LayoutDirection): ContentTransform {
+    val end = if (layoutDirection == LayoutDirection.Ltr) 1 else -1
+    return if (push) {
+        slideInHorizontally(spec) { width -> end * width } togetherWith slideOutHorizontally(spec) { width -> -end * width / 3 }
+    } else {
+        slideInHorizontally(spec) { width -> -end * width / 3 } togetherWith slideOutHorizontally(spec) { width -> end * width }
+    }
+}
 
 @Composable
 fun AppShell(share: ShareViewModel) {
@@ -119,9 +138,15 @@ fun AppShell(share: ShareViewModel) {
     ) { padding ->
         // NavDisplay keeps each entry's content lambda until the back stack changes.
         val shellPadding by rememberUpdatedState(padding)
+        // No bounce: an overshooting full-width slide shows the shell's background at the edge.
+        val slideSpec = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow, IntOffset.VisibilityThreshold)
+        val layoutDirection = LocalLayoutDirection.current
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
+            transitionSpec = { pageSlide(push = true, slideSpec, layoutDirection) },
+            popTransitionSpec = { pageSlide(push = false, slideSpec, layoutDirection) },
+            predictivePopTransitionSpec = { _ -> pageSlide(push = false, slideSpec, layoutDirection) },
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
