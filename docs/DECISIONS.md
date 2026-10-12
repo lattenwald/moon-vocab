@@ -59,6 +59,12 @@
 - The services list is never empty.
 - Every `LlmService` field except `id` has a default.
 - The stored services JSON is rewritten only when the services change.
+- Service templates, in order: OpenRouter, OpenAI, Google Gemini, Mistral, DeepSeek, Groq, Custom. A template fills only the name and base URL; Custom's are empty.
+- An added or duplicated service becomes active. A duplicate keeps the base URL, key and model, and sits right after the original.
+- The last service can't be deleted. Deleting the active service activates the next one, or the previous one when it was last.
+- Translate into offers the prototype's 80 `LANGUAGE_CODES`.
+- Suggested languages: the current one, then the phone's languages, then English; only listed codes, no repeats.
+- Language search ignores case and matches the name in the UI language, the own name, the English and Russian names, or the code. Lists are sorted by the UI-language name with the UI locale's `Collator`.
 - `LlmClient` never blocks: OkHttp `enqueue` with a cancellable coroutine.
 - The production OkHttp client uses `callTimeout(60 s)` and `retryOnConnectionFailure(false)`.
 - `LlmException.Stop` kinds:
@@ -89,6 +95,8 @@
 - `Settings.snapshot` falls back to defaults on an `IOException`.
 - Settings store only values that differ from their defaults. Writing a default removes its key.
 - `reviewFirst` defaults to `true`, and `deckOverride` defaults to `Moon+::Test`.
+- `theme` is `SYSTEM`, `LIGHT` or `DARK`, stored by name, default `SYSTEM`. `ankiAsked` defaults to `false`.
+- `setupDone` defaults to `true` when `backupTree` is set, else `false`. Its key is stored only when the value differs from that default.
 
 ## AnkiDroid
 - `ankiFields` HTML-escapes Word, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid.

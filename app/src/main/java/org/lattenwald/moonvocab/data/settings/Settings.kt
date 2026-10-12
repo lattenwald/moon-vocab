@@ -28,6 +28,8 @@ val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(na
 @Serializable
 data class LlmService(val id: String, val name: String = "", val baseUrl: String = "", val apiKey: String = "", val model: String = "")
 
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
 data class SettingsSnapshot(
     val backupTree: Uri?,
     val booksTree: Uri?,
@@ -43,6 +45,9 @@ data class SettingsSnapshot(
     val noteTypeVersion: Int,
     val deckOverride: String?,
     val lastCheckAt: Long,
+    val theme: ThemeMode,
+    val setupDone: Boolean,
+    val ankiAsked: Boolean,
 ) {
     val activeService: LlmService get() = services.firstOrNull { it.id == activeServiceId } ?: services.first()
 }
@@ -67,6 +72,9 @@ internal object SettingsKeys {
     val noteTypeVersion = intPreferencesKey("noteTypeVersion")
     val deckOverride = stringPreferencesKey("deckOverride")
     val lastCheckAt = longPreferencesKey("lastCheckAt")
+    val theme = stringPreferencesKey("theme")
+    val setupDone = booleanPreferencesKey("setupDone")
+    val ankiAsked = booleanPreferencesKey("ankiAsked")
 }
 
 class Settings(private val store: DataStore<Preferences>) {
@@ -103,6 +111,9 @@ private fun Preferences.toSnapshot() = SettingsSnapshot(
     noteTypeVersion = this[SettingsKeys.noteTypeVersion] ?: 0,
     deckOverride = (this[SettingsKeys.deckOverride] ?: DEFAULT_DECK_OVERRIDE).ifBlank { null },
     lastCheckAt = this[SettingsKeys.lastCheckAt] ?: 0L,
+    theme = ThemeMode.entries.firstOrNull { it.name == this[SettingsKeys.theme] } ?: ThemeMode.SYSTEM,
+    setupDone = this[SettingsKeys.setupDone] ?: (this[SettingsKeys.backupTree] != null),
+    ankiAsked = this[SettingsKeys.ankiAsked] ?: false,
 )
 
 private val DEFAULTS = emptyPreferences().toSnapshot()
@@ -125,6 +136,9 @@ private fun MutablePreferences.write(s: SettingsSnapshot, writeServices: Boolean
     store(SettingsKeys.noteTypeVersion, s.noteTypeVersion, DEFAULTS.noteTypeVersion)
     store(SettingsKeys.deckOverride, s.deckOverride.orEmpty(), DEFAULTS.deckOverride.orEmpty())
     store(SettingsKeys.lastCheckAt, s.lastCheckAt, DEFAULTS.lastCheckAt)
+    store(SettingsKeys.theme, s.theme.name, DEFAULTS.theme.name)
+    store(SettingsKeys.setupDone, s.setupDone, s.backupTree != null)
+    store(SettingsKeys.ankiAsked, s.ankiAsked, DEFAULTS.ankiAsked)
 }
 
 private fun <T> MutablePreferences.store(key: Preferences.Key<T>, value: T?, default: T?) {

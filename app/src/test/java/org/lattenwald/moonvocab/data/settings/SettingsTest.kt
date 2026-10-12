@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -39,11 +40,54 @@ class SettingsTest {
                 backupTree = null, booksTree = null, services = listOf(openRouter), activeServiceId = "openrouter",
                 targetLanguage = "ru", maxExcerptWords = 15, deckPattern = "Moon+::{language}", tagPattern = "book::{title}",
                 reviewFirst = true, styles = emptySet(), noteTypeId = null, noteTypeVersion = 0, deckOverride = "Moon+::Test",
-                lastCheckAt = 0,
+                lastCheckAt = 0, theme = ThemeMode.SYSTEM, setupDone = false, ankiAsked = false,
             ),
             read,
         )
         assertEquals(openRouter, read.activeService)
+    }
+
+    @Test fun anInstallWithABackupFolderCountsAsSetUp() = runTest {
+        val store = store()
+        assertFalse(Settings(store).current().setupDone)
+        store.edit { it[SettingsKeys.backupTree] = "content://tree/backups" }
+        assertTrue(Settings(store).current().setupDone)
+    }
+
+    @Test fun choosingABackupFolderDuringSetupKeepsSetupUnfinished() = runTest {
+        val settings = Settings(store())
+        settings.update { it.copy(backupTree = Uri.parse("content://tree/backups")) }
+        assertFalse(settings.current().setupDone)
+        settings.update { it.copy(setupDone = true) }
+        assertTrue(settings.current().setupDone)
+        assertEquals(setOf("backupTree"), rawPreferences().asMap().keys.map { it.name }.toSet())
+    }
+
+    @Test fun themeRoundTrips() = runTest {
+        val settings = Settings(store())
+        settings.update { it.copy(theme = ThemeMode.DARK) }
+        assertEquals(ThemeMode.DARK, settings.current().theme)
+    }
+
+    @Test fun writingSystemThemeRemovesTheKey() = runTest {
+        val settings = Settings(store())
+        settings.update { it.copy(theme = ThemeMode.LIGHT) }; settings.update { it.copy(theme = ThemeMode.SYSTEM) }
+        assertFalse("theme" in rawPreferences().asMap().keys.map { it.name })
+    }
+
+    @Test fun oldSettingsReadUnchanged() = runTest {
+        val store = store()
+        store.edit {
+            it[SettingsKeys.services] = """[{"id":"a","name":"A","baseUrl":"https://example.com/v1","apiKey":"k","model":"m"}]"""
+            it[SettingsKeys.activeServiceId] = "a"
+            it[SettingsKeys.targetLanguage] = "de"
+            it[SettingsKeys.backupTree] = "content://tree/backups"
+        }
+        val read = Settings(store).current()
+        assertEquals(listOf(LlmService("a", "A", "https://example.com/v1", "k", "m")), read.services)
+        assertEquals("a", read.activeServiceId)
+        assertEquals("de", read.targetLanguage)
+        assertEquals(Uri.parse("content://tree/backups"), read.backupTree)
     }
 
     @Test fun roundTripsTwoServicesAndSwitchedActive() = runTest {
@@ -53,7 +97,7 @@ class SettingsTest {
         val changed = settings.current().copy(
             backupTree = Uri.parse("content://tree/backups"), services = listOf(cheap, strong), activeServiceId = "b",
             styles = setOf(StyleCombo(MarkStyle.WAVY, -28160), StyleCombo(MarkStyle.HIGHLIGHT, 1996532479)),
-            noteTypeId = 1_700_000_000_123, deckOverride = null, reviewFirst = false, lastCheckAt = 42,
+            noteTypeId = 1_700_000_000_123, deckOverride = null, reviewFirst = false, lastCheckAt = 42, ankiAsked = true,
         )
         settings.update { changed }
         val read = settings.current()
