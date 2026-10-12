@@ -281,6 +281,7 @@
 ## UI
 - Fonts are bundled variable TTFs from google/fonts: Roboto Flex for the UI and Literata for book text. The licences ship in `assets/licenses/`.
 - Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
+- The launcher icon is an open cream book on #1F1915 with one #E8590C wave (stroke 5.5) across both pages and a slim #6E5C50 page edge; its monochrome layer is the pages with the wave and fold cut out.
 - The theme is System, Light or Dark. It is applied with `AppCompatDelegate.setDefaultNightMode` in `App.onCreate`, from a blocking read kept as `App.startSettings`, and again on every change. `isSystemInDarkTheme()` follows it.
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
 - The app opens on the Inbox, or on setup while `setupDone` is false. The bottom bar has Inbox, Library and Settings. Settings shows the settings page.
