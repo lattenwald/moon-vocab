@@ -71,6 +71,9 @@ interface MarkDao {
 
     @Query("SELECT COUNT(*) FROM mark WHERE cardId IS NULL")
     suspend fun countWithoutCard(): Int
+
+    @Query("SELECT text FROM mark WHERE cardId = :cardId ORDER BY id LIMIT 1")
+    suspend fun firstTextForCard(cardId: Long): String?
 }
 
 @Dao

@@ -162,6 +162,8 @@
 - A sent card's page reads its note when it opens, under the AnkiDroid lock. A missing note makes the card DELETED_IN_ANKI.
 - Save sends AnkiDroid only the changed fields and no tags. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
 - A pending card's edits are saved in the app only while it is still PENDING.
+- Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
+- Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
 
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.

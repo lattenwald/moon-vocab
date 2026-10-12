@@ -23,6 +23,7 @@ import org.lattenwald.moonvocab.data.llm.TranslationService
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.settingsDataStore
 import org.lattenwald.moonvocab.domain.cardpage.CardEditor
+import org.lattenwald.moonvocab.domain.cardpage.CardRetranslator
 import org.lattenwald.moonvocab.domain.import.AnkiCheck
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.domain.import.ImportPipeline
@@ -47,12 +48,14 @@ class AppContainer(context: Context) {
     // LlmClient does its own retries; OkHttp's silent retry would add attempts.
     private val http = OkHttpClient.Builder().callTimeout(60, TimeUnit.SECONDS).retryOnConnectionFailure(false).build()
     private val llm = LlmClient(http, config = { settings.current().activeService.let { LlmConfig(it.baseUrl, it.apiKey, it.model) } })
+    private val translator = TranslationService(llm)
+    val retranslator = CardRetranslator(db, translator, settings)
 
     val pipeline = ImportPipeline(
         db = db,
         reader = backupReader,
         books = { FolderBookSource(settings.current().booksTree?.let { SafBookFolder(app, it) }, app.cacheDir) },
-        translator = TranslationService(llm),
+        translator = translator,
         judge = LlmSenseJudge(llm),
         anki = anki,
         sender = sender,
