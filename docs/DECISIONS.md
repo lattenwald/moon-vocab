@@ -281,4 +281,5 @@
 - The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.
 - The Inbox background is `surfaceContainer` with `surfaceContainerLowest` rows when the surface is light, and `surface` with `surfaceContainer` rows when it is dark.
 - Asking for AnkiDroid's permission opens the app's system settings only when the request is denied, `ankiAsked` was already true before it, and the system showed no rationale either before or after it (it answered without a dialog). `ankiAsked` is set when a request starts. Taps are ignored while a request is in flight.
+- Russian terms: Inbox «Входящие», Library «Библиотека», Discard «Убрать», Send to Anki «Отправить в Anki», card «карточка», mark «пометка», deck «колода», note «запись», note type «тип записи», backup «бэкап», import «импорт», translation service «сервис перевода», review history «история повторений»; quotes are «ёлочки».
 - Opening the Play Store for AnkiDroid tries `market://details?id=com.ichi2.anki`, then `https://play.google.com/store/apps/details?id=com.ichi2.anki`.
