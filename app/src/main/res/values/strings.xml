@@ -47,7 +47,7 @@
     <string name="inbox_result_stopped_auth">Stopped: the translation service rejected the API key.</string>
     <string name="inbox_result_stopped_credits">Stopped: no credits left with the translation service.</string>
     <string name="inbox_result_stopped_config">Stopped: check the translation service\'s base URL and model.</string>
-    <string name="inbox_result_open_settings">Open Settings</string>
+    <string name="inbox_result_open_services">Open translation services</string>
     <string name="inbox_result_send_error">Sending stopped: %1$s</string>
     <string name="inbox_result_nothing">Nothing new to import</string>
     <string name="inbox_result_import_failed">Import failed: %1$s</string>

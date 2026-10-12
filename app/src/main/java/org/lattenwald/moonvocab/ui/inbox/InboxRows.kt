@@ -454,7 +454,7 @@ private fun ResultLines(s: ImportSummary, onOpenServices: () -> Unit) {
     }
     if (stopped != null) {
         ResultLine(stringResource(stopped), colors.error)
-        TextButton(onClick = onOpenServices) { Text(stringResource(R.string.inbox_result_open_settings)) }
+        TextButton(onClick = onOpenServices) { Text(stringResource(R.string.inbox_result_open_services)) }
     }
     s.sendError?.let { ResultLine(stringResource(R.string.inbox_result_send_error, it), colors.error) }
     if (lines.isEmpty() && stopped == null && s.sendError == null) {

@@ -233,7 +233,7 @@
 - A folder row shows the path after `:` in the tree's document id, "Not chosen", or, when `persistedUriPermissions` holds no read grant for it, "Can't read this folder. Choose it again." in the error colour.
 - Choosing a folder takes the persistable read permission, then saves the folder even if that failed.
 - The AnkiDroid row reads Connected, Allow access (asks), or Not installed (opens the Play Store). It and the folder grants are refreshed on resume.
-- Settings writes run in `appScope` under one lock, in tap order.
+- Settings page writes run in `appScope` under one lock. Theme and Review before sending writes queue in tap order; a folder's write queues only after its permission is taken.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
@@ -257,5 +257,5 @@
 - An import stopped by the translation service shows its reason in the result card, with a button that opens the Services page on top of the Settings tab.
 - The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.
 - The Inbox background is `surfaceContainer` with `surfaceContainerLowest` rows when the surface is light, and `surface` with `surfaceContainer` rows when it is dark.
-- Asking for AnkiDroid's permission opens the app's system settings only when the request is denied, `ankiAsked` was already true before it, and the system shows no rationale. `ankiAsked` is set when a request starts.
+- Asking for AnkiDroid's permission opens the app's system settings only when the request is denied, `ankiAsked` was already true before it, and the system showed no rationale either before or after it (it answered without a dialog). `ankiAsked` is set when a request starts. Taps are ignored while a request is in flight.
 - Opening the Play Store for AnkiDroid tries `market://details?id=com.ichi2.anki`, then `https://play.google.com/store/apps/details?id=com.ichi2.anki`.

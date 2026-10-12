@@ -20,11 +20,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.ichi2.anki.api.AddContentApi
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
 
 private const val TAG = "AnkiPermission"
+private const val PERMISSION = AddContentApi.READ_WRITE_PERMISSION
 private const val ANKIDROID_MARKET = "market://details?id=com.ichi2.anki"
 private const val ANKIDROID_WEB = "https://play.google.com/store/apps/details?id=com.ichi2.anki"
 
@@ -35,28 +37,44 @@ fun rememberAnkiPermissionRequest(onResult: () -> Unit): () -> Unit {
     val scope = rememberCoroutineScope()
     // Saveable: the activity can be recreated while the system dialog shows.
     var askedBefore by rememberSaveable { mutableStateOf(false) }
+    var rationaleBefore by rememberSaveable { mutableStateOf(false) }
+    var inFlight by rememberSaveable { mutableStateOf(false) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (!granted && askedBefore && activity != null && !activity.shouldShowRequestPermissionRationale(AddContentApi.READ_WRITE_PERMISSION)) {
+        inFlight = false
+        // No rationale before or after: the system answered without showing a dialog.
+        if (!granted && askedBefore && !rationaleBefore && activity != null && !activity.shouldShowRequestPermissionRationale(PERMISSION)) {
             activity.startActivity(
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.packageName, null)),
             )
         }
         onResult()
     }
-    return remember(launcher, scope, container) {
+    return remember(launcher, scope, container, activity) {
         {
-            scope.launch {
-                askedBefore = try {
-                    withContext(container.io) {
-                        val asked = container.settings.current().ankiAsked
-                        if (!asked) container.settings.update { it.copy(ankiAsked = true) }
-                        asked
+            if (!inFlight) {
+                inFlight = true
+                scope.launch {
+                    askedBefore = try {
+                        withContext(container.io) {
+                            val asked = container.settings.current().ankiAsked
+                            if (!asked) container.settings.update { it.copy(ankiAsked = true) }
+                            asked
+                        }
+                    } catch (e: CancellationException) {
+                        inFlight = false
+                        throw e
+                    } catch (e: IOException) {
+                        Log.e(TAG, "ankiAsked write failed", e)
+                        false
                     }
-                } catch (e: IOException) {
-                    Log.e(TAG, "ankiAsked write failed", e)
-                    false
+                    rationaleBefore = activity?.shouldShowRequestPermissionRationale(PERMISSION) == true
+                    try {
+                        launcher.launch(PERMISSION)
+                    } catch (e: ActivityNotFoundException) {
+                        Log.e(TAG, "no permission dialog", e)
+                        inFlight = false
+                    }
                 }
-                launcher.launch(AddContentApi.READ_WRITE_PERMISSION)
             }
         }
     }
