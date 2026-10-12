@@ -26,23 +26,23 @@ class ModelCatalog(private val http: OkHttpClient) {
                 return emptyList()
             }
         }
-        val body = fetch(builder.build()) ?: return emptyList()
-        return ids(body)
+        return fetch(builder.build())
     }
 
-    private suspend fun fetch(request: Request): String? = suspendCancellableCoroutine { cont ->
+    // Parsed on OkHttp's thread: OpenRouter's list is several hundred KB.
+    private suspend fun fetch(request: Request): List<String> = suspendCancellableCoroutine { cont ->
         val call = http.newCall(request)
         cont.invokeOnCancellation { call.cancel() }
         call.enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) = cont.resume(null)
+            override fun onFailure(call: Call, e: IOException) = cont.resume(emptyList())
 
             override fun onResponse(call: Call, response: Response) {
-                val body = try {
-                    response.use { if (it.isSuccessful) it.body.string() else null }
-                } catch (_: Throwable) {
-                    null
+                val models = try {
+                    response.use { if (it.isSuccessful) ids(it.body.string()) else emptyList() }
+                } catch (_: Exception) {
+                    emptyList()
                 }
-                cont.resume(body)
+                cont.resume(models)
             }
         })
     }
