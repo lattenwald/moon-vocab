@@ -35,6 +35,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import org.lattenwald.moonvocab.R
+import org.lattenwald.moonvocab.ui.card.CardPage
 import org.lattenwald.moonvocab.ui.debug.DebugScreen
 import org.lattenwald.moonvocab.ui.debug.DebugViewModel
 import org.lattenwald.moonvocab.ui.inbox.InboxScreen
@@ -99,9 +100,15 @@ fun AppShell() {
                     val bottom = PaddingValues(bottom = shellPadding.calculateBottomPadding())
                     InboxScreen(
                         onOpenSettings = { backStack.selectTab(SettingsKey) },
+                        // A second tap during the transition must not push another page.
+                        onOpenCard = { id -> if (backStack.lastOrNull() == InboxKey) backStack.add(CardKey(id)) },
                         modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
                         vm = inbox,
                     )
+                }
+                // The page's own Scaffold handles the insets; a late onBack pops only this page.
+                entry<CardKey> { key ->
+                    CardPage(key.cardId, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() }, onPreview = null)
                 }
                 entry<SettingsKey>(metadata = TabTransitions) { DebugScreen(contentPadding = shellPadding, vm = debug) }
             },

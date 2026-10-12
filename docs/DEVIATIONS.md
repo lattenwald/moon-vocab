@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The card page stays open after its actions
+
+- Plan said: the prototype closes the card page after Send, Discard and Save.
+- Actual: the page stays open, shows the new state, and offers Undo in its own snackbar.
+- Reason: the same behaviour from the Inbox and from a book page, with no messages between screens.
+
 ## 2026-10-12: The import sheet's ViewModel reports a bad pick and confirms the start
 
 - Plan said: M3 Task 9's `SheetState.NoBackup` is `(skipped)`, `SheetState.Ready` is `(backup, skipped, counts, selected, sendToAnki)`, `FolderUnreadable` comes from a `SecurityException`, and the ViewModel has `fun start()`, which enqueues the import and closes the sheet.

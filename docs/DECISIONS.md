@@ -164,6 +164,10 @@
 - A pending card's edits are saved in the app only while it is still PENDING.
 - Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
 - Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
+- Tapping a card outside selection opens its page.
+- Card page actions keep the page open and show their result there, with Undo for send and discard.
+- A pending card's edits are saved in the app on Done or Back. A sent card's edits wait for Save.
+- Delete from AnkiDroid asks first.
 
 ## Library
 - The Library lists every book with at least one card, grouped by the book's language: most books first, Other last. Within a group, newest mark first.
@@ -197,7 +201,7 @@
 - The app opens on the Inbox. The bottom bar has Inbox and Settings. Settings shows the debug screen until milestone 5.
 - Navigation 3 holds one back stack that starts with the Inbox. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
 - The bottom bar shows only on tabs. Tab switches cross-fade.
-- Tapping a card outside selection does nothing until milestone 4.
+- `DebugViewModel` is activity-scoped, created in `AppShell`, until milestone 5 replaces the debug screen.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
 - An import stopped by the translation service shows its reason in the result card, with a button to Settings. The Translation service page comes in milestone 5.
 - The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.

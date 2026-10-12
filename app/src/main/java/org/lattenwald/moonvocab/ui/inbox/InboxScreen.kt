@@ -83,6 +83,7 @@ private const val DISABLED_ALPHA = 0.45f
 @Composable
 fun InboxScreen(
     onOpenSettings: () -> Unit,
+    onOpenCard: (Long) -> Unit,
     modifier: Modifier = Modifier,
     vm: InboxViewModel = viewModel(factory = InboxViewModel.Factory),
     sheetVm: ImportSheetViewModel = viewModel(factory = ImportSheetViewModel.Factory),
@@ -260,6 +261,7 @@ fun InboxScreen(
                                 selecting = selecting,
                                 selected = card.id in selection.ids,
                                 onToggle = { vm.toggle(card.id) },
+                                onOpen = { onOpenCard(card.id) },
                                 onSend = { onStayed -> vm.send(listOf(card.id), onStayed) },
                                 onDiscard = { onStayed -> vm.discard(listOf(card.id), onStayed) },
                                 modifier = Modifier.animateItem().padding(

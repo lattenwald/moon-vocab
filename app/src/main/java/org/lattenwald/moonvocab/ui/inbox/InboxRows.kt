@@ -124,6 +124,7 @@ internal fun SwipeableCardRow(
     selecting: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
+    onOpen: () -> Unit,
     onSend: (onStayed: () -> Unit) -> Unit,
     onDiscard: (onStayed: () -> Unit) -> Unit,
     modifier: Modifier = Modifier,
@@ -153,7 +154,7 @@ internal fun SwipeableCardRow(
             }
         },
     ) {
-        InboxCardRow(card, index, count, containerColor, selecting, selected, onToggle)
+        InboxCardRow(card, index, count, containerColor, selecting, selected, onToggle, onOpen)
     }
 }
 
@@ -205,12 +206,14 @@ internal fun InboxCardRow(
     selecting: Boolean,
     selected: Boolean,
     onToggle: () -> Unit,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
     SegmentedListItem(
         selected = selected,
-        onClick = { if (selecting) onToggle() },
+        // DragSelect.guardTap swallows the lift after a long-press that starts selection.
+        onClick = { if (selecting) onToggle() else onOpen() },
         shapes = ListItemDefaults.segmentedShapes(index, count, ListItemDefaults.shapes(shape = RoundedCornerShape(InnerCorner))),
         modifier = modifier,
         colors = ListItemDefaults.segmentedColors(containerColor = containerColor, selectedContainerColor = colors.secondaryContainer),
@@ -283,7 +286,7 @@ private fun CardText(card: InboxCard) {
 }
 
 @Composable
-private fun RowFlag(icon: Int, text: String) {
+internal fun RowFlag(icon: Int, text: String) {
     val color = MaterialTheme.colorScheme.tertiary
     Row(Modifier.padding(top = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(15.dp), tint = color)
