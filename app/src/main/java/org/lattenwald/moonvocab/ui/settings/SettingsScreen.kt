@@ -249,9 +249,10 @@ private fun ReviewRow(on: Boolean, rowColor: Color, onChange: (Boolean) -> Unit)
     SegmentedListItem(
         checked = on,
         onCheckedChange = onChange,
-        shapes = segmentedRowShapes(2, 3),
+        // A switch row, not a selection: on looks like off.
+        shapes = segmentedRowShapes(2, 3).let { it.copy(selectedShape = it.shape) },
         modifier = Modifier.settingsRow(2),
-        colors = ListItemDefaults.segmentedColors(containerColor = rowColor),
+        colors = ListItemDefaults.segmentedColors(containerColor = rowColor, selectedContainerColor = rowColor),
         contentPadding = RowPadding,
         leadingContent = { IconBadge(R.drawable.ic_inbox) },
         supportingContent = { ValueText(stringResource(R.string.settings_review_help), MaterialTheme.colorScheme.onSurfaceVariant) },

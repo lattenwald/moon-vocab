@@ -98,7 +98,16 @@ class ImportSheetViewModel(
     }
 
     fun share(uri: Uri) = search { // no fallback as in change: the shown state may be a long-closed session's
-        finder.open(uri)?.let { ready(it, skipped = emptyList()) } ?: SheetState.NoBackup(emptyList(), pickIncomplete = true)
+        val backup = try {
+            finder.open(uri)
+        } catch (e: SecurityException) { // a lapsed grant, or a sender that didn't grant read access
+            Log.w(TAG, "shared file unreadable", e)
+            null
+        } catch (e: IOException) {
+            Log.w(TAG, "shared file unreadable", e)
+            null
+        }
+        backup?.let { ready(it, skipped = emptyList()) } ?: SheetState.NoBackup(emptyList(), pickIncomplete = true)
     }
 
     fun toggle(combo: StyleCombo) {
