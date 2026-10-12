@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The picker reads the phone's languages with `LocaleManagerCompat.getSystemLocales`
+
+- Plan said: the device languages for Suggested come from `LocaleListCompat.getAdjustedDefault()`.
+- Actual: `LocaleManagerCompat.getSystemLocales(context)`, for Suggested and for Same as phone.
+- Reason: below API 33 AppCompat sets the app language as the default `LocaleList`, so `getAdjustedDefault()` lists the app's override, not the phone's languages.
+
 ## 2026-10-12: The Library's to-review count is SemiBold in the primary colour
 
 - Plan said: the Library's to-review count is bold.

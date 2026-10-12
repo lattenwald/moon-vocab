@@ -200,6 +200,15 @@
 - The sheet's Error state offers Try again (`open()`) and Choose folder.
 - While unfinished import work exists, Start keeps the sheet open and shows `sheet_import_running`.
 
+## Language picker
+- One picker page, `LanguageKey(TARGET)` or `LanguageKey(APP)`, with the Inbox's segmented rows and a radio on each row.
+- Translate into has a search field, then the line `settings_target_note`, then Suggested and All languages. While searching it shows only the matches, in one group, or `picker_none`.
+- A language row shows the name in the UI language and, below it, the language's own name when that differs.
+- The phone's languages come from `LocaleManagerCompat.getSystemLocales`, as language codes.
+- Picking a target language writes `targetLanguage`, then pops. No snackbar.
+- App language offers Same as phone (with the phone's language), English and Русский, without search. English and Русский are shown in their own names.
+- Picking an app language calls `AppCompatDelegate.setApplicationLocales` (empty for Same as phone), then pops. The current choice comes from `AppCompatDelegate.getApplicationLocales()`.
+
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.

@@ -344,4 +344,14 @@
         <item quantity="one">%d card</item>
         <item quantity="other">%d cards</item>
     </plurals>
+
+    <string name="picker_target">Translate into</string>
+    <string name="picker_app">App language</string>
+    <string name="picker_search">Search languages</string>
+    <string name="picker_clear">Clear</string>
+    <string name="picker_suggested">Suggested</string>
+    <string name="picker_all">All languages</string>
+    <string name="picker_none">No language matches “%1$s”</string>
+    <string name="picker_same_phone">Same as phone (%1$s)</string>
+    <string name="settings_target_note">Changing this affects only new cards.</string>
 </resources>

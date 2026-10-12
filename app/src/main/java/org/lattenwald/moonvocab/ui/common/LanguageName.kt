@@ -9,6 +9,8 @@ import org.lattenwald.moonvocab.R
 @Composable
 fun languageName(code: String?): String {
     if (code == null) return stringResource(R.string.inbox_language_other)
-    val locale = LocalConfiguration.current.locales[0]
-    return Locale.forLanguageTag(code).getDisplayLanguage(locale).ifEmpty { code }.replaceFirstChar { it.titlecase(locale) }
+    return languageName(code, LocalConfiguration.current.locales[0])
 }
+
+fun languageName(code: String, inLocale: Locale): String =
+    Locale.forLanguageTag(code).getDisplayLanguage(inLocale).ifEmpty { code }.replaceFirstChar { it.titlecase(inLocale) }

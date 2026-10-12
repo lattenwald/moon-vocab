@@ -44,6 +44,7 @@ import org.lattenwald.moonvocab.ui.inbox.InboxViewModel
 import org.lattenwald.moonvocab.ui.library.BookPage
 import org.lattenwald.moonvocab.ui.library.LibraryScreen
 import org.lattenwald.moonvocab.ui.library.LibraryViewModel
+import org.lattenwald.moonvocab.ui.settings.LanguagePicker
 
 private val TabTransitions =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
@@ -142,6 +143,9 @@ fun AppShell() {
                 }
                 entry<PreviewKey> { key ->
                     PreviewPage(key.cardId, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                }
+                entry<LanguageKey> { key ->
+                    LanguagePicker(key.kind, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
                 }
                 entry<SettingsKey>(metadata = TabTransitions) { DebugScreen(contentPadding = shellPadding, vm = debug) }
             },

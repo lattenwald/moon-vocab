@@ -16,6 +16,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class PreviewKey(val cardId: Long) : NavKey
 
+enum class LanguageKind { TARGET, APP }
+
+@Serializable data class LanguageKey(val kind: LanguageKind) : NavKey
+
 val TabKeys: List<NavKey> = listOf(InboxKey, LibraryKey, SettingsKey)
 
 fun NavBackStack<NavKey>.selectTab(tab: NavKey) {
