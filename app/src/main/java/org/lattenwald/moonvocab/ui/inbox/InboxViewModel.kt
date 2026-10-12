@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
@@ -98,6 +99,18 @@ class InboxViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InboxState())
 
     private val visibleIds: List<Long> get() = state.value.list.visibleIds
+
+    private val _importSheetRequested = MutableStateFlow(false)
+    val importSheetRequested: StateFlow<Boolean> = _importSheetRequested.asStateFlow()
+
+    /** Opens the import sheet when the Inbox next shows. */
+    fun requestImportSheet() {
+        _importSheetRequested.value = true
+    }
+
+    fun consumeImportSheetRequest() {
+        _importSheetRequested.value = false
+    }
 
     fun setFilter(f: LanguageFilter) {
         filter.value = f

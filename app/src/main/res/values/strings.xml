@@ -422,4 +422,47 @@
     <string name="settings_anki_allow">Allow access</string>
     <string name="settings_anki_missing">Not installed</string>
     <string name="settings_developer">Developer tools</string>
+
+    <string name="setup_hero_excerpt" translatable="false">…whenever my hypos get such an upper hand of me…</string>
+    <string name="setup_hero_mark" translatable="false">upper hand</string>
+    <string name="setup_hero_word" translatable="false">get the upper hand</string>
+    <string name="setup_hero_translation" translatable="false">взять верх, одолеть</string>
+    <string name="setup_welcome_title">Turn your Moon+ marks into Anki cards</string>
+    <string name="setup_welcome_text">Words you underline while reading become flashcards, each with the sentence you found it in.</string>
+    <string name="setup_get_started">Get started</string>
+    <string name="setup_folders_title">Where does Moon+ keep its backups?</string>
+    <string name="setup_folders_text">Pick the folder you chose for backups in Moon+. The app only reads from it.</string>
+    <string name="setup_choose_folder">Choose folder</string>
+    <string name="setup_backups_searching">Looking for backups…</string>
+    <plurals name="setup_backups_found">
+        <item quantity="one">Found %1$d backup, newest %2$s</item>
+        <item quantity="other">Found %1$d backups, newest %2$s</item>
+    </plurals>
+    <plurals name="setup_backups_found_undated">
+        <item quantity="one">Found %d backup</item>
+        <item quantity="other">Found %d backups</item>
+    </plurals>
+    <string name="setup_backups_none">No backups in this folder yet</string>
+    <string name="setup_books_text">Optional. Lets the app read the whole sentence around each mark.</string>
+    <string name="setup_anki_title">Connect AnkiDroid</string>
+    <string name="setup_anki_text">Cards go straight into AnkiDroid. The app only adds and updates cards it made itself.</string>
+    <string name="setup_anki_ok">Connected to AnkiDroid</string>
+    <string name="setup_anki_denied">Without access the app can\'t add cards. Tap Allow access to try again.</string>
+    <string name="setup_anki_missing">AnkiDroid isn\'t installed on this phone.</string>
+    <string name="setup_anki_get">Get AnkiDroid</string>
+    <string name="setup_translation_title">How should words be translated?</string>
+    <string name="setup_translation_text">The app sends each word with its sentence to a language model through %1$s.</string>
+    <string name="setup_other_service">Use another service</string>
+    <string name="setup_ready_title">Ready</string>
+    <plurals name="setup_ready_new">
+        <item quantity="one">Your newest backup has %d new word.</item>
+        <item quantity="other">Your newest backup has %d new words.</item>
+    </plurals>
+    <string name="setup_ready_none">Your newest backup has nothing new.</string>
+    <string name="setup_ready_failed">Couldn\'t read the newest backup. You can import from the Inbox later.</string>
+    <string name="setup_import_now">Import now</string>
+    <string name="setup_later">Later</string>
+    <string name="setup_done">Done</string>
+    <string name="setup_continue">Continue</string>
+    <string name="setup_back">Back</string>
 </resources>

@@ -10,6 +10,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object SettingsKey : NavKey
 
+@Serializable data object SetupKey : NavKey
+
 @Serializable data class BookKey(val bookId: Long) : NavKey
 
 @Serializable data class CardKey(val cardId: Long) : NavKey

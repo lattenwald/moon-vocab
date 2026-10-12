@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The setup Translation step names the active service and drops the OpenRouter key hint
+
+- Plan said: copy the prototype's `su*` strings; `su3p` says "through OpenRouter" and `su3help` says "Get a key at openrouter.ai/keys. It stays on this phone."
+- Actual: `su3p` names the active service; the key field keeps `ServiceForm`'s own help line ("Stored only on this phone.").
+- Reason: the active service need not be OpenRouter, and "Use another service" can change it.
+
 ## 2026-10-12: A blank deck or tag field shows its default when it loses focus
 
 - Plan said: a blank field saves its default, and the field shows the default again after the write.

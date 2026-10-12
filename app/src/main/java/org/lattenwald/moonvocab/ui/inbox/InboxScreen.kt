@@ -119,6 +119,14 @@ fun InboxScreen(
     val fabExpanded by remember { derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward } }
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
     if (sheetOpen) ImportSheet(sheetVm, onDismiss = { sheetOpen = false })
+    val sheetRequested by vm.importSheetRequested.collectAsStateWithLifecycle()
+    LaunchedEffect(sheetRequested) {
+        if (sheetRequested) {
+            vm.consumeImportSheetRequest()
+            sheetVm.open()
+            sheetOpen = true
+        }
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

@@ -81,12 +81,12 @@ class SettingsViewModel(
 
     fun setReviewFirst(on: Boolean) = write { it.copy(reviewFirst = on) }
 
-    fun setBackupTree(uri: Uri) = setTree(uri) { it.copy(backupTree = uri) }
+    fun setBackupTree(uri: Uri, onSaved: () -> Unit = {}) = setTree(uri, onSaved) { it.copy(backupTree = uri) }
 
-    fun setBooksTree(uri: Uri) = setTree(uri) { it.copy(booksTree = uri) }
+    fun setBooksTree(uri: Uri) = setTree(uri, onSaved = {}) { it.copy(booksTree = uri) }
 
     // Saved even without a persisted permission, so its row says it can't be read.
-    private fun setTree(uri: Uri, transform: (SettingsSnapshot) -> SettingsSnapshot) {
+    private fun setTree(uri: Uri, onSaved: () -> Unit, transform: (SettingsSnapshot) -> SettingsSnapshot) {
         appScope.launch {
             try {
                 resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -95,6 +95,7 @@ class SettingsViewModel(
             }
             write(transform).join()
             refreshReadable()
+            onSaved()
         }
     }
 

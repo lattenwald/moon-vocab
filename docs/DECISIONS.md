@@ -235,6 +235,16 @@
 - The AnkiDroid row reads Connected, Allow access (asks), or Not installed (opens the Play Store). It and the folder grants are refreshed on resume.
 - Settings page writes run in `appScope` under one lock. Theme and Review before sending writes queue in tap order; a folder's write queues only after its permission is taken.
 
+## First run
+- Setup shows while `setupDone` is false; an install that already has a backup folder counts as set up. The first back-stack key comes from `App.setupDone`, read at start and set when setup finishes.
+- Steps: Welcome, Folders, AnkiDroid, Translation, Ready. Folders to Translation show three progress bars; Back and Continue sit at the bottom. The step index is saveable.
+- Folders: the backup folder is required. Its row shows how many `.mrpro` files it holds and the newest one's relative date, "No backups in this folder yet" (Continue still works), or, when it can't be listed, the unreadable line and Choose folder again. The books folder is optional.
+- AnkiDroid: Continue waits for access. Not installed shows Get AnkiDroid (Play Store). A refused request shows the denied line. Availability is refreshed on resume.
+- Translation: the active service's key with Test connection, the Translate into row, and Use another service (Services page). Continue needs a non-blank key.
+- Ready counts the newest complete backup's marks in `defaultStyles` whose key isn't stored, with a progress indicator while it reads. Some new: Later or Import now. None, or the backup can't be read: Done.
+- Finishing writes `setupDone = true` in `appScope` and replaces the back stack with the Inbox. Import now also calls `InboxViewModel.requestImportSheet()`, which the Inbox consumes to open the import sheet.
+- Back goes to the previous step. On the first step, Back leaves the app.
+
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
@@ -249,8 +259,8 @@
 - Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
 - The theme is System, Light or Dark. It is applied with `AppCompatDelegate.setDefaultNightMode` in `App.onCreate`, from a blocking read kept as `App.startSettings`, and again on every change. `isSystemInDarkTheme()` follows it.
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
-- The app opens on the Inbox. The bottom bar has Inbox, Library and Settings. Settings shows the settings page.
-- Navigation 3 holds one back stack that starts with the Inbox. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
+- The app opens on the Inbox, or on setup while `setupDone` is false. The bottom bar has Inbox, Library and Settings. Settings shows the settings page.
+- Navigation 3 holds one back stack that starts with the Inbox, or with `SetupKey` until setup finishes. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
 - The bottom bar shows only on tabs. Tab switches cross-fade.
 - The debug screen is the Developer tools page (`DeveloperKey`), pushed from the last row of Settings, with its own top bar. It keeps all its tools. `DebugViewModel` is scoped to its entry.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.

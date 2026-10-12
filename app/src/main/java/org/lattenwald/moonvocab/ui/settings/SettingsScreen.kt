@@ -239,7 +239,7 @@ private fun FolderRow(index: Int, icon: Int, title: Int, tree: Uri?, readable: S
 }
 
 // A tree's last segment is its document id, "volume:path".
-private fun folderName(tree: Uri): String {
+internal fun folderName(tree: Uri): String {
     val id = tree.lastPathSegment ?: return tree.toString()
     return id.substringAfter(':').ifEmpty { id }
 }

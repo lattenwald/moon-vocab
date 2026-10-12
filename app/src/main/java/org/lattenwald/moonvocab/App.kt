@@ -15,12 +15,21 @@ class App : Application() {
     lateinit var startSettings: SettingsSnapshot
         private set
 
+    // Not startSettings: a relaunch in this process must not show setup again.
+    @Volatile var setupDone: Boolean = false
+        private set
+
+    fun onSetupDone() {
+        setupDone = true
+    }
+
     override fun onCreate() {
         super.onCreate()
         val channel = NotificationChannel(IMPORT_CHANNEL, getString(R.string.import_channel_name), NotificationManager.IMPORTANCE_LOW)
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         container = AppContainer(this)
         startSettings = runBlocking { container.settings.current() }
+        setupDone = startSettings.setupDone
         AppCompatDelegate.setDefaultNightMode(startSettings.theme.nightMode())
     }
 

@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,6 +35,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
 import org.lattenwald.moonvocab.ui.card.PreviewPage
@@ -48,6 +50,7 @@ import org.lattenwald.moonvocab.ui.settings.LanguagePicker
 import org.lattenwald.moonvocab.ui.settings.ServicePage
 import org.lattenwald.moonvocab.ui.settings.ServicesPage
 import org.lattenwald.moonvocab.ui.settings.SettingsScreen
+import org.lattenwald.moonvocab.ui.setup.SetupFlow
 
 private val TabTransitions =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
@@ -56,7 +59,8 @@ private val TabTransitions =
 
 @Composable
 fun AppShell() {
-    val backStack = rememberNavBackStack(InboxKey)
+    val app = LocalContext.current.applicationContext as App
+    val backStack = rememberNavBackStack(if (app.setupDone) InboxKey else SetupKey)
     val top = backStack.last()
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
     val library: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)
@@ -180,6 +184,18 @@ fun AppShell() {
                 }
                 entry<DeveloperKey> { key ->
                     DebugScreen(onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                }
+                entry<SetupKey> {
+                    SetupFlow(
+                        onOpen = { next -> if (backStack.lastOrNull() == SetupKey) backStack.add(next) },
+                        onFinish = { importNow ->
+                            if (backStack.lastOrNull() == SetupKey) {
+                                if (importNow) inbox.requestImportSheet()
+                                backStack.add(InboxKey)
+                                while (backStack.size > 1) backStack.removeAt(0)
+                            }
+                        },
+                    )
                 }
                 entry<SettingsKey>(metadata = TabTransitions) {
                     SettingsScreen(
