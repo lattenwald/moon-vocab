@@ -195,7 +195,8 @@
 - The theme follows the system's light or dark mode until Settings adds the choice in milestone 5.
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
 - The app opens on the Inbox. The bottom bar has Inbox and Settings. Settings shows the debug screen until milestone 5.
-- Tabs are plain Compose state. Navigation 3 arrives with the card page in milestone 4.
+- Navigation 3 holds one back stack that starts with the Inbox. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
+- The bottom bar shows only on tabs. Tab switches cross-fade.
 - Tapping a card outside selection does nothing until milestone 4.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
 - An import stopped by the translation service shows its reason in the result card, with a button to Settings. The Translation service page comes in milestone 5.

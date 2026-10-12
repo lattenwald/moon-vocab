@@ -1,6 +1,6 @@
 ---
 id: mv-gh2y
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-10-11T22:13:56Z
