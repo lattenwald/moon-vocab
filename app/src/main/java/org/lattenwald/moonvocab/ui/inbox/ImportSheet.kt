@@ -114,10 +114,14 @@ internal fun ImportSheet(vm: ImportSheetViewModel, onDismiss: () -> Unit) {
                 SheetState.FolderUnreadable -> FolderPrompt(R.string.sheet_folder_unreadable, onChoose = { pickFolder.launch(null) })
                 is SheetState.NoBackup -> {
                     Row(Modifier.padding(start = SidePadding, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(R.string.sheet_no_backup), Modifier.weight(1f), fontSize = 16.sp, lineHeight = 22.sp)
+                        if (s.pickIncomplete) {
+                            Text(stringResource(R.string.sheet_change_incomplete), Modifier.weight(1f), color = MaterialTheme.colorScheme.error, fontSize = 16.sp, lineHeight = 22.sp)
+                        } else {
+                            Text(stringResource(R.string.sheet_no_backup), Modifier.weight(1f), fontSize = 16.sp, lineHeight = 22.sp)
+                        }
                         TextButton(onClick = onChange) { Text(stringResource(R.string.sheet_change)) }
                     }
-                    BackupNotes(s.skipped, s.pickIncomplete)
+                    BackupNotes(s.skipped, pickIncomplete = false)
                 }
                 is SheetState.Ready -> Ready(
                     s,

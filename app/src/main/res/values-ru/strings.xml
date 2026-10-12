@@ -22,7 +22,7 @@
         <item quantity="other">%d карточки на проверку</item>
     </plurals>
     <string name="inbox_all">Все</string>
-    <string name="inbox_language_other">Другой</string>
+    <string name="inbox_language_other">Другой язык</string>
     <string name="inbox_label_phrase">Расширено до фразы</string>
     <string name="inbox_label_invented">Пример придуман моделью: в книге не нашлось</string>
     <string name="inbox_label_failed">Перевод не удался. Переведите заново.</string>
@@ -48,15 +48,15 @@
         <item quantity="other">Отправлено в AnkiDroid: %d</item>
     </plurals>
     <plurals name="inbox_result_failed">
-        <item quantity="one">Не удалось перевести: %d. Переведите её заново.</item>
-        <item quantity="few">Не удалось перевести: %d. Переведите их заново.</item>
-        <item quantity="many">Не удалось перевести: %d. Переведите их заново.</item>
-        <item quantity="other">Не удалось перевести: %d. Переведите их заново.</item>
+        <item quantity="one">Не удалось перевести: %d. Переведите заново.</item>
+        <item quantity="few">Не удалось перевести: %d. Переведите заново.</item>
+        <item quantity="many">Не удалось перевести: %d. Переведите заново.</item>
+        <item quantity="other">Не удалось перевести: %d. Переведите заново.</item>
     </plurals>
     <string name="inbox_result_incomplete">Бэкап был неполным, поэтому переведены только пометки, сохранённые раньше.</string>
     <string name="inbox_result_stopped_auth">Остановлено: сервис перевода отклонил API-ключ.</string>
     <string name="inbox_result_stopped_credits">Остановлено: в сервисе перевода закончились кредиты.</string>
-    <string name="inbox_result_stopped_config">Остановлено: проверьте базовый URL и модель сервиса перевода.</string>
+    <string name="inbox_result_stopped_config">Остановлено: проверьте адрес и модель сервиса перевода.</string>
     <string name="inbox_result_open_services">Открыть сервисы перевода</string>
     <string name="inbox_result_send_error">Отправка остановлена: %1$s</string>
     <string name="inbox_result_nothing">Нового нет</string>
@@ -103,10 +103,10 @@
     </plurals>
     <string name="inbox_undo">Отменить</string>
     <plurals name="inbox_undo_kept">
-        <item quantity="one">%d карточка осталась в AnkiDroid: он не удалил запись</item>
+        <item quantity="one">%d карточка осталась в AnkiDroid: он не удалил её запись</item>
         <item quantity="few">%d карточки остались в AnkiDroid: он не удалил их записи</item>
-        <item quantity="many">%d карточек остались в AnkiDroid: он не удалил их записи</item>
-        <item quantity="other">%d карточки остались в AnkiDroid: он не удалил их записи</item>
+        <item quantity="many">%d карточек осталось в AnkiDroid: он не удалил их записи</item>
+        <item quantity="other">%d карточки осталось в AnkiDroid: он не удалил их записи</item>
     </plurals>
     <string name="inbox_send_failed">Не удалось отправить: %1$s</string>
     <string name="inbox_send_stopped">Отправка остановлена: %1$s</string>
@@ -124,7 +124,7 @@
     <string name="card_back">Обратная сторона</string>
     <string name="card_edit">Изменить карточку</string>
     <string name="card_done">Готово</string>
-    <string name="card_preview">Как в AnkiDroid</string>
+    <string name="card_preview">Предпросмотр в AnkiDroid</string>
     <string name="preview_title">Карточка в AnkiDroid</string>
     <string name="preview_show_answer">Показать ответ</string>
     <string name="preview_show_question">Показать вопрос</string>
@@ -139,7 +139,7 @@
     <string name="card_send_as_new">Отправить как новую</string>
     <string name="card_no_translation">Перевода пока нет</string>
     <string name="card_sent_note">Карточка уже в AnkiDroid. Сохранение обновит её там, история повторений останется.</string>
-    <string name="card_local_note">AnkiDroid недоступен, поэтому здесь копия из приложения. Сохранение выключено, пока AnkiDroid не вернётся.</string>
+    <string name="card_local_note">AnkiDroid недоступен, поэтому здесь копия из приложения. Сохранить можно будет, когда AnkiDroid снова станет доступен.</string>
     <string name="card_deleted_note">Эта карточка удалена в AnkiDroid. Отправьте её снова, чтобы создать новую.</string>
     <string name="card_discarded_note">Вы убрали эту карточку.</string>
     <string name="card_field_word">Слово</string>
@@ -155,7 +155,7 @@
     <string name="card_snack_saved">Карточка обновлена в AnkiDroid</string>
     <string name="card_snack_deleted">Удалено из AnkiDroid</string>
     <string name="card_snack_delete_refused">AnkiDroid не удалил запись, поэтому карточка осталась там.</string>
-    <string name="card_snack_conflict">Изменено в AnkiDroid, пока вы редактировали: %1$s. Теперь здесь текст из AnkiDroid.</string>
+    <string name="card_snack_conflict">Пока вы редактировали, в AnkiDroid изменились поля: %1$s. Теперь здесь текст из AnkiDroid.</string>
     <string name="card_snack_note_gone">Эта карточка удалена в AnkiDroid. Ваши правки сохранены здесь.</string>
     <string name="card_snack_not_pending">Карточка изменилась, пока вы её редактировали. Ваши правки не сохранены.</string>
     <string name="card_snack_retranslated">Новый перевод подставлен.</string>
@@ -319,16 +319,16 @@
         <item quantity="other">%d новой карточки</item>
     </plurals>
     <plurals name="import_already_card">
-        <item quantity="one">%d уже стала карточкой</item>
-        <item quantity="few">%d уже стали карточками</item>
-        <item quantity="many">%d уже стали карточками</item>
-        <item quantity="other">%d уже стали карточками</item>
+        <item quantity="one">%d пометка уже стала карточкой</item>
+        <item quantity="few">%d пометки уже стали карточками</item>
+        <item quantity="many">%d пометок уже стали карточками</item>
+        <item quantity="other">%d пометки уже стали карточками</item>
     </plurals>
     <plurals name="import_skipped_discarded">
-        <item quantity="one">%d пропущена: убрана раньше</item>
-        <item quantity="few">%d пропущены: убраны раньше</item>
-        <item quantity="many">%d пропущено: убраны раньше</item>
-        <item quantity="other">%d пропущено: убраны раньше</item>
+        <item quantity="one">%d пометка пропущена: убрана раньше</item>
+        <item quantity="few">%d пометки пропущены: убраны раньше</item>
+        <item quantity="many">%d пометок пропущено: убраны раньше</item>
+        <item quantity="other">%d пометки пропущено: убраны раньше</item>
     </plurals>
     <plurals name="debug_import_failed">
         <item quantity="one">%d не переведена</item>
@@ -344,10 +344,10 @@
     </plurals>
     <string name="debug_import_incomplete">Бэкап неполный: %1$s</string>
     <plurals name="import_sense_failed">
-        <item quantity="one">Проверка значений не удалась для %d пакета; повторы слов стали отдельными карточками</item>
-        <item quantity="few">Проверка значений не удалась для %d пакетов; повторы слов стали отдельными карточками</item>
-        <item quantity="many">Проверка значений не удалась для %d пакетов; повторы слов стали отдельными карточками</item>
-        <item quantity="other">Проверка значений не удалась для %d пакета; повторы слов стали отдельными карточками</item>
+        <item quantity="one">Не удалось сверить значения повторов в %d пакете; повторы слов стали отдельными карточками</item>
+        <item quantity="few">Не удалось сверить значения повторов в %d пакетах; повторы слов стали отдельными карточками</item>
+        <item quantity="many">Не удалось сверить значения повторов в %d пакетах; повторы слов стали отдельными карточками</item>
+        <item quantity="other">Не удалось сверить значения повторов в %d пакета; повторы слов стали отдельными карточками</item>
     </plurals>
     <string name="debug_import_stopped_auth">Остановлено: API-ключ отклонён</string>
     <string name="debug_import_stopped_credits">Остановлено: закончились кредиты</string>
@@ -441,7 +441,7 @@
     <string name="service_hide_key">Скрыть ключ</string>
     <string name="service_test">Проверить связь</string>
     <string name="service_testing">Проверяю</string>
-    <string name="service_test_ok">Работает. «%1$s» переведено как «%2$s» за %3$s с.</string>
+    <string name="service_test_ok">Работает. Слово «%1$s» переведено как «%2$s» за %3$s с.</string>
     <string name="service_test_auth">Сервис отклонил ключ.</string>
     <string name="service_test_credits">На этом аккаунте закончились кредиты.</string>
     <string name="service_test_config">Проверьте адрес и модель.</string>
@@ -459,7 +459,7 @@
     <string name="cards_example">Пример лицевой стороны</string>
     <string name="cards_deck">Колода</string>
     <string name="cards_deck_help">Вместо {language} будет English, German и так далее: колода на каждый язык.</string>
-    <string name="cards_test_deck">Включена тестовая колода: карточки идут в %1$s. Её можно выключить в инструментах разработчика.</string>
+    <string name="cards_test_deck">Включена тестовая колода: карточки идут в %1$s. Её можно выключить в «Инструментах разработчика».</string>
     <string name="cards_tag">Тег книги</string>
     <string name="cards_tag_help">Вместо {title} будет название книги.</string>
     <string name="cards_design">Оформление карточки</string>
@@ -471,7 +471,7 @@
     <string name="settings_into">Язык перевода</string>
     <string name="settings_look">Внешний вид</string>
     <string name="settings_theme">Тема</string>
-    <string name="settings_theme_system">Как в системе</string>
+    <string name="settings_theme_system">Системная</string>
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
     <string name="settings_app_language">Язык приложения</string>
