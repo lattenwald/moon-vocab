@@ -414,4 +414,4 @@ Each milestone gets its own implementation plan, written when the previous one i
 
 - Is the truncated `2026-10-05_AUTO.mrpro` how Moon+ wrote it, or was it cut in transfer? If Moon+ writes incomplete auto backups often, the sheet should prefer manual backups.
 - Mark `time` is assumed unchanged across backups. Comparing two complete backups confirms it; the next complete backup the user exports is enough.
-- Which MIME type file managers and Moon+ use when sharing a `.mrpro`. The default plan is `*/*` plus a check of the file name and content; milestone 5 confirms on the device.
+- Which MIME type Moon+ itself uses when sharing a `.mrpro`. Android's Files app sends `application/octet-stream` (checked on the emulator in milestone 5). The app accepts `*/*` and checks the content, so this only matters if the filter is ever narrowed.
