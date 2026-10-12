@@ -226,7 +226,6 @@
 - The deck and book tag patterns are saved as typed. A blank field saves its default and shows it once the field loses focus.
 - When the test deck is on, the deck field's help line names it.
 - Card design opens the preview (`PreviewKey(null)`) with the sample card, cut to the stored longest excerpt.
-- The sample card is "get the upper hand" in a Moby-Dick sentence that keeps its leading and trailing `…`.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.

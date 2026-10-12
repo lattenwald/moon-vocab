@@ -1,6 +1,7 @@
 package org.lattenwald.moonvocab.ui.settings
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -60,6 +62,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import java.io.IOException
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -81,12 +85,16 @@ import org.lattenwald.moonvocab.ui.inbox.inboxColors
 import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
 import org.lattenwald.moonvocab.ui.library.LibrarySubheader
 
-class CardsViewModel(private val settings: Settings, private val io: CoroutineDispatcher) : ViewModel() {
+class CardsViewModel(
+    private val settings: Settings,
+    private val io: CoroutineDispatcher,
+    private val appScope: CoroutineScope,
+) : ViewModel() {
     val snapshot: StateFlow<SettingsSnapshot?> = settings.snapshot
         .flowOn(io)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    // A fair lock taken on the main thread: writes land in keystroke order.
+    // A fair lock reached undispatched from the main thread: writes land in keystroke order.
     private val writes = Mutex()
 
     fun setMaxWords(words: Int) = write { it.copy(maxExcerptWords = words) }
@@ -95,8 +103,9 @@ class CardsViewModel(private val settings: Settings, private val io: CoroutineDi
 
     fun setTagPattern(pattern: String) = write { it.copy(tagPattern = pattern.ifBlank { DEFAULT_TAG_PATTERN }) }
 
+    // In appScope, so a write queued when the page closes still lands.
     private fun write(transform: (SettingsSnapshot) -> SettingsSnapshot) {
-        viewModelScope.launch {
+        appScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 writes.withLock { withContext(io) { settings.update(transform) } }
             } catch (e: IOException) {
@@ -114,7 +123,7 @@ class CardsViewModel(private val settings: Settings, private val io: CoroutineDi
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                CardsViewModel(c.settings, c.io)
+                CardsViewModel(c.settings, c.io, c.appScope)
             }
         }
     }
@@ -191,13 +200,20 @@ private fun LongestExcerpt(words: Int, rowColor: Color, onChange: (Int) -> Unit,
     val title = pluralStringResource(R.plurals.cards_longest, words, words)
     Column(Modifier.padding(horizontal = 12.dp).fillMaxWidth().background(rowColor, GroupShape).padding(RowPadding)) {
         Text(title, fontSize = 16.sp, lineHeight = 22.sp)
+        val state = rememberSliderState(
+            words.toFloat(),
+            CardsViewModel.MAX_WORDS - CardsViewModel.MIN_WORDS - 1,
+            CardsViewModel.MIN_WORDS.toFloat()..CardsViewModel.MAX_WORDS.toFloat(),
+        )
+        // With onValueChange given, the state leaves updating its value to the caller.
         Slider(
-            value = words.toFloat(),
-            onValueChange = { onChange(it.roundToInt()) },
+            state,
+            onValueChange = {
+                state.value = it
+                onChange(it.roundToInt())
+            },
             modifier = Modifier.padding(vertical = 4.dp).semantics { stateDescription = title },
             onValueChangeFinished = onDone,
-            steps = CardsViewModel.MAX_WORDS - CardsViewModel.MIN_WORDS - 1,
-            valueRange = CardsViewModel.MIN_WORDS.toFloat()..CardsViewModel.MAX_WORDS.toFloat(),
         )
         Text(
             stringResource(R.string.cards_longest_help),
@@ -213,7 +229,7 @@ private fun LongestExcerpt(words: Int, rowColor: Color, onChange: (Int) -> Unit,
 private fun PatternField(
     stored: String,
     default: String,
-    label: Int,
+    @StringRes label: Int,
     imeAction: ImeAction,
     help: @Composable () -> Unit,
     onChange: (String) -> Unit,
