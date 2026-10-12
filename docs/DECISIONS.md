@@ -154,6 +154,12 @@
 - Cards labelled "Already in Anki" can be sent from the Inbox.
 - While an import runs, the Import button shows its progress and opens nothing.
 
+## Card page
+- In the edit form, the excerpt's and the sentence's focus is written in square brackets. A field left unchanged keeps its stored HTML.
+- Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs none or one.
+- Changed form values are trimmed. A blank sentence is saved empty.
+- Saving writes only the fields the user changed. A changed field that also changed in AnkiDroid since the page read it is not written; the page shows AnkiDroid's text instead.
+
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
 - A mark combination is named by its style and a colour name taken from its hue.
