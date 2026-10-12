@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -165,6 +166,7 @@ fun ServiceForm(
     vm: ServicesViewModel,
     modifier: Modifier = Modifier,
     fields: Set<ServiceField> = ServiceField.entries.toSet(),
+    keyHelp: AnnotatedString? = null,
 ) {
     val id = service.id
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -176,7 +178,7 @@ fun ServiceForm(
         if (ServiceField.ADDRESS in fields) {
             TextRow(id, service.baseUrl, R.string.service_address, KeyboardType.Uri) { vm.edit(id, ServiceField.ADDRESS, it) }
         }
-        if (ServiceField.KEY in fields) KeyField(id, service.apiKey) { vm.edit(id, ServiceField.KEY, it) }
+        if (ServiceField.KEY in fields) KeyField(id, service.apiKey, keyHelp) { vm.edit(id, ServiceField.KEY, it) }
         if (ServiceField.MODEL in fields) {
             LaunchedEffect(id) { vm.watch(id) }
             val models by vm.models.collectAsStateWithLifecycle()
@@ -222,7 +224,7 @@ private fun TextRow(
 }
 
 @Composable
-private fun KeyField(id: String, initial: String, onChange: (String) -> Unit) {
+private fun KeyField(id: String, initial: String, help: AnnotatedString?, onChange: (String) -> Unit) {
     var value by remember(id) { mutableStateOf(initial) }
     var shown by remember(id) { mutableStateOf(false) }
     OutlinedTextField(
@@ -233,7 +235,7 @@ private fun KeyField(id: String, initial: String, onChange: (String) -> Unit) {
         },
         modifier = Modifier.fillMaxWidth(),
         label = { Text(stringResource(R.string.service_key)) },
-        supportingText = { Text(stringResource(R.string.service_key_help)) },
+        supportingText = { if (help != null) Text(help) else Text(stringResource(R.string.service_key_help)) },
         trailingIcon = {
             IconButton(onClick = { shown = !shown }) {
                 Icon(

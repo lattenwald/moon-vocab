@@ -7,6 +7,8 @@ import android.provider.OpenableColumns
 import java.io.File
 import java.io.FileNotFoundException
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.domain.mark.RawMark
 
@@ -22,8 +24,15 @@ class BackupFinder(
 ) {
     private val dir = File(cacheDir, DIR)
 
+    // Calls share one cache folder, and a cancelled call still finishes its blocking copy.
+    private val lock = Mutex()
+
     /** Throws [SecurityException] when the folder can't be read. */
-    suspend fun newest(tree: Uri): BackupSearch = withContext(io) {
+    suspend fun newest(tree: Uri): BackupSearch = lock.withLock { newestLocked(tree) }
+
+    suspend fun open(document: Uri): FoundBackup? = lock.withLock { openLocked(document) }
+
+    private suspend fun newestLocked(tree: Uri): BackupSearch = withContext(io) {
         val folder = SafBackupFolder(resolver, tree)
         dir.mkdirs()
         val pick = pickNewestComplete(folder.list()) { doc -> reader.read(folder.copy(doc, File(dir, doc.name))) }
@@ -34,7 +43,7 @@ class BackupFinder(
         )
     }
 
-    suspend fun open(document: Uri): FoundBackup? = withContext(io) {
+    private suspend fun openLocked(document: Uri): FoundBackup? = withContext(io) {
         val (name, lastModified) = describe(document)
         dir.mkdirs()
         // A partial copy must not overwrite a chosen backup of the same name.

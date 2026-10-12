@@ -12,6 +12,7 @@ import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +70,7 @@ class SetupViewModel(
     private val _newMarks = MutableStateFlow<NewMarks>(NewMarks.Counting)
     val newMarks: StateFlow<NewMarks> = _newMarks.asStateFlow()
     private var counting: Job? = null
+    private var countedTree: Uri? = null
 
     fun rescan() = scans.update { it + 1 }
 
@@ -85,23 +87,28 @@ class SetupViewModel(
         }
     }
 
+    // A recreated or re-entered Ready step keeps the count for the same tree.
     fun countNew() {
-        counting?.cancel()
-        _newMarks.value = NewMarks.Counting
-        counting = viewModelScope.launch {
-            _newMarks.value = try {
-                NewMarks.Counted(newMarkCount())
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "newest backup unreadable", e)
-                NewMarks.Failed
+        viewModelScope.launch {
+            val s = withContext(io) { settings.current() }
+            if (counting != null && countedTree == s.backupTree) return@launch
+            counting?.cancel()
+            countedTree = s.backupTree
+            _newMarks.value = NewMarks.Counting
+            counting = viewModelScope.launch {
+                _newMarks.value = try {
+                    NewMarks.Counted(newMarkCount(s))
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "newest backup unreadable", e)
+                    NewMarks.Failed
+                }
             }
         }
     }
 
-    private suspend fun newMarkCount(): Int {
-        val s = withContext(io) { settings.current() }
+    private suspend fun newMarkCount(s: SettingsSnapshot): Int {
         val tree = s.backupTree ?: return 0
         val marks = finder.newest(tree).chosen?.marks ?: return 0
         val known = withContext(io) { db.marks().keys().toHashSet() }
@@ -112,9 +119,9 @@ class SetupViewModel(
     // In appScope: the setup page leaves the back stack at once.
     fun finish() {
         onDone()
-        appScope.launch {
+        appScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
-                settings.update { it.copy(setupDone = true) }
+                withContext(io) { settings.update { it.copy(setupDone = true) } }
             } catch (e: IOException) {
                 Log.e(TAG, "settings write failed", e)
             }

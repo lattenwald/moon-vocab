@@ -61,7 +61,7 @@ class ImportSheetViewModel(
     private val workManager: WorkManager,
     private val io: CoroutineDispatcher,
 ) : ViewModel() {
-    private val lock = Mutex() // finder calls share one cache folder and outlive cancellation
+    private val lock = Mutex() // actions run in order, so start() follows every queued settings write
     private var search: Job? = null
     private var knownKeys: Set<String> = emptySet()
     private var waiting = 0

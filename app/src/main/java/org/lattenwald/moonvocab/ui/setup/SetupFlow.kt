@@ -50,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,7 +65,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.core.net.toUri
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.LayoutDirection
@@ -99,6 +107,9 @@ private const val FOLDERS = 1
 private const val ANKI = 2
 private const val TRANSLATION = 3
 private const val READY = 4
+
+private const val OPENROUTER_HOST = "openrouter.ai"
+private const val OPENROUTER_KEYS_URL = "https://openrouter.ai/keys"
 
 @Composable
 fun SetupFlow(
@@ -331,9 +342,29 @@ private fun TranslationStep(s: SettingsSnapshot, servicesVm: ServicesViewModel, 
     val service = s.activeService
     Title(R.string.setup_translation_title)
     Lede(stringResource(R.string.setup_translation_text, serviceTitle(service)))
+    val keyHelp = if (isOpenRouter(service.baseUrl)) openRouterKeyHelp() else null
+    ServiceForm(service, servicesVm, fields = setOf(ServiceField.KEY), keyHelp = keyHelp)
     TextButton(onClick = { onOpen(ServicesKey) }) { Text(stringResource(R.string.setup_other_service)) }
-    ServiceForm(service, servicesVm, fields = setOf(ServiceField.KEY))
     LanguageRow(languageName(s.targetLanguage)) { onOpen(LanguageKey(LanguageKind.TARGET)) }
+}
+
+private fun isOpenRouter(baseUrl: String): Boolean {
+    val host = baseUrl.trim().toUri().host ?: return false
+    return host.equals(OPENROUTER_HOST, ignoreCase = true) || host.endsWith(".$OPENROUTER_HOST", ignoreCase = true)
+}
+
+@Composable
+private fun openRouterKeyHelp(): AnnotatedString {
+    val link = stringResource(R.string.setup_openrouter_keys)
+    val text = stringResource(R.string.setup_openrouter_key_help, link)
+    val linkStyle = TextLinkStyles(SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline))
+    return remember(text, link, linkStyle) {
+        buildAnnotatedString {
+            append(text)
+            val start = text.indexOf(link)
+            if (start >= 0) addLink(LinkAnnotation.Url(OPENROUTER_KEYS_URL, linkStyle), start, start + link.length)
+        }
+    }
 }
 
 @Composable

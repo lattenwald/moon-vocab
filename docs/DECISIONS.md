@@ -193,6 +193,7 @@
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
 - A mark combination is named by its style and a colour name taken from its hue.
 - `BackupFinder` keeps only the chosen backup's copy in `cacheDir/backups`.
+- `BackupFinder.newest` and `open` run one at a time under the finder's own lock, held until a cancelled call's copy finishes.
 - The import sheet reads the newest complete backup each time it opens, except when opened by a share, which shows the shared file.
 - `ImportSheetViewModel` is activity-scoped: `AppShell` holds it and passes it to the Inbox.
 - `InboxViewModel.requestImportSheet()` only opens the sheet; its caller first calls the sheet's `open()` or `change(uri)`.
@@ -242,8 +243,9 @@
 - Steps: Welcome, Folders, AnkiDroid, Translation, Ready. Folders to Translation show three progress bars; Back and Continue sit at the bottom. The step index is saveable.
 - Folders: the backup folder is required. Its row shows how many `.mrpro` files it holds and the newest one's relative date, "No backups in this folder yet" (Continue still works), or, when it can't be listed, the unreadable line and Choose folder again. The books folder is optional.
 - AnkiDroid: Continue waits for access. Not installed shows Get AnkiDroid (Play Store). A refused request shows the denied line. Availability is refreshed on resume.
-- Translation: the active service's key with Test connection, the Translate into row, and Use another service (Services page). Continue needs a non-blank key.
-- Ready counts the newest complete backup's marks in `defaultStyles` whose key isn't stored, with a progress indicator while it reads. Some new: Later or Import now. None, or the backup can't be read: Done.
+- Translation: the active service's key with Test connection, then Use another service (Services page), then the Translate into row. Continue needs a non-blank key.
+- While the active service's host is openrouter.ai, the setup key field's help reads "Get a key at openrouter.ai/keys. It stays on this phone.", with openrouter.ai/keys linking to `https://openrouter.ai/keys`.
+- Ready counts the newest complete backup's marks in `defaultStyles` whose key isn't stored, with a progress indicator while it reads. It counts once per backup folder; returning to Ready keeps that count. Some new: Later or Import now. None, or the backup can't be read: Done.
 - Finishing writes `setupDone = true` in `appScope` and replaces the back stack with the Inbox. Import now also calls the sheet's `open()` and `InboxViewModel.requestImportSheet()`, which the Inbox consumes to open the import sheet.
 - Back goes to the previous step. On the first step, Back leaves the app.
 

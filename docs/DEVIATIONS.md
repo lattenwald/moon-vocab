@@ -2,11 +2,11 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
-## 2026-10-12: The setup Translation step names the active service and drops the OpenRouter key hint
+## 2026-10-12: Setup names the active service, and its folder step shows no book count
 
-- Plan said: copy the prototype's `su*` strings; `su3p` says "through OpenRouter" and `su3help` says "Get a key at openrouter.ai/keys. It stays on this phone."
-- Actual: `su3p` names the active service; the key field keeps `ServiceForm`'s own help line ("Stored only on this phone.").
-- Reason: the active service need not be OpenRouter, and "Use another service" can change it.
+- Plan said: copy the prototype's `su*` strings. `su3p` says "through OpenRouter", `su3help` always gives the openrouter.ai/keys hint, and `su1booksFound` shows the book count ("46 books").
+- Actual: `su3p` names the active service. The openrouter.ai/keys hint, with a link, shows only while the active service's host is openrouter.ai; any other service keeps `ServiceForm`'s own help line ("Stored only on this phone."). The books folder row shows the folder name without a count.
+- Reason: the active service need not be OpenRouter, and "Use another service" can change it. Counting books needs a scan of the books folder that setup doesn't otherwise do.
 
 ## 2026-10-12: A blank deck or tag field shows its default when it loses focus
 
