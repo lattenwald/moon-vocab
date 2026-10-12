@@ -132,6 +132,10 @@ class InboxViewModel(
         workManager.pruneWork()
     }
 
+    fun retryFailed() {
+        if (!state.value.import.running) ImportWork.enqueue(workManager, ImportWork.retryInput())
+    }
+
     fun startDrag(id: Long) {
         val order = visibleIds
         selection.update { it.startDrag(order, id) }

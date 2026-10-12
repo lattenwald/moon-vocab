@@ -40,8 +40,8 @@
         <item quantity="other">%d cards sent to AnkiDroid</item>
     </plurals>
     <plurals name="inbox_result_failed">
-        <item quantity="one">%d failed. Translate it again to retry.</item>
-        <item quantity="other">%d failed. Translate them again to retry.</item>
+        <item quantity="one">%d failed. Tap to translate it again.</item>
+        <item quantity="other">%d failed. Tap to translate them again.</item>
     </plurals>
     <string name="inbox_result_incomplete">The backup was incomplete, so only marks saved earlier were translated.</string>
     <string name="inbox_result_stopped_auth">Stopped: the translation service rejected the API key.</string>

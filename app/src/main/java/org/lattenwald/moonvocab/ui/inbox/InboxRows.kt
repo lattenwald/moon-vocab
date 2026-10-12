@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -407,8 +408,20 @@ internal fun ImportProgressPanel(progress: ImportProgress?, modifier: Modifier =
 }
 
 @Composable
-internal fun ImportResultCard(import: ImportState, onDismiss: () -> Unit, onOpenServices: () -> Unit, modifier: Modifier = Modifier) {
-    Panel(modifier) {
+internal fun ImportResultCard(
+    import: ImportState,
+    onDismiss: () -> Unit,
+    onOpenServices: () -> Unit,
+    onRetryFailed: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val retry = import.failure == null && import.summary?.let { it.failed > 0 && it.stopped == null } == true
+    val clickable = if (retry) {
+        Modifier.clip(PanelShape).clickable(onClickLabel = stringResource(R.string.inbox_translate_again), onClick = onRetryFailed)
+    } else {
+        Modifier
+    }
+    Panel(modifier.then(clickable)) {
         Row {
             Column(Modifier.weight(1f).padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val failure = import.failure

@@ -229,6 +229,7 @@ fun InboxScreen(
                                 import,
                                 onDismiss = vm::dismissResult,
                                 onOpenServices = onOpenServices,
+                                onRetryFailed = vm::retryFailed,
                                 modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 10.dp),
                             )
                         }

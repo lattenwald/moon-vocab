@@ -290,6 +290,7 @@
 - The debug screen is the Developer tools page (`DeveloperKey`), pushed from the last row of Settings, with its own top bar. It keeps all its tools. `DebugViewModel` is scoped to its entry.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
 - An import stopped by the translation service shows its reason in the result card, with a button that opens the Services page on top of the Settings tab.
+- Tapping a result card that reports failed cards, from an import the service didn't stop, translates every failed card again.
 - The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.
 - The Inbox background is `surfaceContainer` with `surfaceContainerLowest` rows when the surface is light, and `surface` with `surfaceContainer` rows when it is dark.
 - Asking for AnkiDroid's permission opens the app's system settings only when the request is denied, `ankiAsked` was already true before it, and the system showed no rationale either before or after it (it answered without a dialog). `ankiAsked` is set when a request starts. Taps are ignored while a request is in flight.

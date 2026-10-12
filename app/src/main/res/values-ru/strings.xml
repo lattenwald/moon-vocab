@@ -48,10 +48,10 @@
         <item quantity="other">Отправлено в AnkiDroid: %d</item>
     </plurals>
     <plurals name="inbox_result_failed">
-        <item quantity="one">Не удалось перевести: %d. Переведите заново.</item>
-        <item quantity="few">Не удалось перевести: %d. Переведите заново.</item>
-        <item quantity="many">Не удалось перевести: %d. Переведите заново.</item>
-        <item quantity="other">Не удалось перевести: %d. Переведите заново.</item>
+        <item quantity="one">Не удалось перевести: %d. Нажмите, чтобы перевести заново.</item>
+        <item quantity="few">Не удалось перевести: %d. Нажмите, чтобы перевести заново.</item>
+        <item quantity="many">Не удалось перевести: %d. Нажмите, чтобы перевести заново.</item>
+        <item quantity="other">Не удалось перевести: %d. Нажмите, чтобы перевести заново.</item>
     </plurals>
     <string name="inbox_result_incomplete">Бэкап был неполным, поэтому переведены только пометки, сохранённые раньше.</string>
     <string name="inbox_result_stopped_auth">Остановлено: сервис перевода отклонил API-ключ.</string>
