@@ -7,20 +7,39 @@ interface BookSource {
     fun text(bookPath: String): BookText?
 }
 
+data class BookCopy(val relativePath: String, val file: File)
+
 class FolderBookSource(private val folder: BookFolder?, private val cacheDir: File) : BookSource {
     private val locator: BookLocator by lazy { BookLocator(folder?.listRelativePaths().orEmpty()) }
 
-    override fun text(bookPath: String): BookText? = folder?.let { read(it, bookPath) }
+    override fun text(bookPath: String): BookText? {
+        val copy = copy(bookPath) ?: return null
+        try {
+            return read(copy)
+        } finally {
+            copy.file.delete()
+        }
+    }
 
-    private fun read(folder: BookFolder, bookPath: String): BookText? {
+    /** The caller deletes the copy. */
+    fun copy(bookPath: String): BookCopy? {
+        val folder = folder ?: return null
         val relativePath = locator.locate(bookPath) ?: return null
         return try {
-            val copy = folder.copyToCache(relativePath, cacheDir)
-            try {
-                readBookText(copy, relativePath.substringAfterLast('/'))
-            } finally {
-                copy.delete()
-            }
+            BookCopy(relativePath, folder.copyToCache(relativePath, cacheDir))
+        } catch (e: Exception) {
+            Log.w(TAG, "cannot copy $relativePath", e)
+            null
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "out of memory copying $relativePath", e)
+            null
+        }
+    }
+
+    fun read(copy: BookCopy): BookText? {
+        val relativePath = copy.relativePath
+        return try {
+            readBookText(copy.file, relativePath.substringAfterLast('/'))
         } catch (e: Exception) {
             Log.w(TAG, "cannot read $relativePath", e)
             null

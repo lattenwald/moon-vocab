@@ -107,6 +107,8 @@ private fun DebugContent(contentPadding: PaddingValues, vm: DebugViewModel) {
     val notifyThenImport = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.startImport() }
     val notifyThenRetry = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.retryFailed() }
     val exportCards = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(vm::exportCards) }
+    val exportPositions =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri -> uri?.let(vm::exportPositionReport) }
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmForget by remember { mutableStateOf(false) }
     val idle = !state.busy && !state.importState.running
@@ -190,6 +192,14 @@ private fun DebugContent(contentPadding: PaddingValues, vm: DebugViewModel) {
                     Text(stringResource(R.string.debug_export))
                 }
                 OutlinedButton(onClick = { confirmForget = true }, enabled = idle) { Text(stringResource(R.string.debug_forget_unsent)) }
+            }
+        }
+        item {
+            OutlinedButton(
+                onClick = { exportPositions.launch(positionReportName(LocalDate.now())) },
+                enabled = idle && state.backup.name != null,
+            ) {
+                Text(stringResource(R.string.debug_position_report))
             }
         }
         if (state.notice !is Notice.Checked && state.notice != null) item { NoticeText(state.notice) }
@@ -349,6 +359,9 @@ private fun NoticeText(notice: Notice?) {
         }
         is Notice.Deleted -> pluralStringResource(R.plurals.debug_deleted, notice.notes, notice.notes)
         is Notice.Exported -> pluralStringResource(R.plurals.debug_exported, notice.cards, notice.cards)
+        is Notice.PositionsReported -> notice.summary.let {
+            pluralStringResource(R.plurals.debug_position_reported, it.notes, it.exact, it.notes)
+        }
         is Notice.Forgotten -> pluralStringResource(R.plurals.debug_forgotten, notice.cards, notice.cards)
         is Notice.Error -> stringResource(R.string.debug_error, notice.message)
         is Notice.Sent -> {

@@ -390,6 +390,13 @@
         <item quantity="many">%d карточек экспортировано</item>
         <item quantity="other">%d карточки экспортировано</item>
     </plurals>
+    <string name="debug_position_report">Экспортировать отчёт о позициях</string>
+    <plurals name="debug_position_reported">
+        <item quantity="one">%1$d из %2$d заметки на своём месте</item>
+        <item quantity="few">%1$d из %2$d заметок на своих местах</item>
+        <item quantity="many">%1$d из %2$d заметок на своих местах</item>
+        <item quantity="other">%1$d из %2$d заметки на своих местах</item>
+    </plurals>
     <string name="debug_forget_unsent">Забыть неотправленные карточки</string>
     <string name="debug_forget_title">Забыть неотправленные карточки?</string>
     <string name="debug_forget_text">Будут удалены все ожидающие и непереведённые карточки, которых нет в AnkiDroid, и все карточки, чьи записи удалены в AnkiDroid. Следующий импорт заново переведёт их пометки.</string>

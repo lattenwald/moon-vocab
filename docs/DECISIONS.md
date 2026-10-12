@@ -269,6 +269,7 @@
 - The debug screen's service fields use `remember`, never `rememberSaveable`.
 - The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
 - The debug screen's Send all pending skips cards with an `elsewhereDeck`.
+- The debug screen's Export position report writes a zip: `report.json` (every note of the picked backup checked at its saved chapter and position, misses with the text there and its occurrences), the backup, and every book with a miss or unreadable text.
 
 ## UI
 - Fonts are bundled variable TTFs from google/fonts: Roboto Flex for the UI and Literata for book text. The licences ship in `assets/licenses/`.

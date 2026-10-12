@@ -27,6 +27,7 @@ import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.backup.BackupFinder
 import org.lattenwald.moonvocab.data.backup.FoundBackup
+import org.lattenwald.moonvocab.data.books.FolderBookSource
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.data.settings.LlmService
@@ -49,6 +50,7 @@ sealed interface Notice {
     data class Sent(val result: SendResult) : Notice
     data class Deleted(val notes: Int) : Notice
     data class Exported(val cards: Int) : Notice
+    data class PositionsReported(val summary: PositionReportSummary) : Notice
     data class Forgotten(val cards: Int) : Notice
     data class Error(val message: String) : Notice
 }
@@ -83,6 +85,8 @@ class DebugViewModel(
     private val anki: AnkiGateway,
     private val workManager: WorkManager,
     private val io: CoroutineDispatcher,
+    private val bookSource: suspend () -> FolderBookSource,
+    private val appVersion: String,
 ) : ViewModel() {
     private data class Local(
         val availability: AnkiAvailability? = null,
@@ -189,6 +193,19 @@ class DebugViewModel(
         Notice.Exported(count)
     }
 
+    fun exportPositionReport(uri: Uri) = whileBusy {
+        val backup = checkNotNull(local.value.picked) { "no backup" }
+        val source = bookSource()
+        val summary = withContext(io) {
+            val sentences = db.cards().observeAll().first().associate { it.id to it.sentenceHtml }
+            val cardSentences = db.marks().all().mapNotNull { m -> m.cardId?.let(sentences::get)?.let { m.key to it } }.toMap()
+            checkNotNull(resolver.openOutputStream(uri)) { "cannot open $uri" }.use { out ->
+                writePositionReport(out, appVersion, backup.file, backup.marks, cardSentences, source::copy, source::read)
+            }
+        }
+        Notice.PositionsReported(summary)
+    }
+
     fun forgetUnsent() = whileBusy { Notice.Forgotten(withContext(io) { db.cards().deleteUnsent() }) }
 
     private suspend fun findBackup() {
@@ -235,8 +252,10 @@ class DebugViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
+                val info = app.packageManager.getPackageInfo(app.packageName, 0)
                 DebugViewModel(
                     app.contentResolver, c.db, c.settings, c.backupFinder, c.sender, c.ankiCheck, c.anki, c.workManager, c.io,
+                    c::bookSource, "${info.versionName} (${info.longVersionCode})",
                 )
             }
         }

@@ -57,10 +57,12 @@ class AppContainer(context: Context) {
     // Three attempts at 60 s each would hold "Checking" for minutes on a stalled server.
     val connectionTest = ConnectionTest(http.newBuilder().callTimeout(15, TimeUnit.SECONDS).build(), clock = SystemClock::elapsedRealtime)
 
+    suspend fun bookSource() = FolderBookSource(settings.current().booksTree?.let { SafBookFolder(app, it) }, app.cacheDir)
+
     val pipeline = ImportPipeline(
         db = db,
         reader = backupReader,
-        books = { FolderBookSource(settings.current().booksTree?.let { SafBookFolder(app, it) }, app.cacheDir) },
+        books = ::bookSource,
         translator = translator,
         judge = LlmSenseJudge(llm),
         anki = anki,

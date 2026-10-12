@@ -329,6 +329,11 @@
         <item quantity="one">%d card exported</item>
         <item quantity="other">%d cards exported</item>
     </plurals>
+    <string name="debug_position_report">Export position report</string>
+    <plurals name="debug_position_reported">
+        <item quantity="one">%1$d of %2$d note at its saved place</item>
+        <item quantity="other">%1$d of %2$d notes at their saved places</item>
+    </plurals>
     <string name="debug_forget_unsent">Forget unsent cards</string>
     <string name="debug_forget_title">Forget unsent cards?</string>
     <string name="debug_forget_text">This deletes every pending and failed card that is not in AnkiDroid, and every card whose note was deleted in AnkiDroid. The next import translates their marks again.</string>
