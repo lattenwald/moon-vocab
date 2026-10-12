@@ -250,8 +250,10 @@
 - Back goes to the previous step. On the first step, Back leaves the app.
 
 ## Share target
-- `MainActivity` is `singleTask` and accepts `ACTION_SEND` with `EXTRA_STREAM` for any MIME type (`*/*`). It reads a share in `onCreate` (only without saved state, and not when launched from history) and in `onNewIntent`.
-- A shared file goes at once to `ImportSheetViewModel.change(uri)`, which copies it into the cache. The app then shows the Inbox tab with the sheet open; a file that isn't a complete backup gets the "incomplete" note.
+- `MainActivity` is `singleTask` and accepts `ACTION_SEND` with `EXTRA_STREAM` for any MIME type (`*/*`). It reads a share in `onCreate` (only without saved state, and not when launched from history) and in `onNewIntent`. A failed `EXTRA_STREAM` read is logged and ignored.
+- A received share waits in the activity-scoped `ShareViewModel` (`SavedStateHandle`) until `AppShell` takes it.
+- A shared file goes at once to `ImportSheetViewModel.share(uri)`, which copies it into the cache. The app then clears the Inbox selection and shows the Inbox tab with the sheet open.
+- A shared file that isn't a complete backup shows `NoBackup` with the "incomplete" note, never the sheet's earlier state.
 - A share that arrives while `App.setupDone` is false is dropped.
 
 ## App

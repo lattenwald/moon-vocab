@@ -1,6 +1,5 @@
 package org.lattenwald.moonvocab.ui
 
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -37,7 +36,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
@@ -62,7 +60,7 @@ private val TabTransitions =
         NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
 
 @Composable
-fun AppShell(sharedBackup: MutableStateFlow<Uri?>) {
+fun AppShell(share: ShareViewModel) {
     val app = LocalContext.current.applicationContext as App
     val backStack = rememberNavBackStack(if (app.setupDone) InboxKey else SetupKey)
     val top = backStack.last()
@@ -73,12 +71,13 @@ fun AppShell(sharedBackup: MutableStateFlow<Uri?>) {
     val total = inboxState.list.total
     val selecting = top == InboxKey && inboxState.selection.active
 
-    val shared by sharedBackup.collectAsStateWithLifecycle()
+    val shared by share.pending.collectAsStateWithLifecycle()
     LaunchedEffect(shared) {
         val uri = shared ?: return@LaunchedEffect
-        sharedBackup.value = null
+        share.clear()
         if (!app.setupDone) return@LaunchedEffect
-        sheet.change(uri)
+        sheet.share(uri)
+        inbox.clearSelection()
         backStack.selectTab(InboxKey)
         inbox.requestImportSheet()
     }

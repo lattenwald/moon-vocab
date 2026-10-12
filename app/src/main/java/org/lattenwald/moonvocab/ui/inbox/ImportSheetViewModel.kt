@@ -97,6 +97,10 @@ class ImportSheetViewModel(
         }
     }
 
+    fun share(uri: Uri) = search { // no fallback as in change: the shown state may be a long-closed session's
+        finder.open(uri)?.let { ready(it, skipped = emptyList()) } ?: SheetState.NoBackup(emptyList(), pickIncomplete = true)
+    }
+
     fun toggle(combo: StyleCombo) {
         val ready = state.value as? SheetState.Ready ?: return
         val styles = if (combo in ready.selected) ready.selected - combo else ready.selected + combo
