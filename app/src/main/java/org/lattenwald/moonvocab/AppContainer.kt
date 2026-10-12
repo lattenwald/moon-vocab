@@ -1,6 +1,7 @@
 package org.lattenwald.moonvocab
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.room.Room
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
@@ -16,9 +17,11 @@ import org.lattenwald.moonvocab.data.backup.BackupReader
 import org.lattenwald.moonvocab.data.books.FolderBookSource
 import org.lattenwald.moonvocab.data.books.SafBookFolder
 import org.lattenwald.moonvocab.data.db.AppDatabase
+import org.lattenwald.moonvocab.data.llm.ConnectionTest
 import org.lattenwald.moonvocab.data.llm.LlmClient
 import org.lattenwald.moonvocab.data.llm.LlmConfig
 import org.lattenwald.moonvocab.data.llm.LlmSenseJudge
+import org.lattenwald.moonvocab.data.llm.ModelCatalog
 import org.lattenwald.moonvocab.data.llm.TranslationService
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.settingsDataStore
@@ -50,6 +53,8 @@ class AppContainer(context: Context) {
     private val llm = LlmClient(http, config = { settings.current().activeService.let { LlmConfig(it.baseUrl, it.apiKey, it.model) } })
     private val translator = TranslationService(llm)
     val retranslator = CardRetranslator(db, translator, settings)
+    val modelCatalog = ModelCatalog(http)
+    val connectionTest = ConnectionTest(http, clock = SystemClock::elapsedRealtime)
 
     val pipeline = ImportPipeline(
         db = db,
