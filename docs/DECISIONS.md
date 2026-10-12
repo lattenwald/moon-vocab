@@ -81,7 +81,8 @@
 - For a repeated id in a sense reply, the first result wins even when its match is null or invalid.
 - Test connection translates one item with the edited service's own base URL, key and model: id `test`, marked `Schnallen`, sentence `Der Mantel hatte viele Taschen und Schnallen.`, book `Test`, source language `de`, at most 15 excerpt words. It does not wait out a 429 or 5xx.
 - A connection test's `Failed.kind` is the `Stop` kind, or null for `LlmException.Failed`. A reply without the sample's translation is `NoTranslation`.
-- `ConnectionTest` times with `SystemClock.elapsedRealtime`.
+- `ConnectionTest` times with `SystemClock.elapsedRealtime`. Its client has a 15 s call timeout.
+- The theme segmented buttons show no checkmark.
 - Model suggestions come from `GET {baseUrl}/models` (`data[].id`, sorted, no repeats), with the key as a Bearer token when it isn't blank. Any failure gives no suggestions and no error.
 
 ## Storage and status

@@ -54,7 +54,8 @@ class AppContainer(context: Context) {
     private val translator = TranslationService(llm)
     val retranslator = CardRetranslator(db, translator, settings)
     val modelCatalog = ModelCatalog(http)
-    val connectionTest = ConnectionTest(http, clock = SystemClock::elapsedRealtime)
+    // Three attempts at 60 s each would hold "Checking" for minutes on a stalled server.
+    val connectionTest = ConnectionTest(http.newBuilder().callTimeout(15, TimeUnit.SECONDS).build(), clock = SystemClock::elapsedRealtime)
 
     val pipeline = ImportPipeline(
         db = db,

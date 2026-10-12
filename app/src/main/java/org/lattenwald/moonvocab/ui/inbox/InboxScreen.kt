@@ -79,7 +79,7 @@ fun InboxScreen(
     onOpenCard: (Long) -> Unit,
     modifier: Modifier = Modifier,
     vm: InboxViewModel = viewModel(factory = InboxViewModel.Factory),
-    sheetVm: ImportSheetViewModel = viewModel(factory = ImportSheetViewModel.Factory),
+    sheetVm: ImportSheetViewModel,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current

@@ -219,6 +219,7 @@ private fun ThemeRow(theme: ThemeMode, rowColor: Color, onSelect: (ThemeMode) ->
                         onClick = { if (theme != mode) onSelect(mode) },
                         shape = SegmentedButtonDefaults.itemShape(index = i, count = THEME_LABELS.size),
                         modifier = Modifier.weight(1f),
+                        icon = {}, // a checkmark clips «Системная»
                     ) { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 }
             }

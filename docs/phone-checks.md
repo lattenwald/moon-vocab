@@ -23,7 +23,7 @@ The emulator already covered first-run setup, the Settings pages, the language p
 
 ## 2. One book end to end (from milestone 1)
 
-Everything here is in Settings → Developer tools. Keep "Send to test deck" on, so cards go to `Moon+::Test`.
+Everything here is in Settings → Developer tools. Keep "Send to test deck" on, so cards go to `Moon+::Test`. Stay on the Developer tools page while one of its buttons is working: leaving the page forgets the found backup and the result line, though the work itself still finishes.
 
 1. Tap Find newest backup. It names your newest complete backup.
 2. Pick *Diaspora* in the book list. Turn "Send to Anki after translating" off, then tap Import.
