@@ -58,4 +58,29 @@ class CardEditTest {
     }
     @Test fun planWithNoChangesWritesNothing() =
         assertEquals(SavePlan.Write(emptyMap(), stored), planSave(stored, stored, note(stored)))
+    @Test fun mergeAfterConflictKeepsEditedFieldsAndTakesFreshForTheRest() {
+        val form = stored.toForm().copy(grammar = "idiom", translation = "одолеть")
+        val fresh = stored.copy(translation = "взять верх, одержать верх", meaning = "to win")
+        assertEquals(
+            fresh.toForm().copy(grammar = "idiom"),
+            mergeAfterConflict(form, stored, fresh, setOf(CardField.TRANSLATION)),
+        )
+    }
+    @Test fun aWhitespaceOnlyEditCountsAsUntouched() {
+        val form = stored.toForm().copy(word = "get the upper hand ", excerptHtml = " such an [upper hand] of me ", translation = "одолеть")
+        val fresh = stored.copy(
+            word = "gain the upper hand", excerptHtml = """gain such an <span class="mark">upper hand</span> of me""",
+            translation = "взять верх, одержать верх",
+        )
+        val merged = mergeAfterConflict(form, stored, fresh, setOf(CardField.TRANSLATION))
+        assertEquals("gain the upper hand", merged.word)
+        assertEquals("gain such an [upper hand] of me", merged.excerptHtml)
+    }
+    @Test fun aConflictingFieldTakesAnkiDroidsText() {
+        val form = stored.toForm().copy(excerptHtml = "such an [upper] hand of me", translation = "одолеть")
+        val fresh = stored.copy(excerptHtml = """such a <span class="mark">upper hand</span> of mine""", translation = "взять верх, одержать верх")
+        val merged = mergeAfterConflict(form, stored, fresh, setOf(CardField.EXCERPT, CardField.TRANSLATION))
+        assertEquals("such a [upper hand] of mine", merged.excerptHtml)
+        assertEquals("взять верх, одержать верх", merged.translation)
+    }
 }

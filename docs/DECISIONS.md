@@ -120,8 +120,8 @@
 - `Stop` ends the import with nothing written for that batch. `Failed` makes the batch's cards FAILED.
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
-- A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created fresh, the check runs if the last one is 10 minutes old or more.
-- `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck` and `InboxActions`. Sends, deletes, undo, the check, and the Inbox's discard, restore and translate again run under it.
+- A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created, the check runs if the last one is 10 minutes old or more.
+- `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck`, `InboxActions` and `CardEditor`. Sends, deletes, undo, the check, the Inbox's discard, restore and translate again, and the card page's open, Save and local save run under it.
 - `CardSender`:
   - `send` sends PENDING cards and cards deleted in AnkiDroid. Other ids count as skipped;
   - a gateway error stops the send and is reported in `SendResult.error`;
@@ -158,10 +158,10 @@
 - In the edit form, the excerpt's and the sentence's focus is written in square brackets. A field left unchanged keeps its stored HTML.
 - Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs none or one.
 - Changed form values are trimmed. A blank sentence is saved empty.
-- Saving writes only the fields the user changed. When any changed field also changed in AnkiDroid since the page read it, nothing is written to AnkiDroid; the page shows AnkiDroid's text for the conflicting fields.
+- Save sends AnkiDroid only the fields the user changed, and no tags. When any changed field also changed in AnkiDroid since the page read it, nothing is written to AnkiDroid. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
+- On a conflict, the page shows AnkiDroid's text for the conflicting fields and for fields the user didn't change. The user's other edits stay.
 - A sent card's page reads its note when it opens, under the AnkiDroid lock. A missing note makes the card DELETED_IN_ANKI.
-- Save sends AnkiDroid only the changed fields and no tags. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
-- A pending card's edits are saved in the app only while it is still PENDING.
+- A pending card's edits are saved in the app only while it is still PENDING. Otherwise the page keeps them: as unsaved edits when the card is now SENT, else with `card_snack_not_pending`, and Back stays on the page.
 - Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
 - Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
 - Tapping a card outside selection opens its page.

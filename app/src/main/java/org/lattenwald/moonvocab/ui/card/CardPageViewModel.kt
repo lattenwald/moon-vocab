@@ -30,6 +30,7 @@ import org.lattenwald.moonvocab.domain.card.CardFields
 import org.lattenwald.moonvocab.domain.card.CardStatus
 import org.lattenwald.moonvocab.domain.card.FormResult
 import org.lattenwald.moonvocab.domain.card.cardFields
+import org.lattenwald.moonvocab.domain.card.mergeAfterConflict
 import org.lattenwald.moonvocab.domain.card.parseForm
 import org.lattenwald.moonvocab.domain.card.toForm
 import org.lattenwald.moonvocab.domain.cardpage.CardEditor
@@ -77,6 +78,7 @@ sealed interface CardPageEvent {
     data object Saved : CardPageEvent
     data class Conflict(val fields: Set<CardField>) : CardPageEvent
     data object NoteGone : CardPageEvent
+    data object NotPending : CardPageEvent
     data object Deleted : CardPageEvent
     data object DeleteRefused : CardPageEvent
     data object Retranslated : CardPageEvent
@@ -229,8 +231,10 @@ class CardPageViewModel(
         }
         // Not behind busy: leaving must not wait for a translation to come back.
         viewModelScope.launch {
-            try {
-                withContext(io) { editor.saveLocal(cardId, fields, s.extras) }
+            val saved = try {
+                val saved = withContext(io) { editor.saveLocal(cardId, fields, s.extras) } != null
+                if (!saved && keepIfSent()) state = state.copy(dialog = CardDialog.ConfirmLeave)
+                saved
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -239,7 +243,7 @@ class CardPageViewModel(
                 state = state.copy(dialog = CardDialog.ConfirmLeave)
                 return@launch
             }
-            onLeave()
+            if (saved) onLeave()
         }
     }
 
@@ -275,29 +279,36 @@ class CardPageViewModel(
         )
     }
 
-    // An unedited field takes AnkiDroid's text too, or the next Save would write the stale value back.
     private fun takeFresh(fresh: CardEntity, conflicting: Set<CardField>) {
         val s = state
-        val shown = s.baseline.toForm()
         val freshFields = fresh.cardFields()
-        val freshForm = freshFields.toForm()
-        val form = CardField.entries.fold(s.form) { acc, f ->
-            if (f in conflicting || acc[f] == shown[f]) acc.with(f, freshForm[f]) else acc
-        }
         state = s.copy(card = fresh, baseline = freshFields)
-        setForm(form)
+        setForm(mergeAfterConflict(s.form, s.baseline, freshFields, conflicting))
     }
 
     private fun setForm(form: CardFields) {
         val s = state.copy(form = form)
-        val invalid = if (s.invalid.isEmpty()) s.invalid else (s.parsed as? FormResult.Invalid)?.fields.orEmpty()
-        state = s.copy(invalid = invalid)
+        state = s.copy(invalid = (s.parsed as? FormResult.Invalid)?.fields.orEmpty())
     }
 
     private suspend fun saveLocal(fields: CardFields, extras: CardExtras?): Boolean {
         val saved = withContext(io) { editor.saveLocal(cardId, fields, extras) }
-        if (saved == null) load() else show(saved)
+        if (saved == null) keepIfSent() else show(saved)
         return saved != null
+    }
+
+    private suspend fun keepIfSent(): Boolean {
+        val before = state
+        load()
+        val now = state
+        if (now.gone) return false
+        if (now.card?.status != CardStatus.SENT) {
+            eventChannel.send(CardPageEvent.NotPending)
+            return false
+        }
+        state = now.copy(extras = before.extras, editing = true)
+        setForm(mergeAfterConflict(before.form, before.baseline, now.baseline, emptySet()))
+        return true
     }
 
     private suspend fun sendNow() {

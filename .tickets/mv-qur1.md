@@ -2,7 +2,7 @@
 id: mv-qur1
 status: open
 deps: []
-links: []
+links: [mv-c8b6]
 created: 2026-10-12T07:52:25Z
 type: feature
 priority: 3

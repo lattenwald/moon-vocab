@@ -934,6 +934,7 @@ Checks:
 5. Delete from AnkiDroid on the page, confirm, then Restore. The card is back in the Inbox.
 6. Use Translate again on a sent card: new values fill the fields, and Save writes them.
 7. Open the Library, then a book, the Discarded section, and a card. Back returns step by step. Back on Library or Settings returns to the Inbox. The Inbox keeps its scroll position across tabs.
-8. Preview a card in light and dark mode, and use Show answer.
+8. Open a card page, close the app from recents or let Android kill it, and return: the app comes back on the same page.
+9. Preview a card in light and dark mode, and use Show answer.
 
 Fix each reported defect in its own commit (`fix: <what>`), then build and send a new APK.

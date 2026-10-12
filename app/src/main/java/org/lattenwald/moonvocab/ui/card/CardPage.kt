@@ -203,6 +203,7 @@ private fun TopActions(card: CardEntity, state: CardPageState, onPreview: ((Long
 @Composable
 private fun BottomActions(card: CardEntity, state: CardPageState, vm: CardPageViewModel, onLeave: () -> Unit) {
     val idle = !state.busy
+    val valid = state.parsed is FormResult.Ok
     Row(
         Modifier.fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
@@ -212,7 +213,7 @@ private fun BottomActions(card: CardEntity, state: CardPageState, vm: CardPageVi
         when (card.status) {
             CardStatus.PENDING -> {
                 Tonal(R.drawable.ic_delete, R.string.card_discard, enabled = idle, onClick = vm::discard)
-                val sendable = state.form.translation.isNotBlank() && state.parsed is FormResult.Ok
+                val sendable = state.form.translation.isNotBlank() && valid
                 Filled(R.drawable.ic_send, R.string.card_send, enabled = idle && sendable, onClick = vm::send)
             }
             CardStatus.FAILED -> {
@@ -222,7 +223,7 @@ private fun BottomActions(card: CardEntity, state: CardPageState, vm: CardPageVi
             CardStatus.SENT -> Filled(
                 R.drawable.ic_check,
                 R.string.card_save,
-                enabled = idle && state.dirty && state.source !is CardSource.Local,
+                enabled = idle && state.dirty && valid && state.source !is CardSource.Local,
                 onClick = vm::save,
             )
             CardStatus.DISCARDED -> Filled(R.drawable.ic_restore_from_trash, R.string.card_restore, enabled = idle, onClick = vm::restore)
@@ -280,6 +281,7 @@ private fun eventMessage(r: Resources, event: CardPageEvent): String? = when (ev
     CardPageEvent.Saved -> r.getString(R.string.card_snack_saved)
     is CardPageEvent.Conflict -> r.getString(R.string.card_snack_conflict, event.fields.sorted().joinToString(", ") { r.getString(it.label) })
     CardPageEvent.NoteGone -> r.getString(R.string.card_snack_note_gone)
+    CardPageEvent.NotPending -> r.getString(R.string.card_snack_not_pending)
     CardPageEvent.Deleted -> r.getString(R.string.card_snack_deleted)
     CardPageEvent.DeleteRefused -> r.getString(R.string.card_snack_delete_refused)
     CardPageEvent.Retranslated -> r.getString(R.string.card_snack_retranslated)

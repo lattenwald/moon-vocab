@@ -2,6 +2,24 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-12: The Library's to-review count is SemiBold in the primary colour
+
+- Plan said: the Library's to-review count is bold.
+- Actual: SemiBold in the primary colour, as in the prototype.
+- Reason: the prototype.
+
+## 2026-10-12: An AnkiDroid error during Delete from AnkiDroid shows its message
+
+- Plan said: Delete from AnkiDroid shows `card_snack_delete_refused` or the unavailable message.
+- Actual: an AnkiDroid error during delete shows `inbox_action_failed` with the message.
+- Reason: a refusal and an error are different cases.
+
+## 2026-10-12: The card preview's background is the Inbox row colour
+
+- Plan said: the preview background is `surfaceContainerLowest`.
+- Actual: `inboxColors().row`, the Inbox row colour.
+- Reason: the prototype's `--row-bg`; `surfaceContainerLowest` looks sunk in dark mode.
+
 ## 2026-10-12: The card preview has no grade buttons
 
 - Plan said: the prototype's preview has AnkiDroid's grade buttons, which step to the next card.

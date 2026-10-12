@@ -12,10 +12,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        if (savedInstanceState == null) {
-            val container = (application as App).container
-            container.appScope.launch { container.ankiCheck.runIfDue() }
-        }
+        val container = (application as App).container
+        container.appScope.launch { container.ankiCheck.runIfDue() }
         setContent {
             MoonVocabTheme {
                 AppShell()

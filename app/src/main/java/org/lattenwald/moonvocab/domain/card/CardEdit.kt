@@ -76,15 +76,27 @@ fun parseForm(form: CardFields, original: CardFields): FormResult {
     for (f in CardField.entries) {
         val value = form[f]
         if (value == shown[f]) continue
-        val parsed = when (f) {
-            CardField.EXCERPT -> markFromBrackets(value.trim())
-            CardField.SENTENCE -> if (value.isBlank()) "" else markFromBrackets(value.trim())
-            else -> value.trim()
-        }
+        val parsed = parseField(f, value)
         if (parsed == null) invalid += f else out = out.with(f, parsed)
     }
     REQUIRED.filterTo(invalid) { out[it].isBlank() }
     return if (invalid.isEmpty()) FormResult.Ok(out) else FormResult.Invalid(invalid)
+}
+
+private fun parseField(f: CardField, value: String): String? = when (f) {
+    CardField.EXCERPT -> markFromBrackets(value.trim())
+    CardField.SENTENCE -> if (value.isBlank()) "" else markFromBrackets(value.trim())
+    else -> value.trim()
+}
+
+// An unedited field takes AnkiDroid's text too, or the next Save would write the stale value back.
+fun mergeAfterConflict(form: CardFields, oldBaseline: CardFields, fresh: CardFields, conflicts: Set<CardField>): CardFields {
+    val shown = oldBaseline.toForm()
+    val freshForm = fresh.toForm()
+    return CardField.entries.fold(form) { acc, f ->
+        val edited = form[f] != shown[f] && parseField(f, form[f]) != oldBaseline[f]
+        if (f in conflicts || !edited) acc.with(f, freshForm[f]) else acc
+    }
 }
 
 private fun markFromBrackets(s: String): String? {

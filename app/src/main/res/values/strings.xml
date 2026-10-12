@@ -135,6 +135,7 @@
     <string name="card_snack_delete_refused">AnkiDroid didn\'t delete the note, so the card stays there.</string>
     <string name="card_snack_conflict">Changed in AnkiDroid while you were editing: %1$s. The page now shows AnkiDroid\'s text.</string>
     <string name="card_snack_note_gone">This card was deleted in AnkiDroid. Your changes are kept here.</string>
+    <string name="card_snack_not_pending">This card changed while you were editing. Your changes weren\'t saved.</string>
     <string name="card_snack_retranslated">New translation filled in.</string>
     <string name="card_delete_title">Delete from AnkiDroid?</string>
     <string name="card_delete_text">The note and its review history are deleted in AnkiDroid. The card stays here as discarded.</string>
