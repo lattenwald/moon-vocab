@@ -23,6 +23,7 @@ data class RawMark(
     val text: String,
     val combo: StyleCombo,
     val markedAt: Long,
+    val split: Int = 0, // Moon+ lastSplitIndex: which ~100 KB part of the chapter's HTML the position counts in
 )
 
 fun fileKeyOf(bookPath: String): String = bookPath.substringAfterLast('/').lowercase()

@@ -1,5 +1,6 @@
 package org.lattenwald.moonvocab.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -34,6 +35,7 @@ data class MarkEntity(
     val color: Int,
     val markedAt: Long,
     val cardId: Long?,
+    @ColumnInfo(defaultValue = "0") val split: Int = 0,
 )
 
 @Entity(tableName = "card", indices = [Index(value = ["uuid"], unique = true), Index("status"), Index("lemma")])

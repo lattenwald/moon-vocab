@@ -102,6 +102,7 @@ private fun bookJson(
     putJsonArray("misses") {
         for ((mark, check) in checks) if (!check.exact) addJsonObject {
             put("chapter", mark.chapter)
+            put("split", mark.split)
             put("position", mark.position)
             put("text", mark.text)
             put("style", mark.combo.style.name)

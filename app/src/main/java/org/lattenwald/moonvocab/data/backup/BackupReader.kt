@@ -57,7 +57,7 @@ class BackupReader(private val cacheDir: File) {
             val rows = mutableListOf<Row>()
             db.rawQuery(
                 "SELECT filename, book, lastChapter, lastPosition, original, highlightColor, time, " +
-                    "bak, underline, strikethrough, bookmark FROM notes",
+                    "bak, underline, strikethrough, bookmark, lastSplitIndex FROM notes",
                 null,
             ).use { c ->
                 while (c.moveToNext()) {
@@ -75,12 +75,13 @@ class BackupReader(private val cacheDir: File) {
                         text = text,
                         combo = StyleCombo(styleOf(c.getString(7), c.getInt(8), c.getInt(9)), c.getInt(5)),
                         markedAt = c.getLong(6),
+                        split = c.getInt(11),
                     )
                 }
             }
             val keys = markKeys(rows.map { KeyInput(it.bookPath, it.markedAt, it.text) })
             val marks = rows.mapIndexed { i, r ->
-                RawMark(keys[i], r.bookPath, r.bookTitle, r.chapter, r.position, r.text, r.combo, r.markedAt)
+                RawMark(keys[i], r.bookPath, r.bookTitle, r.chapter, r.position, r.text, r.combo, r.markedAt, r.split)
             }
             BackupContents.Complete(marks, bookmarks)
         }
@@ -93,6 +94,7 @@ class BackupReader(private val cacheDir: File) {
         val text: String,
         val combo: StyleCombo,
         val markedAt: Long,
+        val split: Int,
     )
 
     private companion object {

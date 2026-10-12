@@ -173,10 +173,11 @@ class ImportPipeline(
             }
             MarkEntity(
                 key = m.key, bookId = bookId, chapter = m.chapter, position = m.position, text = m.text, style = m.combo.style,
-                color = m.combo.color, markedAt = m.markedAt, cardId = null,
+                color = m.combo.color, markedAt = m.markedAt, cardId = null, split = m.split,
             )
         }
         db.marks().insertIgnoringKnown(entities)
+        for (e in entities) if (e.split != 0) db.marks().setSplit(e.key, e.split)
     }
 
     private suspend fun merge(built: List<Built>): Merged {

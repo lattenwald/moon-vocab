@@ -57,6 +57,9 @@ interface MarkDao {
     @Query("SELECT * FROM mark WHERE cardId IS NULL AND (:bookId IS NULL OR bookId = :bookId) ORDER BY markedAt DESC, id DESC")
     suspend fun withoutCard(bookId: Long?): List<MarkEntity>
 
+    @Query("UPDATE mark SET split = :split WHERE `key` = :key")
+    suspend fun setSplit(key: String, split: Int)
+
     @Query("UPDATE mark SET cardId = :cardId WHERE id IN (:markIds)")
     suspend fun link(markIds: List<Long>, cardId: Long)
 

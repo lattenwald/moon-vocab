@@ -19,6 +19,7 @@ data class NoteRow(
     val strikethrough: Int = 0,
     val bak: String = "0",
     val bookmark: String = "",
+    val split: Int = 0,
 )
 
 enum class Cut { NONE, BEFORE_DB, INSIDE_DB }
@@ -76,7 +77,7 @@ object MrproFixture {
                         put("filename", n.filename)
                         put("lowerFilename", n.filename.lowercase())
                         put("lastChapter", n.chapter)
-                        put("lastSplitIndex", 0)
+                        put("lastSplitIndex", n.split)
                         put("lastPosition", n.position)
                         put("highlightLength", n.original.length)
                         put("highlightColor", n.color)

@@ -38,6 +38,7 @@
 - The mark is searched case-insensitively, without changing string length.
 - A mark is located only as the spec §5.2 evidence allows; otherwise it gets no sentence.
 - Anchors come from every note of the book in the current run's backup. A run without a backup has none.
+- A mark stores Moon+ `lastSplitIndex` as `split`; an import refreshes `split` on marks already stored.
 - A sentence never crosses a paragraph `\n`. Widening a short sentence stays inside its paragraph.
 - A mark that spans a paragraph break is its own sentence.
 - Each run keeps the text and normalized chapters of at most 3 books, least recently used out.
