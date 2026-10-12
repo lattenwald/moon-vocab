@@ -165,6 +165,7 @@
 - Inbox groups are ordered by their newest mark. Cards in a group are ordered by newest mark, then id, both descending.
 - Groups whose newest marks are equal are ordered by book id, descending.
 - Language chips appear only when the Inbox holds two or more languages. A card with no language counts as Other, listed last.
+- The Inbox's one chip row is single-select: All, then Failed, Model example and Already in Anki (each only when it has cards), then the language chips. A filter whose cards are gone falls back to All.
 - A filter whose language left the Inbox falls back to All, and the stored filter becomes All.
 - Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen only maps fingers to rows and calls it.
 - Long-press is 360 ms. Auto-scroll starts 72 dp from either list edge and moves at most 18 dp per frame.

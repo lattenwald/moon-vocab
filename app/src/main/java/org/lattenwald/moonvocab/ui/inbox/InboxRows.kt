@@ -85,7 +85,8 @@ import org.lattenwald.moonvocab.domain.import.ImportSummary
 import org.lattenwald.moonvocab.domain.inbox.InboxCard
 import org.lattenwald.moonvocab.domain.inbox.InboxGroup
 import org.lattenwald.moonvocab.domain.inbox.InboxList
-import org.lattenwald.moonvocab.domain.inbox.LanguageFilter
+import org.lattenwald.moonvocab.domain.inbox.CardKind
+import org.lattenwald.moonvocab.domain.inbox.InboxFilter
 import org.lattenwald.moonvocab.domain.inbox.RowLabel
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
 import org.lattenwald.moonvocab.ui.common.languageName
@@ -334,21 +335,30 @@ internal fun GroupHeader(group: InboxGroup, selecting: Boolean, checked: Togglea
 }
 
 @Composable
-internal fun LanguageChips(list: InboxList, onFilter: (LanguageFilter) -> Unit, modifier: Modifier = Modifier) {
+internal fun FilterChips(list: InboxList, onFilter: (InboxFilter) -> Unit, modifier: Modifier = Modifier) {
     Row(
         modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        LanguageChip(stringResource(R.string.inbox_all), list.total, list.filter == LanguageFilter.All) { onFilter(LanguageFilter.All) }
-        for (chip in list.chips) {
-            val filter = LanguageFilter.Only(chip.language)
-            LanguageChip(languageName(chip.language), chip.count, list.filter == filter) { onFilter(filter) }
+        CountChip(stringResource(R.string.inbox_all), list.total, list.filter == InboxFilter.All) { onFilter(InboxFilter.All) }
+        for (chip in list.kinds) {
+            val filter = InboxFilter.Kind(chip.kind)
+            val name = when (chip.kind) {
+                CardKind.FAILED -> R.string.inbox_filter_failed
+                CardKind.INVENTED -> R.string.inbox_filter_invented
+                CardKind.ELSEWHERE -> R.string.inbox_filter_elsewhere
+            }
+            CountChip(stringResource(name), chip.count, list.filter == filter) { onFilter(filter) }
+        }
+        for (chip in list.languages) {
+            val filter = InboxFilter.Language(chip.language)
+            CountChip(languageName(chip.language), chip.count, list.filter == filter) { onFilter(filter) }
         }
     }
 }
 
 @Composable
-private fun LanguageChip(name: String, count: Int, selected: Boolean, onClick: () -> Unit) {
+private fun CountChip(name: String, count: Int, selected: Boolean, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,

@@ -33,7 +33,7 @@ import org.lattenwald.moonvocab.domain.import.ImportRequest
 import org.lattenwald.moonvocab.domain.import.SendResult
 import org.lattenwald.moonvocab.domain.inbox.InboxActions
 import org.lattenwald.moonvocab.domain.inbox.InboxList
-import org.lattenwald.moonvocab.domain.inbox.LanguageFilter
+import org.lattenwald.moonvocab.domain.inbox.InboxFilter
 import org.lattenwald.moonvocab.domain.inbox.Selection
 import org.lattenwald.moonvocab.domain.inbox.dragOver
 import org.lattenwald.moonvocab.domain.inbox.endDrag
@@ -47,7 +47,7 @@ import org.lattenwald.moonvocab.work.ImportState
 import org.lattenwald.moonvocab.work.ImportWork
 
 data class InboxState(
-    val list: InboxList = inboxList(emptyList(), LanguageFilter.All),
+    val list: InboxList = inboxList(emptyList(), InboxFilter.All),
     val selection: Selection = Selection(),
     val import: ImportState = ImportState(),
     val anki: AnkiAvailability? = null,
@@ -75,7 +75,7 @@ class InboxViewModel(
     private val sender: CardSender,
     private val io: CoroutineDispatcher,
 ) : ViewModel() {
-    private val filter = MutableStateFlow<LanguageFilter>(LanguageFilter.All)
+    private val filter = MutableStateFlow<InboxFilter>(InboxFilter.All)
     private val availability = MutableStateFlow<AnkiAvailability?>(null)
     private val selection = MutableStateFlow(Selection())
     private val missingFields = MutableStateFlow<List<String>>(emptyList())
@@ -89,7 +89,7 @@ class InboxViewModel(
     }
 
     private val list = combine(rows, filter) { r, f ->
-        inboxList(r, f).also { if (it.filter != f) filter.compareAndSet(f, LanguageFilter.All) }
+        inboxList(r, f).also { if (it.filter != f) filter.compareAndSet(f, InboxFilter.All) }
     }.onEach { l -> selection.update { it.retain(l.visibleIds.toSet()) } }
 
     val state: StateFlow<InboxState> = combine(
@@ -112,7 +112,7 @@ class InboxViewModel(
         _importSheetRequested.value = false
     }
 
-    fun setFilter(f: LanguageFilter) {
+    fun setFilter(f: InboxFilter) {
         filter.value = f
     }
 

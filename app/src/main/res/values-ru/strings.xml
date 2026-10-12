@@ -22,6 +22,9 @@
         <item quantity="other">%d карточки на проверку</item>
     </plurals>
     <string name="inbox_all">Все</string>
+    <string name="inbox_filter_failed">Не переведены</string>
+    <string name="inbox_filter_invented">Пример от модели</string>
+    <string name="inbox_filter_elsewhere">Уже в Anki</string>
     <string name="inbox_language_other">Другой язык</string>
     <string name="inbox_label_phrase">Расширено до фразы</string>
     <string name="inbox_label_invented">Пример придуман моделью: в книге не нашлось</string>

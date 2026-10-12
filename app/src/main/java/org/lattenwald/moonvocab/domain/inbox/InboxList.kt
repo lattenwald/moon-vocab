@@ -28,25 +28,42 @@ data class InboxGroup(val bookId: Long, val title: String, val author: String?, 
 
 data class LanguageChip(val language: String?, val count: Int)
 
-sealed interface LanguageFilter {
-    data object All : LanguageFilter
-    data class Only(val language: String?) : LanguageFilter
+enum class CardKind { FAILED, INVENTED, ELSEWHERE }
+
+data class KindChip(val kind: CardKind, val count: Int)
+
+sealed interface InboxFilter {
+    data object All : InboxFilter
+    data class Language(val language: String?) : InboxFilter
+    data class Kind(val kind: CardKind) : InboxFilter
 }
 
 data class InboxList(
     val groups: List<InboxGroup>,
-    val chips: List<LanguageChip>,
-    val filter: LanguageFilter,
+    val kinds: List<KindChip>,
+    val languages: List<LanguageChip>,
+    val filter: InboxFilter,
     val total: Int,
     val visibleIds: List<Long>,
 )
 
 internal val NEWEST_FIRST = compareByDescending<InboxCard> { it.markedAt }.thenByDescending { it.id }
 
-fun inboxList(rows: List<InboxRow>, filter: LanguageFilter): InboxList {
-    val present = rows.mapTo(HashSet()) { it.card.sourceLanguage }
-    val applied = if (filter is LanguageFilter.Only && filter.language !in present) LanguageFilter.All else filter
-    val kept = if (applied is LanguageFilter.Only) rows.filter { it.card.sourceLanguage == applied.language } else rows
+private fun InboxRow.isKind(kind: CardKind) = when (kind) {
+    CardKind.FAILED -> card.status == CardStatus.FAILED
+    CardKind.INVENTED -> card.invented
+    CardKind.ELSEWHERE -> card.elsewhereDeck != null
+}
+
+private fun InboxRow.matches(filter: InboxFilter) = when (filter) {
+    InboxFilter.All -> true
+    is InboxFilter.Language -> card.sourceLanguage == filter.language
+    is InboxFilter.Kind -> isKind(filter.kind)
+}
+
+fun inboxList(rows: List<InboxRow>, filter: InboxFilter): InboxList {
+    val applied = if (rows.none { it.matches(filter) }) InboxFilter.All else filter
+    val kept = rows.filter { it.matches(applied) }
     val groups = kept.groupBy { it.card.bookId }
         .map { (bookId, bookRows) ->
             val first = bookRows.first()
@@ -55,7 +72,8 @@ fun inboxList(rows: List<InboxRow>, filter: LanguageFilter): InboxList {
         .sortedWith(compareByDescending<InboxGroup> { it.cards.first().markedAt }.thenByDescending { it.bookId })
     return InboxList(
         groups = groups,
-        chips = languageChips(rows),
+        kinds = CardKind.entries.map { kind -> KindChip(kind, rows.count { it.isKind(kind) }) }.filter { it.count > 0 },
+        languages = languageChips(rows),
         filter = applied,
         total = rows.size,
         visibleIds = groups.flatMap { g -> g.cards.map { it.id } },

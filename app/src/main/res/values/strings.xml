@@ -18,6 +18,9 @@
         <item quantity="other">%d cards to review</item>
     </plurals>
     <string name="inbox_all">All</string>
+    <string name="inbox_filter_failed">Failed</string>
+    <string name="inbox_filter_invented">Model example</string>
+    <string name="inbox_filter_elsewhere">Already in Anki</string>
     <string name="inbox_language_other">Other</string>
     <string name="inbox_label_phrase">Widened to a phrase</string>
     <string name="inbox_label_invented">Example written by the model, sentence not found</string>

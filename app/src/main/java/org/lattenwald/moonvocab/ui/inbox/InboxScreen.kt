@@ -234,8 +234,8 @@ fun InboxScreen(
                             )
                         }
                     }
-                    if (list.chips.isNotEmpty()) {
-                        item(key = "chips") { LanguageChips(list, onFilter = vm::setFilter, modifier = Modifier.padding(bottom = 6.dp)) }
+                    if (list.kinds.isNotEmpty() || list.languages.isNotEmpty()) {
+                        item(key = "chips") { FilterChips(list, onFilter = vm::setFilter, modifier = Modifier.padding(bottom = 6.dp)) }
                     }
                     for (group in list.groups) {
                         item(key = "h${group.bookId}", contentType = "header") {
