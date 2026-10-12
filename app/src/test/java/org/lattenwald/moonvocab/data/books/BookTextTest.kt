@@ -19,7 +19,7 @@ class BookTextTest {
         assertTrue("Alpha." in b.chapters[0])
     }
 
-    @Test fun epubSpineHrefsResolveAgainstOpfDirectoryAndMissingEntriesAreSkipped() {
+    @Test fun epubSpineHrefsResolveAgainstOpfDirectoryAndMissingEntriesStayEmptyChapters() {
         val f = BookFixtures.zip(tmp, "b.epub", mapOf(
             "META-INF/container.xml" to BookFixtures.container("OPS/pkg/book.opf").toByteArray(),
             "OPS/pkg/book.opf" to BookFixtures.opf("de-DE", "Der Titel", "Die Autorin",
@@ -28,8 +28,8 @@ class BookTextTest {
             "OPS/c++.xhtml" to BookFixtures.xhtml("<p>Drittes.</p>").toByteArray(),
         ))
         val b = readBookText(f, "b.epub")!!
-        assertEquals(2, b.chapters.size)
-        assertTrue("Erstes." in b.chapters[0]); assertTrue("Drittes." in b.chapters[1])
+        assertEquals(3, b.chapters.size)
+        assertTrue("Erstes." in b.chapters[0]); assertEquals("", b.chapters[1]); assertTrue("Drittes." in b.chapters[2])
         assertEquals("Der Titel", b.title); assertEquals("Die Autorin", b.author); assertEquals("de", b.language)
     }
 
@@ -66,6 +66,15 @@ class BookTextTest {
     @Test fun fb2SectionsAreChapters() {
         val b = readBookText(BookFixtures.fb2(tmp, "de", listOf(listOf("Erster Satz."), listOf("Zweiter Satz."))), "y.fb2")!!
         assertEquals("de", b.language); assertEquals(listOf("Erster Satz.", "Zweiter Satz."), b.chapters)
+    }
+
+    // Moon+ Reader's lastChapter for The Great Book of Amber counts nested sections this way.
+    @Test fun fb2NestedSectionsAreChaptersInReadingOrderWithOwnText() {
+        val part = "<section><title><p>Part One</p></title>" +
+            "<section><title><p>CHAPTER 1</p></title><p>Eins.</p></section>" +
+            "<section><title><p>CHAPTER 2</p></title><subtitle>* * *</subtitle><p>Zwei.</p></section></section>"
+        val f = BookFixtures.fb2(tmp, sections = listOf(listOf("<title><p>Omnibus</p></title>", part)))
+        assertEquals(listOf("Omnibus", "Part One", "CHAPTER 1\nEins.", "CHAPTER 2\n* * *\nZwei."), readBookText(f, "y.fb2")!!.chapters)
     }
 
     @Test fun fb2ParagraphsJoinWithNewlinesAndNotesBodyIsNotAChapter() {

@@ -25,7 +25,8 @@
 - OPF selectors ignore namespace prefixes.
 - An FB2 is parsed from its bytes, so the declared encoding applies.
 - FB2 chapters come from the first `<body>`, plus every later `<body>` without a `name`.
-- FB2 chapter text is the `p` and `v` lines, in document order.
+- Every FB2 `<section>` is a chapter, nested ones included, in document order. Its text is its own `p`, `v` and `subtitle` lines, titles included, not those of its subsections.
+- An EPUB spine entry that can't be read is an empty chapter.
 - An FB2 is parsed only up to its first `<binary` after the first `<body`.
 - A zip file named `.fb2` is read as a zipped FB2.
 - `isoLanguage` maps ISO 639-2/B codes to two-letter codes and returns only two-letter codes in `Locale.getISOLanguages()`; anything else is null.
@@ -35,6 +36,8 @@
 
 ## Sentences, excerpts, cards
 - The mark is searched case-insensitively, without changing string length.
+- A mark is located only as the spec §5.2 evidence allows; otherwise it gets no sentence.
+- Anchors come from every note of the book in the current run's backup. A run without a backup has none.
 - A sentence never crosses a paragraph `\n`. Widening a short sentence stays inside its paragraph.
 - A mark that spans a paragraph break is its own sentence.
 - Each run keeps the text and normalized chapters of at most 3 books, least recently used out.

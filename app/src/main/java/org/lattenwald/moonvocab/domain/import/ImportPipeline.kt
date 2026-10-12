@@ -39,10 +39,11 @@ import org.lattenwald.moonvocab.domain.card.senseQuestions
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.lattenwald.moonvocab.domain.mark.fileKey
-import org.lattenwald.moonvocab.domain.text.NormalizedText
+import org.lattenwald.moonvocab.domain.text.MarkLocator
+import org.lattenwald.moonvocab.domain.text.NoteRef
 import org.lattenwald.moonvocab.domain.text.SentenceResult
-import org.lattenwald.moonvocab.domain.text.findSentence
 import org.lattenwald.moonvocab.domain.text.normalize
+import org.lattenwald.moonvocab.domain.text.sentenceAt
 
 data class ImportRequest(val backup: File?, val styles: Set<StyleCombo>, val onlyBookFileKey: String?, val sendToAnki: Boolean)
 
@@ -75,14 +76,18 @@ class ImportPipeline(
 ) {
     suspend fun run(request: ImportRequest, progress: (ImportProgress) -> Unit): ImportSummary {
         var incomplete: String? = null
+        var notes = emptyMap<String, List<NoteRef>>()
         if (request.backup != null) {
             when (val contents = withContext(io) { reader.read(request.backup) }) {
                 is BackupContents.Incomplete -> incomplete = contents.reason
-                is BackupContents.Complete -> store(contents.marks, request)
+                is BackupContents.Complete -> {
+                    store(contents.marks, request)
+                    notes = contents.marks.groupBy({ it.fileKey }, { NoteRef(it.chapter, it.position, it.text) })
+                }
             }
         }
         val s = settings.current()
-        val run = Run(books())
+        val run = Run(books(), notes)
         val todo = db.marks().withoutCard(null)
             .filter { request.onlyBookFileKey == null || run.book(it.bookId).fileKey == request.onlyBookFileKey }
 
@@ -285,11 +290,11 @@ class ImportPipeline(
         val senseFailed: Boolean,
     )
 
-    private class LoadedBook(val text: BookText?, var normalized: List<NormalizedText>? = null)
+    private class LoadedBook(val text: BookText?, var locator: MarkLocator? = null)
 
     private fun internalError(e: Exception) = "internal error: " + (e.message ?: e::class.simpleName)
 
-    private inner class Run(private val source: BookSource) {
+    private inner class Run(private val source: BookSource, private val notes: Map<String, List<NoteRef>>) {
         private val books = HashMap<Long, BookEntity>()
         private val loaded = object : LinkedHashMap<Long, LoadedBook>(16, 0.75f, true) {
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, LoadedBook>) = size > BOOKS_IN_MEMORY
@@ -311,9 +316,13 @@ class ImportPipeline(
                     SentenceResult.NotFound
                 } else {
                     val locale = book.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
-                    val chapters = loadedBook.normalized
-                        ?: withContext(io) { text.chapters.map(::normalize) }.also { loadedBook.normalized = it }
-                    withContext(io) { findSentence(chapters, text.chapters, mark.chapter, mark.position, mark.text, locale) }
+                    val locator = loadedBook.locator ?: withContext(io) {
+                        MarkLocator(text.chapters.map(::normalize), notes[book.fileKey].orEmpty(), text.chaptersMatchMoonReader)
+                    }.also { loadedBook.locator = it }
+                    withContext(io) {
+                        locator.locate(mark.chapter, mark.position, mark.text)
+                            ?.let { sentenceAt(text.chapters, locator.chapters, it, locale) } ?: SentenceResult.NotFound
+                    }
                 }
                 Prepared(mark, sentence, item((sentence as? SentenceResult.Found)?.let { normalize(it.sentence).text }))
             } catch (e: CancellationException) {

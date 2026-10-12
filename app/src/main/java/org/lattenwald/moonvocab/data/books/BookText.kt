@@ -5,7 +5,13 @@ import java.io.IOException
 import java.util.Locale
 import java.util.zip.ZipFile
 
-data class BookText(val title: String?, val author: String?, val language: String?, val chapters: List<String>)
+data class BookText(
+    val title: String?,
+    val author: String?,
+    val language: String?,
+    val chapters: List<String>,
+    val chaptersMatchMoonReader: Boolean = false,
+)
 
 fun readBookText(file: File, fileName: String): BookText? {
     val name = fileName.lowercase()

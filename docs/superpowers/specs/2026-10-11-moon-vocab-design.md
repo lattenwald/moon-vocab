@@ -175,8 +175,14 @@ The normalized text keeps an offset map back to the original, so the sentence sh
 
 `SentenceFinder.find(book, mark): Found(sentence, markSpan) | NotFound`:
 
-1. Search every chapter for the normalized `original`, ignoring case.
-2. Of all occurrences, keep the one with the smallest distance to the mark's position, preferring chapters at or after `lastChapter` (Moon+ chapter numbers run at or below the spine index).
+1. Search every chapter for the normalized `original`, ignoring case. A match starts a word but may end inside one: Moon+ saves "behoove" for a selection in "behooves", and "hose" must not match inside "those".
+2. Use only the occurrence that is certainly the marked one, otherwise no sentence (the card then gets a model-written example). Moon+ chapter numbers follow the EPUB spine in some books and not in others, so the evidence is, in order:
+   - the text occurs once in the book;
+   - exactly one occurrence lies between the book's neighbouring anchors, in Moon+ order. Anchors are the book's other notes in the same backup, of any style, whose text occurs once in the book; anchors out of reading order are dropped;
+   - an anchor in the same Moon+ chapter puts exactly one occurrence within tolerance of the mark;
+   - when the chapter numbers are proven, exactly one occurrence in the saved chapter sits at the saved position, or else within tolerance of it. FB2 chapter numbers are proven unless an anchor contradicts them; EPUB chapter numbers are proven when every anchor sits in its saved chapter near its saved position.
+
+   Tolerance is 40 characters plus a tenth of the distance, since Moon+ counts whitespace its own way.
 3. Take the enclosing sentence with `BreakIterator.getSentenceInstance(locale)`. If `original` is itself longer than one sentence, use it as the sentence. `BreakIterator` sometimes splits at abbreviations such as "z. B." or inside dialogue; if the found sentence is shorter than 6 words, the neighbouring sentence on each side is added.
 
 Language falls back to the model's detection (5.3) when the book is missing or has no language metadata. A book's language, once known, is stored on the book.
@@ -371,7 +377,8 @@ JVM unit tests:
 - Text normalization and its offset map.
 - `SentenceFinder` on small EPUB and FB2 fixtures, covering:
   - a shifted chapter number;
-  - repeated words;
+  - repeated words, placed by anchors, by the saved position, or not at all;
+  - a mark inside a longer word;
   - soft hyphens;
   - an abbreviation split;
   - a mark longer than one sentence.

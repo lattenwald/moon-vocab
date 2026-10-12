@@ -21,10 +21,11 @@ internal object EpubText {
         val opf = xml(opfPath)
         val opfDir = opfPath.substringBeforeLast('/', "")
         val hrefs = opf.select("*|manifest > *|item").associate { it.attr("id") to it.attr("href") }
-        val chapters = opf.select("*|spine > *|itemref").mapNotNull { hrefs[it.attr("idref")] }
-            .mapNotNull { href -> zip.getEntry(resolve(opfDir, href)) }
+        // A spine entry that can't be read stays an empty chapter, so later ones keep Moon+ Reader's numbers.
+        val chapters = opf.select("*|spine > *|itemref")
+            .map { itemref -> hrefs[itemref.attr("idref")]?.let { zip.getEntry(resolve(opfDir, it)) } }
             // XML, not HTML, parsing: the HTML parser reads a self-closing <title/> as an open title that swallows the body.
-            .map { entry -> xml(entry).selectFirst("*|body")?.let(::text).orEmpty() }
+            .map { entry -> entry?.let { xml(it).selectFirst("*|body")?.let(::text) }.orEmpty() }
         fun meta(tag: String) = opf.selectFirst("*|metadata *|$tag")?.text()?.trim()?.ifEmpty { null }
         BookText(title = meta("title"), author = meta("creator"), language = isoLanguage(meta("language")), chapters = chapters)
     }
