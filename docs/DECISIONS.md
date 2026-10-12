@@ -227,6 +227,14 @@
 - When the test deck is on, the deck field's help line names it.
 - Card design opens the preview (`PreviewKey(null)`) with the sample card, cut to the stored longest excerpt.
 
+## Settings page
+- The Settings tab has a large title and the prototype's groups: Translation (service, Translate into), Look (Theme, App language), Moon+ Reader (Backups folder, Books folder, Review before sending), Cards (Cards, AnkiDroid), then Developer tools alone.
+- Theme is a segmented button. Selecting writes `theme` and calls `setDefaultNightMode`.
+- A folder row shows the path after `:` in the tree's document id, "Not chosen", or, when `persistedUriPermissions` holds no read grant for it, "Can't read this folder. Choose it again." in the error colour.
+- Choosing a folder takes the persistable read permission, then saves the folder even if that failed.
+- The AnkiDroid row reads Connected, Allow access (asks), or Not installed (opens the Play Store). It and the folder grants are refreshed on resume.
+- Settings writes run in `appScope` under one lock, in tap order.
+
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
@@ -239,14 +247,15 @@
 ## UI
 - Fonts are bundled variable TTFs from google/fonts: Roboto Flex for the UI and Literata for book text. The licences ship in `assets/licenses/`.
 - Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
-- The theme follows the system's light or dark mode until Settings adds the choice in milestone 5.
+- The theme is System, Light or Dark. It is applied with `AppCompatDelegate.setDefaultNightMode` in `App.onCreate`, from a blocking read kept as `App.startSettings`, and again on every change. `isSystemInDarkTheme()` follows it.
 - The mark underline is `#D9480F` in light mode and `#FF8A50` in dark mode, drawn as a wave under the focus.
-- The app opens on the Inbox. The bottom bar has Inbox, Library and Settings. Settings shows the debug screen until milestone 5.
+- The app opens on the Inbox. The bottom bar has Inbox, Library and Settings. Settings shows the settings page.
 - Navigation 3 holds one back stack that starts with the Inbox. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
 - The bottom bar shows only on tabs. Tab switches cross-fade.
-- `DebugViewModel` is activity-scoped, created in `AppShell`, until milestone 5 replaces the debug screen.
+- The debug screen is the Developer tools page (`DeveloperKey`), pushed from the last row of Settings, with its own top bar. It keeps all its tools. `DebugViewModel` is scoped to its entry.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
-- An import stopped by the translation service shows its reason in the result card, with a button to Settings. The Translation service page comes in milestone 5.
+- An import stopped by the translation service shows its reason in the result card, with a button that opens the Services page on top of the Settings tab.
 - The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.
 - The Inbox background is `surfaceContainer` with `surfaceContainerLowest` rows when the surface is light, and `surface` with `surfaceContainer` rows when it is dark.
-- Asking for AnkiDroid's permission opens the app's system settings when the request is denied and the system shows no rationale.
+- Asking for AnkiDroid's permission opens the app's system settings only when the request is denied, `ankiAsked` was already true before it, and the system shows no rationale. `ankiAsked` is set when a request starts.
+- Opening the Play Store for AnkiDroid tries `market://details?id=com.ichi2.anki`, then `https://play.google.com/store/apps/details?id=com.ichi2.anki`.

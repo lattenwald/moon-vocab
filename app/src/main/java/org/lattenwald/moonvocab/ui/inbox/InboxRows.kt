@@ -407,7 +407,7 @@ internal fun ImportProgressPanel(progress: ImportProgress?, modifier: Modifier =
 }
 
 @Composable
-internal fun ImportResultCard(import: ImportState, onDismiss: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ImportResultCard(import: ImportState, onDismiss: () -> Unit, onOpenServices: () -> Unit, modifier: Modifier = Modifier) {
     Panel(modifier) {
         Row {
             Column(Modifier.weight(1f).padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -417,7 +417,7 @@ internal fun ImportResultCard(import: ImportState, onDismiss: () -> Unit, onOpen
                     ResultTitle(stringResource(R.string.inbox_result_import_failed, failure), MaterialTheme.colorScheme.error)
                 } else if (summary != null) {
                     ResultTitle(stringResource(R.string.inbox_result_title), MaterialTheme.colorScheme.onSurface)
-                    ResultLines(summary, onOpenSettings)
+                    ResultLines(summary, onOpenServices)
                 }
             }
             IconButton(onClick = onDismiss, modifier = Modifier.padding(start = 8.dp)) {
@@ -433,7 +433,7 @@ private fun ResultTitle(text: String, color: Color) {
 }
 
 @Composable
-private fun ResultLines(s: ImportSummary, onOpenSettings: () -> Unit) {
+private fun ResultLines(s: ImportSummary, onOpenServices: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val toReview = (s.newCards - s.sent).coerceAtLeast(0)
     val lines = buildList {
@@ -454,7 +454,7 @@ private fun ResultLines(s: ImportSummary, onOpenSettings: () -> Unit) {
     }
     if (stopped != null) {
         ResultLine(stringResource(stopped), colors.error)
-        TextButton(onClick = onOpenSettings) { Text(stringResource(R.string.inbox_result_open_settings)) }
+        TextButton(onClick = onOpenServices) { Text(stringResource(R.string.inbox_result_open_settings)) }
     }
     s.sendError?.let { ResultLine(stringResource(R.string.inbox_result_send_error, it), colors.error) }
     if (lines.isEmpty() && stopped == null && s.sendError == null) {

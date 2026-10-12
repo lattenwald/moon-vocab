@@ -1,10 +1,6 @@
 package org.lattenwald.moonvocab.ui.inbox
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
 import android.content.res.Resources
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -66,23 +62,20 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
+import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
 import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
 
-private const val TAG = "InboxScreen"
-private const val ANKIDROID_MARKET = "market://details?id=com.ichi2.anki"
-private const val ANKIDROID_WEB = "https://play.google.com/store/apps/details?id=com.ichi2.anki"
 private const val DISABLED_ALPHA = 0.45f
 
 @Composable
 fun InboxScreen(
-    onOpenSettings: () -> Unit,
+    onOpenServices: () -> Unit,
     onOpenCard: (Long) -> Unit,
     modifier: Modifier = Modifier,
     vm: InboxViewModel = viewModel(factory = InboxViewModel.Factory),
@@ -228,7 +221,7 @@ fun InboxScreen(
                             ImportResultCard(
                                 import,
                                 onDismiss = vm::dismissResult,
-                                onOpenSettings = onOpenSettings,
+                                onOpenServices = onOpenServices,
                                 modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 10.dp),
                             )
                         }
@@ -327,15 +320,4 @@ private fun eventMessage(r: Resources, event: InboxEvent): String? = when (event
     is InboxEvent.UndoKept -> r.getQuantityString(R.plurals.inbox_undo_kept, event.count, event.count)
     is InboxEvent.Retranslating -> r.getQuantityString(R.plurals.inbox_retranslating, event.count, event.count)
     is InboxEvent.Failed -> r.getString(R.string.inbox_action_failed, event.message)
-}
-
-private fun openAnkiDroidStore(context: Context) {
-    for (uri in listOf(ANKIDROID_MARKET, ANKIDROID_WEB)) {
-        try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, uri.toUri()))
-            return
-        } catch (e: ActivityNotFoundException) {
-            Log.w(TAG, "no app opens $uri", e)
-        }
-    }
 }

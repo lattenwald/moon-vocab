@@ -207,17 +207,27 @@ private fun TargetList(vm: LanguagePickerViewModel, padding: PaddingValues, rowC
     }
 }
 
+internal fun appLanguage(): String? {
+    val chosen = AppCompatDelegate.getApplicationLocales()
+    return if (chosen.isEmpty) SAME_AS_PHONE else chosen[0]?.language
+}
+
+@Composable
+internal fun appLanguageTitle(code: String?): String {
+    val context = LocalContext.current
+    val ui = LocalConfiguration.current.locales[0]
+    val phone = remember(context) { LocaleManagerCompat.getSystemLocales(context).languageCodes().firstOrNull() }
+    return when (code) {
+        null -> ""
+        SAME_AS_PHONE -> stringResource(R.string.picker_same_phone, phone?.let { languageName(it, ui) }.orEmpty())
+        else -> languageName(code, Locale.forLanguageTag(code))
+    }
+}
+
 @Composable
 private fun AppList(padding: PaddingValues, rowColor: Color, onBack: () -> Unit) {
-    val ui = LocalConfiguration.current.locales[0]
-    val context = LocalContext.current
-    val phone = remember(context) { LocaleManagerCompat.getSystemLocales(context).languageCodes().firstOrNull() }
-    val current = remember {
-        val chosen = AppCompatDelegate.getApplicationLocales()
-        if (chosen.isEmpty) SAME_AS_PHONE else chosen[0]?.language
-    }
-    val rows = listOf(Choice(SAME_AS_PHONE, stringResource(R.string.picker_same_phone, phone?.let { languageName(it, ui) }.orEmpty()), null)) +
-        APP_LANGUAGES.map { Choice(it, languageName(it, Locale.forLanguageTag(it)), null) }
+    val current = remember { appLanguage() }
+    val rows = (listOf(SAME_AS_PHONE) + APP_LANGUAGES).map { Choice(it, appLanguageTitle(it), null) }
     val pick: (String) -> Unit = { code ->
         if (code != current) {
             AppCompatDelegate.setApplicationLocales(

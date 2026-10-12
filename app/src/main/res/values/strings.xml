@@ -397,4 +397,29 @@
     <string name="cards_tag_help">{title} becomes the book title.</string>
     <string name="cards_design">Card design</string>
     <string name="cards_design_help">Front and back as AnkiDroid shows them</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_translation">Translation</string>
+    <string name="settings_service">Translation service</string>
+    <string name="settings_into">Translate into</string>
+    <string name="settings_look">Look</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_app_language">App language</string>
+    <string name="settings_moon">Moon+ Reader</string>
+    <string name="settings_backups">Backups folder</string>
+    <string name="settings_books">Books folder</string>
+    <string name="settings_folder_none">Not chosen</string>
+    <string name="settings_folder_unreadable">Can\'t read this folder. Choose it again.</string>
+    <string name="settings_review">Review before sending</string>
+    <string name="settings_review_help">You can change this for each import.</string>
+    <string name="settings_cards">Cards</string>
+    <string name="settings_cards_help">Excerpt, deck, tags and design</string>
+    <string name="settings_anki">AnkiDroid</string>
+    <string name="settings_anki_ready">Connected</string>
+    <string name="settings_anki_allow">Allow access</string>
+    <string name="settings_anki_missing">Not installed</string>
+    <string name="settings_developer">Developer tools</string>
 </resources>

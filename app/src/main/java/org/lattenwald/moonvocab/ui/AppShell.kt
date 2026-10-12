@@ -38,7 +38,6 @@ import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
 import org.lattenwald.moonvocab.ui.card.PreviewPage
 import org.lattenwald.moonvocab.ui.debug.DebugScreen
-import org.lattenwald.moonvocab.ui.debug.DebugViewModel
 import org.lattenwald.moonvocab.ui.inbox.InboxScreen
 import org.lattenwald.moonvocab.ui.inbox.InboxViewModel
 import org.lattenwald.moonvocab.ui.library.BookPage
@@ -48,6 +47,7 @@ import org.lattenwald.moonvocab.ui.settings.CardsPage
 import org.lattenwald.moonvocab.ui.settings.LanguagePicker
 import org.lattenwald.moonvocab.ui.settings.ServicePage
 import org.lattenwald.moonvocab.ui.settings.ServicesPage
+import org.lattenwald.moonvocab.ui.settings.SettingsScreen
 
 private val TabTransitions =
     NavDisplay.transitionSpec { fadeIn() togetherWith fadeOut() } +
@@ -60,7 +60,6 @@ fun AppShell() {
     val top = backStack.last()
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
     val library: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)
-    val debug: DebugViewModel = viewModel(factory = DebugViewModel.Factory)
     val inboxState by inbox.state.collectAsStateWithLifecycle()
     val total = inboxState.list.total
     val selecting = top == InboxKey && inboxState.selection.active
@@ -114,7 +113,12 @@ fun AppShell() {
                     // The Inbox's own top bar handles the top insets.
                     val bottom = PaddingValues(bottom = shellPadding.calculateBottomPadding())
                     InboxScreen(
-                        onOpenSettings = { backStack.selectTab(SettingsKey) },
+                        onOpenServices = {
+                            if (backStack.lastOrNull() == InboxKey) {
+                                backStack.selectTab(SettingsKey)
+                                backStack.add(ServicesKey)
+                            }
+                        },
                         // A second tap during the transition must not push another page.
                         onOpenCard = { id -> if (backStack.lastOrNull() == InboxKey) backStack.add(CardKey(id)) },
                         modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
@@ -174,7 +178,15 @@ fun AppShell() {
                         onPreview = { if (backStack.lastOrNull() == key) backStack.add(PreviewKey(null)) },
                     )
                 }
-                entry<SettingsKey>(metadata = TabTransitions) { DebugScreen(contentPadding = shellPadding, vm = debug) }
+                entry<DeveloperKey> { key ->
+                    DebugScreen(onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                }
+                entry<SettingsKey>(metadata = TabTransitions) {
+                    SettingsScreen(
+                        onOpen = { next -> if (backStack.lastOrNull() == SettingsKey) backStack.add(next) },
+                        contentPadding = PaddingValues(bottom = shellPadding.calculateBottomPadding()),
+                    )
+                }
             },
         )
     }
