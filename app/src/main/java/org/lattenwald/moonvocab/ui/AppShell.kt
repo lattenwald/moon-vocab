@@ -1,5 +1,6 @@
 package org.lattenwald.moonvocab.ui
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -21,6 +22,7 @@ import androidx.compose.material3.ShortNavigationBar
 import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -35,11 +37,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
 import org.lattenwald.moonvocab.ui.card.PreviewPage
 import org.lattenwald.moonvocab.ui.debug.DebugScreen
+import org.lattenwald.moonvocab.ui.inbox.ImportSheetViewModel
 import org.lattenwald.moonvocab.ui.inbox.InboxScreen
 import org.lattenwald.moonvocab.ui.inbox.InboxViewModel
 import org.lattenwald.moonvocab.ui.library.BookPage
@@ -58,15 +62,26 @@ private val TabTransitions =
         NavDisplay.predictivePopTransitionSpec { fadeIn() togetherWith fadeOut() }
 
 @Composable
-fun AppShell() {
+fun AppShell(sharedBackup: MutableStateFlow<Uri?>) {
     val app = LocalContext.current.applicationContext as App
     val backStack = rememberNavBackStack(if (app.setupDone) InboxKey else SetupKey)
     val top = backStack.last()
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
+    val sheet: ImportSheetViewModel = viewModel(factory = ImportSheetViewModel.Factory)
     val library: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)
     val inboxState by inbox.state.collectAsStateWithLifecycle()
     val total = inboxState.list.total
     val selecting = top == InboxKey && inboxState.selection.active
+
+    val shared by sharedBackup.collectAsStateWithLifecycle()
+    LaunchedEffect(shared) {
+        val uri = shared ?: return@LaunchedEffect
+        sharedBackup.value = null
+        if (!app.setupDone) return@LaunchedEffect
+        sheet.change(uri)
+        backStack.selectTab(InboxKey)
+        inbox.requestImportSheet()
+    }
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -127,6 +142,7 @@ fun AppShell() {
                         onOpenCard = { id -> if (backStack.lastOrNull() == InboxKey) backStack.add(CardKey(id)) },
                         modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
                         vm = inbox,
+                        sheetVm = sheet,
                     )
                 }
                 entry<LibraryKey>(metadata = TabTransitions) {
@@ -190,7 +206,10 @@ fun AppShell() {
                         onOpen = { next -> if (backStack.lastOrNull() == SetupKey) backStack.add(next) },
                         onFinish = { importNow ->
                             if (backStack.lastOrNull() == SetupKey) {
-                                if (importNow) inbox.requestImportSheet()
+                                if (importNow) {
+                                    sheet.open()
+                                    inbox.requestImportSheet()
+                                }
                                 backStack.add(InboxKey)
                                 while (backStack.size > 1) backStack.removeAt(0)
                             }

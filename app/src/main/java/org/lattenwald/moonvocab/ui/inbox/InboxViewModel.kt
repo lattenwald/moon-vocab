@@ -103,7 +103,7 @@ class InboxViewModel(
     private val _importSheetRequested = MutableStateFlow(false)
     val importSheetRequested: StateFlow<Boolean> = _importSheetRequested.asStateFlow()
 
-    /** Opens the import sheet when the Inbox next shows. */
+    /** Opens the import sheet when the Inbox next shows. The caller first calls the sheet's `open` or `change`. */
     fun requestImportSheet() {
         _importSheetRequested.value = true
     }

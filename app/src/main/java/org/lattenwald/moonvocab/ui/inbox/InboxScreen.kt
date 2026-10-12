@@ -123,7 +123,6 @@ fun InboxScreen(
     LaunchedEffect(sheetRequested) {
         if (sheetRequested) {
             vm.consumeImportSheetRequest()
-            sheetVm.open()
             sheetOpen = true
         }
     }

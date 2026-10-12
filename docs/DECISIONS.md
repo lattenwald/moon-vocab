@@ -193,7 +193,9 @@
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
 - A mark combination is named by its style and a colour name taken from its hue.
 - `BackupFinder` keeps only the chosen backup's copy in `cacheDir/backups`.
-- The import sheet reads the newest complete backup each time it opens.
+- The import sheet reads the newest complete backup each time it opens, except when opened by a share, which shows the shared file.
+- `ImportSheetViewModel` is activity-scoped: `AppShell` holds it and passes it to the Inbox.
+- `InboxViewModel.requestImportSheet()` only opens the sheet; its caller first calls the sheet's `open()` or `change(uri)`.
 - The sheet's Review first / Send to Anki choice is saved as `reviewFirst`, and its mark selection as `styles`.
 - The import sheet runs its `BackupFinder` calls and settings writes one at a time, under one lock.
 - A `SecurityException` or `IOException` from `BackupFinder.newest` shows FolderUnreadable.
@@ -242,8 +244,13 @@
 - AnkiDroid: Continue waits for access. Not installed shows Get AnkiDroid (Play Store). A refused request shows the denied line. Availability is refreshed on resume.
 - Translation: the active service's key with Test connection, the Translate into row, and Use another service (Services page). Continue needs a non-blank key.
 - Ready counts the newest complete backup's marks in `defaultStyles` whose key isn't stored, with a progress indicator while it reads. Some new: Later or Import now. None, or the backup can't be read: Done.
-- Finishing writes `setupDone = true` in `appScope` and replaces the back stack with the Inbox. Import now also calls `InboxViewModel.requestImportSheet()`, which the Inbox consumes to open the import sheet.
+- Finishing writes `setupDone = true` in `appScope` and replaces the back stack with the Inbox. Import now also calls the sheet's `open()` and `InboxViewModel.requestImportSheet()`, which the Inbox consumes to open the import sheet.
 - Back goes to the previous step. On the first step, Back leaves the app.
+
+## Share target
+- `MainActivity` is `singleTask` and accepts `ACTION_SEND` with `EXTRA_STREAM` for any MIME type (`*/*`). It reads a share in `onCreate` (only without saved state, and not when launched from history) and in `onNewIntent`.
+- A shared file goes at once to `ImportSheetViewModel.change(uri)`, which copies it into the cache. The app then shows the Inbox tab with the sheet open; a file that isn't a complete backup gets the "incomplete" note.
+- A share that arrives while `App.setupDone` is false is dropped.
 
 ## App
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
