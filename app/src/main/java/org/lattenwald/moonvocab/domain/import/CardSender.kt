@@ -11,12 +11,13 @@ import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStatus
 import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.card.CardWrites
+import org.lattenwald.moonvocab.domain.card.SENDABLE
 import org.lattenwald.moonvocab.domain.card.bookTags
 import org.lattenwald.moonvocab.domain.card.deckName
 import org.lattenwald.moonvocab.domain.card.deletedFromAnki
+import org.lattenwald.moonvocab.domain.card.noteDeleted
 import org.lattenwald.moonvocab.domain.card.sent
 import org.lattenwald.moonvocab.domain.card.unsent
-import org.lattenwald.moonvocab.domain.card.withoutNote
 
 data class SendResult(
     val sent: Int,
@@ -142,13 +143,9 @@ class CardSender(
         for (card in db.cards().withNoteIds()) {
             if (!anki.delete(checkNotNull(card.ankiNoteId))) continue
             deleted++
-            save(if (card.status == CardStatus.SENT) card.unsent() else card.withoutNote())
+            save(card.noteDeleted())
         }
         return deleted
-    }
-
-    private companion object {
-        val SENDABLE = setOf(CardStatus.PENDING, CardStatus.DELETED_IN_ANKI)
     }
 }
 

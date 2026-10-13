@@ -11,7 +11,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.lattenwald.moonvocab.data.backup.MrproFixture
 import org.lattenwald.moonvocab.data.backup.NoteRow
-import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.domain.card.CardStatus.DISCARDED
 import org.lattenwald.moonvocab.domain.card.CardStatus.FAILED
 import org.lattenwald.moonvocab.domain.card.CardStatus.PENDING
@@ -29,8 +28,6 @@ class CardStoreTest : ImportTestBase() {
     }
 
     private suspend fun allIds(): List<Long> = db.cards().observeAll().first().map { it.id }
-
-    private suspend fun only(ids: List<Long>): CardEntity = db.cards().byIds(ids).single()
 
     private suspend fun <T> TestScope.waitingOnALockedWrite(write: suspend (CardWrites) -> Unit, waiting: suspend () -> T): T {
         val release = CompletableDeferred<Unit>()
@@ -67,29 +64,29 @@ class CardStoreTest : ImportTestBase() {
         val sentId = sender.send(allIds.take(1)).sentIds.single()
         val pendingId = allIds.single { it != sentId }
         assertEquals(listOf(pendingId), store.discard(allIds))
-        assertEquals(SENT, only(listOf(sentId)).status)
+        assertEquals(SENT, stored(sentId).status)
     }
 
     @Test fun discardWaitsForASend() = runTest {
         pipeline().run(req(backup(1)), {})
-        val ids = allIds()
-        val discarded = waitingOnALockedWrite({ it.save(only(ids).sent(noteId = 1, at = NOW)) }) { store.discard(ids) }
+        val id = allIds().single()
+        val discarded = waitingOnALockedWrite({ it.save(stored(id).sent(noteId = 1, at = NOW)) }) { store.discard(listOf(id)) }
         assertEquals(emptyList<Long>(), discarded)
-        assertEquals(SENT, only(ids).status)
+        assertEquals(SENT, stored(id).status)
     }
 
     @Test fun forgetUnsentWaitsForASendSoItsNoteStaysRecorded() = runTest {
         pipeline().run(req(backup(1)), {})
-        val ids = allIds()
-        assertEquals(0, waitingOnALockedWrite({ it.save(only(ids).sent(noteId = 1, at = NOW)) }) { store.forgetUnsent() })
-        assertEquals(SENT, only(ids).status)
+        val id = allIds().single()
+        assertEquals(0, waitingOnALockedWrite({ it.save(stored(id).sent(noteId = 1, at = NOW)) }) { store.forgetUnsent() })
+        assertEquals(SENT, stored(id).status)
     }
 
     @Test fun retryKeepsACardDiscardedWhileItWaited() = runTest {
         importPendingAAndFailedB()
         val failed = db.cards().byStatus(FAILED).single()
         waitingOnALockedWrite({ it.save(failed.discarded()) }) { pipeline().retryFailed {} }
-        assertEquals(DISCARDED, only(listOf(failed.id)).status)
+        assertEquals(DISCARDED, stored(failed.id).status)
     }
 
     @Test fun restoreTwiceRestoresOnce() = runTest {
@@ -114,7 +111,7 @@ class CardStoreTest : ImportTestBase() {
         val cardA = db.cards().byStatus(PENDING).single()
         sender.send(listOf(cardA.id))
         assertEquals(0, store.forgetForRetranslation(listOf(cardA.id)))
-        assertEquals(SENT, only(listOf(cardA.id)).status)
+        assertEquals(SENT, stored(cardA.id).status)
         assertEquals(2, db.marks().all().count { it.cardId == cardA.id })
     }
 }

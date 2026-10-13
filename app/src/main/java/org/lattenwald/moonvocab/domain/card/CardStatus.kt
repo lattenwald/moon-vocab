@@ -22,6 +22,8 @@ fun next(status: CardStatus?, event: CardEvent, previous: CardStatus? = null): C
     else -> throw IllegalStateException("no transition from $status on $event")
 }
 
+val SENDABLE = setOf(CardStatus.PENDING, CardStatus.DELETED_IN_ANKI)
+
 fun CardEntity.sent(noteId: Long, at: Long): CardEntity = copy(
     status = next(status, if (status == CardStatus.DELETED_IN_ANKI) CardEvent.SEND_AS_NEW else CardEvent.SEND),
     ankiNoteId = noteId, sentAt = at, ankiMod = null, error = null,
@@ -38,4 +40,6 @@ fun CardEntity.restored(): CardEntity = copy(status = next(status, CardEvent.RES
 
 fun CardEntity.noteMissing(): CardEntity = copy(status = next(status, CardEvent.NOTE_MISSING))
 
-fun CardEntity.withoutNote(): CardEntity = copy(ankiNoteId = null, sentAt = null, ankiMod = null)
+fun CardEntity.noteDeleted(): CardEntity = if (status == CardStatus.SENT) unsent() else withoutNote()
+
+private fun CardEntity.withoutNote(): CardEntity = copy(ankiNoteId = null, sentAt = null, ankiMod = null)

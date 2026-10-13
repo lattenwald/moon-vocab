@@ -23,8 +23,6 @@ class CardRetranslatorTest : ImportTestBase() {
         return db.cards().byStatus(PENDING).single()
     }
 
-    private suspend fun stored(id: Long): CardEntity = db.cards().byIds(listOf(id)).single()
-
     @Test fun retranslateSendsTheMarkTheStoredSentenceAndTheCardsTarget() = runTest {
         val card = pendingCard(headword = "edited")
         settings.update { it.copy(targetLanguage = "de", englishAccent = EnglishAccent.BRITISH) }

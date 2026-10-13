@@ -30,8 +30,6 @@ class CardEditorTest : ImportTestBase() {
         return db.cards().byStatus(SENT).single()
     }
 
-    private suspend fun stored(id: Long): CardEntity = db.cards().byIds(listOf(id)).single()
-
     private fun editNote(noteId: Long, field: String, value: String) {
         val note = fakeAnki.notes.getValue(noteId)
         fakeAnki.notes[noteId] = note.copy(fields = note.fields + (field to value), mod = note.mod + 1)

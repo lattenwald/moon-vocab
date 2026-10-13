@@ -20,6 +20,7 @@ import org.lattenwald.moonvocab.data.backup.NoteRow
 import org.lattenwald.moonvocab.data.books.BookSource
 import org.lattenwald.moonvocab.data.books.BookText
 import org.lattenwald.moonvocab.data.db.AppDatabase
+import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.card.DraftResult
@@ -49,6 +50,8 @@ abstract class ImportTestBase {
     protected val store = CardStore(db)
     protected val sender by lazy { CardSender(db, fakeAnki, settings, store) { NOW } }
     protected val check by lazy { AnkiCheck(db, fakeAnki, store, settings) { NOW } }
+
+    protected suspend fun stored(id: Long): CardEntity = db.cards().byIds(listOf(id)).single()
 
     @After fun closeAll() {
         db.close()
