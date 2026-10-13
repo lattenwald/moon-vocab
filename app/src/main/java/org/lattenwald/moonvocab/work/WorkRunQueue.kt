@@ -16,10 +16,10 @@ import org.lattenwald.moonvocab.domain.mark.parseStyleCombo
 
 class WorkRunQueue(private val workManager: WorkManager) : RunQueue {
     override val active: Flow<ActiveRun?> = workManager.getWorkInfosForUniqueWorkFlow(NAME)
-        .map { infos -> infos.firstOrNull { !it.state.isFinished }?.let { ActiveRun(ImportWork.progress(it.progress)) } }
+        .map { infos -> infos.firstOrNull { !it.state.isFinished }?.let { ActiveRun(RunData.progress(it.progress)) } }
 
-    override suspend fun enqueue(job: ImportJob): Boolean {
-        val request = OneTimeWorkRequestBuilder<ImportWorker>().setInputData(ImportWork.input(job)).build()
+    override suspend fun enqueue(kind: RunKind): Boolean {
+        val request = OneTimeWorkRequestBuilder<ImportWorker>().setInputData(RunData.input(kind)).build()
         workManager.enqueueUniqueWork(NAME, ExistingWorkPolicy.KEEP, request).await()
         // KEEP drops the request while unfinished work exists.
         return workManager.getWorkInfoByIdFlow(request.id).first() != null
@@ -30,7 +30,7 @@ class WorkRunQueue(private val workManager: WorkManager) : RunQueue {
     }
 }
 
-internal object ImportWork {
+internal object RunData {
     private const val BACKUP = "backup"
     private const val STYLES = "styles"
     private const val BOOK = "book"
@@ -41,20 +41,20 @@ internal object ImportWork {
     private const val TOTAL = "total"
     private const val BOOK_TITLE = "bookTitle"
 
-    fun input(job: ImportJob): Data = when (job) {
-        ImportJob.RetryFailed -> workDataOf(RETRY_FAILED to true)
-        is ImportJob.Import -> workDataOf(
-            BACKUP to job.request.backup?.path,
-            STYLES to job.request.styles.map { it.encode() }.toTypedArray(),
-            BOOK to job.request.onlyBookFileKey,
-            SEND to job.request.sendToAnki,
+    fun input(kind: RunKind): Data = when (kind) {
+        RunKind.RetryFailed -> workDataOf(RETRY_FAILED to true)
+        is RunKind.Import -> workDataOf(
+            BACKUP to kind.request.backup?.path,
+            STYLES to kind.request.styles.map { it.encode() }.toTypedArray(),
+            BOOK to kind.request.onlyBookFileKey,
+            SEND to kind.request.sendToAnki,
         )
     }
 
-    fun job(data: Data): ImportJob = if (data.getBoolean(RETRY_FAILED, false)) {
-        ImportJob.RetryFailed
+    fun kind(data: Data): RunKind = if (data.getBoolean(RETRY_FAILED, false)) {
+        RunKind.RetryFailed
     } else {
-        ImportJob.Import(
+        RunKind.Import(
             ImportRequest(
                 backup = data.getString(BACKUP)?.let(::File),
                 styles = data.getNullableStringArray(STYLES).orEmpty().filterNotNull().mapNotNull(::parseStyleCombo).toSet(),

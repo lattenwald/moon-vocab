@@ -43,6 +43,7 @@ import org.lattenwald.moonvocab.domain.inbox.toggleAll
 import org.lattenwald.moonvocab.domain.inbox.toggleGroup
 import org.lattenwald.moonvocab.work.ImportRuns
 import org.lattenwald.moonvocab.work.ImportState
+import org.lattenwald.moonvocab.work.Start
 
 data class InboxState(
     val list: InboxList = inboxList(emptyList(), InboxFilter.All),
@@ -127,23 +128,23 @@ class InboxViewModel(
         }
     }
 
-    fun dismissResult() = act("dismissing the import result failed") { runs.dismiss() }
-
-    fun retryFailed() {
-        if (state.value.import.canRetryFailed) act("retrying failed cards failed") { runs.retryFailed() }
+    fun dismissResult() {
+        viewModelScope.launch { reported("dismissing the import result failed") { runs.dismiss() } }
     }
 
-    private fun act(failure: String, block: suspend () -> Unit) {
-        viewModelScope.launch {
-            try {
-                block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, failure, e)
-                eventChannel.send(InboxEvent.Failed(messageOf(e)))
-            }
-        }
+    fun retryFailed() {
+        if (!state.value.import.canRetryFailed) return
+        viewModelScope.launch { reported("retrying failed cards failed") { runs.retryFailed() } }
+    }
+
+    private suspend fun <T> reported(what: String, block: suspend () -> T): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, what, e)
+        eventChannel.send(InboxEvent.Failed(messageOf(e)))
+        null
     }
 
     override fun startDrag(id: Long) {
@@ -229,16 +230,10 @@ class InboxViewModel(
         if (ids.isEmpty() || state.value.import.running) return
         clearSelection()
         viewModelScope.launch {
-            val forgotten = try {
-                withContext(io) { store.forgetForRetranslation(ids) }.also { if (it > 0) runs.resume() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "translate again failed", e)
-                eventChannel.send(InboxEvent.Failed(messageOf(e)))
-                return@launch
-            }
-            if (forgotten > 0) eventChannel.send(InboxEvent.Retranslating(forgotten))
+            val forgotten = reported("translate again failed") { withContext(io) { store.forgetForRetranslation(ids) } } ?: return@launch
+            if (forgotten == 0) return@launch
+            val start = reported("starting the import failed") { runs.resume() }
+            if (start == Start.STARTED) eventChannel.send(InboxEvent.Retranslating(forgotten))
         }
     }
 

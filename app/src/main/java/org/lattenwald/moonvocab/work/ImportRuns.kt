@@ -31,9 +31,9 @@ data class ImportState(
     val canRetryFailed: Boolean get() = summary?.let { it.failed > 0 && it.stopped == null } == true
 }
 
-sealed interface ImportJob {
-    data class Import(val request: ImportRequest) : ImportJob
-    data object RetryFailed : ImportJob
+sealed interface RunKind {
+    data class Import(val request: ImportRequest) : RunKind
+    data object RetryFailed : RunKind
 }
 
 enum class Start { STARTED, ALREADY_RUNNING }
@@ -43,7 +43,7 @@ data class ActiveRun(val progress: ImportProgress?)
 interface RunQueue {
     val active: Flow<ActiveRun?>
 
-    suspend fun enqueue(job: ImportJob): Boolean
+    suspend fun enqueue(kind: RunKind): Boolean
 }
 
 class ImportRuns(private val queue: RunQueue, private val store: DataStore<Preferences>) {
@@ -55,12 +55,12 @@ class ImportRuns(private val queue: RunQueue, private val store: DataStore<Prefe
         if (run != null) ImportState(running = true, progress = run.progress) else ImportState(summary = r?.summary, failure = r?.failure)
     }
 
-    suspend fun start(request: ImportRequest): Start = launch(ImportJob.Import(request))
+    suspend fun start(request: ImportRequest): Start = launch(RunKind.Import(request))
 
     /** Imports the marks that have no card yet, from the backup already read. */
     suspend fun resume(): Start = start(ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false))
 
-    suspend fun retryFailed(): Start = launch(ImportJob.RetryFailed)
+    suspend fun retryFailed(): Start = launch(RunKind.RetryFailed)
 
     suspend fun dismiss() {
         store.edit { it.remove(RESULT) }
@@ -70,7 +70,10 @@ class ImportRuns(private val queue: RunQueue, private val store: DataStore<Prefe
 
     suspend fun failed(message: String) = keep(StoredResult(failure = message))
 
-    private suspend fun launch(job: ImportJob): Start = if (queue.enqueue(job)) Start.STARTED else Start.ALREADY_RUNNING
+    private suspend fun launch(kind: RunKind): Start {
+        dismiss()
+        return if (queue.enqueue(kind)) Start.STARTED else Start.ALREADY_RUNNING
+    }
 
     private suspend fun keep(r: StoredResult) {
         store.edit { it[RESULT] = json.encodeToString(r) }

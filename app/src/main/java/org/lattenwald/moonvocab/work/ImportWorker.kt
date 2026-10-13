@@ -27,25 +27,25 @@ class ImportWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx
         } catch (e: IllegalStateException) { // Android 12+ refuses a foreground start while the app is in the background
             Log.w(TAG, "import runs without a foreground notification", e)
         }
-        return try {
-            val progress = { p: ImportProgress ->
-                setProgressAsync(ImportWork.progress(p))
-                setForegroundAsync(foregroundInfo(p))
-                Unit
+        val progress = { p: ImportProgress ->
+            setProgressAsync(RunData.progress(p))
+            setForegroundAsync(foregroundInfo(p))
+            Unit
+        }
+        val summary = try {
+            when (val kind = RunData.kind(inputData)) {
+                RunKind.RetryFailed -> pipeline.retryFailed(progress)
+                is RunKind.Import -> pipeline.run(kind.request, progress)
             }
-            val summary = when (val job = ImportWork.job(inputData)) {
-                ImportJob.RetryFailed -> pipeline.retryFailed(progress)
-                is ImportJob.Import -> pipeline.run(job.request, progress)
-            }
-            runs.finished(summary)
-            Result.success()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "import failed", e)
             runs.failed(e.message ?: e::class.simpleName.orEmpty())
-            Result.failure()
+            return Result.failure()
         }
+        runs.finished(summary)
+        return Result.success()
     }
 
     private fun foregroundInfo(p: ImportProgress?): ForegroundInfo {

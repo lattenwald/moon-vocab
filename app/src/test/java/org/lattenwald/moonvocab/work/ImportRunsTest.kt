@@ -29,7 +29,7 @@ class ImportRunsTest {
     private class FakeQueue : RunQueue {
         override val active = MutableStateFlow<ActiveRun?>(null)
 
-        override suspend fun enqueue(job: ImportJob): Boolean {
+        override suspend fun enqueue(kind: RunKind): Boolean {
             if (active.value != null) return false
             active.value = ActiveRun(null)
             return true
@@ -71,9 +71,19 @@ class ImportRunsTest {
         assertEquals(ImportState(failure = "disk full"), runs.state.first())
     }
 
-    @Test fun anUnreadableStoredResultShowsNothing() = runTest {
+    @Test fun aRunThatEndsWithoutAResultLeavesNoneBehind() = runTest {
         val runs = runs()
-        store.edit { it[stringPreferencesKey("result")] = """{"summary":{"stopped":"GONE"}}""" }
+        runs.finished(summary)
+        runs.resume()
+        queue.active.value = null
+        assertEquals(ImportState(), runs.state.first())
+    }
+
+    @Test fun aStoredResultWithAStopReasonThisVersionLacksShowsNothing() = runTest {
+        val runs = runs()
+        val stored = """{"summary":{"newCards":1,"failed":0,"alreadyCard":0,"skippedDiscarded":0,"senseFailed":0,"sent":0,""" +
+            """"incompleteBackup":null,"stopped":"GONE","sendError":null}}"""
+        store.edit { it[stringPreferencesKey("result")] = stored }
         assertEquals(ImportState(), runs.state.first())
     }
 
