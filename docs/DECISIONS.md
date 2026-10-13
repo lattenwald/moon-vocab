@@ -149,7 +149,7 @@
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
 - A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created, the check runs if the last one is 10 minutes old or more.
-- `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck`, `InboxActions` and `CardEditor`. Sends, deletes, undo, the check, the Inbox's discard, restore and translate again, and the card page's open, Save and local save run under it.
+- `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck`, `InboxActions` and `CardEditor`. Sends, deletes, undo, the check, the Inbox's discard, restore and translate again, and the card page's open of a sent card, Save and local save run under it.
 - `CardSender`:
   - `send` sends PENDING cards and cards deleted in AnkiDroid. Other ids count as skipped;
   - a gateway error stops the send and is reported in `SendResult.error`;
@@ -191,7 +191,14 @@
 - Save sends AnkiDroid only the fields the user changed, and no tags. When any changed field also changed in AnkiDroid since the page read it, nothing is written to AnkiDroid. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
 - On a conflict, the page shows AnkiDroid's text for the conflicting fields and for fields the user didn't change. The user's other edits stay.
 - A sent card's page reads its note when it opens, under the AnkiDroid lock. A missing note makes the card DELETED_IN_ANKI.
-- A pending card's edits are saved in the app only while it is still PENDING. Otherwise the page keeps them: as unsaved edits when the card is now SENT, else with `card_snack_not_pending`, and Back stays on the page.
+- A pending card's edits are saved in the app only while it is still PENDING. When it is now SENT, they stay as unsaved edits and Back asks first. When it is neither, the page drops them and shows the stored card with `card_snack_not_pending`, and Back stays on the page.
+- The card page's state and rules live in the pure reducer `CardEditSession`. `CardPageViewModel` only runs the effects it returns.
+- One card page action runs at a time. While it runs, the fields are read-only and a wavy progress bar shows under the top bar.
+- Undo and Back tapped while an action runs wait for it to end. Back during Translate again cancels the translation instead.
+- A reload never replaces unsaved edits on a pending or sent card. They are rebased onto the stored card, which supplies every field the user didn't change.
+- Discard on a pending card saves its unsaved edits first, so Restore brings them back.
+- Unsaved edits, and the stored fields they were made against, survive process death in the page's `SavedStateHandle`.
+- A sent card whose note couldn't be read, because AnkiDroid was unavailable or the read failed, is read again on resume. Its note line names the cause and offers the Inbox banner's fix, or Try again after a read error.
 - Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, transcription, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
 - Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
 - Tapping a card outside selection opens its page.

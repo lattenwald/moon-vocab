@@ -12,3 +12,9 @@ assignee: Alexander Q
 
 AppShell's share path calls selectTab(InboxKey), which pops CardPage without its dirty-edit BackHandler/ConfirmLeave, so unsaved pending-card edits are lost when the user shares a .mrpro from another app mid-edit. Found in the Task 8 fix review 2026-10-12.
 
+
+## Notes
+
+**2026-10-13T12:12:57Z**
+
+The card edit session now decides Back (leave, save then leave, or ask). The share path in AppShell can route through CardIntent.Back on the open card page before selectTab.
