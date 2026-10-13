@@ -124,6 +124,7 @@
     <string name="card_no_translation">No translation yet</string>
     <string name="card_sent_note">This card is in AnkiDroid. Saving updates it there and keeps its review history.</string>
     <string name="card_local_note">AnkiDroid isn’t available, so this is the app’s copy. Saving is off until AnkiDroid is back.</string>
+    <string name="card_read_failed_note">Couldn’t read this card’s note in AnkiDroid (%1$s), so this is the app’s copy. Saving is off until the note can be read.</string>
     <string name="card_deleted_note">This card was deleted in AnkiDroid. Send it again to make a new card.</string>
     <string name="card_discarded_note">You discarded this card.</string>
     <string name="card_field_word">Word</string>

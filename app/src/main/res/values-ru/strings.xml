@@ -146,6 +146,7 @@
     <string name="card_no_translation">Перевода пока нет</string>
     <string name="card_sent_note">Карточка уже в AnkiDroid. Сохранение обновит её там, история повторений останется.</string>
     <string name="card_local_note">AnkiDroid недоступен, поэтому здесь копия из приложения. Сохранить можно будет, когда AnkiDroid снова станет доступен.</string>
+    <string name="card_read_failed_note">Не удалось прочитать заметку этой карточки в AnkiDroid (%1$s), поэтому здесь копия из приложения. Сохранить можно будет, когда заметка прочитается.</string>
     <string name="card_deleted_note">Эта карточка удалена в AnkiDroid. Отправьте её снова, чтобы создать новую.</string>
     <string name="card_discarded_note">Вы убрали эту карточку.</string>
     <string name="card_field_word">Слово</string>

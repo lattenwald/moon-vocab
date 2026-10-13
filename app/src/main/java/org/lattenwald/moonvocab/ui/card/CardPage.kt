@@ -46,6 +46,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
@@ -70,6 +72,9 @@ import org.lattenwald.moonvocab.domain.cardpage.EDITABLE
 import org.lattenwald.moonvocab.domain.cardpage.undoable
 import org.lattenwald.moonvocab.domain.card.FormResult
 import org.lattenwald.moonvocab.domain.import.bookLine
+import org.lattenwald.moonvocab.ui.common.openAnkiDroid
+import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
+import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
 
 private val PREVIEWABLE = setOf(CardStatus.PENDING, CardStatus.SENT)
@@ -102,6 +107,10 @@ fun CardPage(
         }
     }
     LaunchedEffect(state.closed) { if (state.closed) leave() }
+    LifecycleResumeEffect(vm) {
+        vm.dispatch(CardIntent.Resumed)
+        onPauseOrDispose {}
+    }
     BackHandler(enabled = state.dirty) { vm.dispatch(CardIntent.Back) }
 
     val shown = if (state.editing) null else (state.parsed as? FormResult.Ok)?.fields ?: state.baseline
@@ -141,7 +150,7 @@ fun CardPage(
             Subheader(stringResource(R.string.card_back))
             if (shown == null) BackForm(state.form, state.invalid, line, colors.row, readOnly = state.busy, edit) else BackFace(shown, line, colors.row)
             CardLabels(card, widened = state.extras?.widened ?: card.widened)
-            Notes(card, state.source)
+            Notes(card, state.source, vm::dispatch)
         }
     }
 
@@ -278,11 +287,14 @@ private fun Subheader(text: String) {
 }
 
 @Composable
-private fun Notes(card: CardEntity, source: CardSource) {
+private fun Notes(card: CardEntity, source: CardSource, dispatch: (CardIntent) -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val local = source is CardSource.Unavailable || source is CardSource.ReadFailed
     val (text, color) = when (card.status) {
-        CardStatus.SENT -> stringResource(if (local) R.string.card_local_note else R.string.card_sent_note) to colors.onSurfaceVariant
+        CardStatus.SENT -> when (source) {
+            is CardSource.Unavailable -> stringResource(R.string.card_local_note)
+            is CardSource.ReadFailed -> stringResource(R.string.card_read_failed_note, source.message)
+            else -> stringResource(R.string.card_sent_note)
+        } to colors.onSurfaceVariant
         CardStatus.DELETED_IN_ANKI -> stringResource(R.string.card_deleted_note) to colors.onSurfaceVariant
         CardStatus.DISCARDED -> stringResource(R.string.card_discarded_note) to colors.onSurfaceVariant
         CardStatus.FAILED ->
@@ -290,6 +302,24 @@ private fun Notes(card: CardEntity, source: CardSource) {
         CardStatus.PENDING -> return
     }
     Text(text, Modifier.padding(start = 8.dp, top = 2.dp, end = 8.dp), color = color, fontSize = 12.5.sp, lineHeight = 17.sp)
+    if (card.status == CardStatus.SENT) FixAction(source, dispatch)
+}
+
+@Composable
+private fun FixAction(source: CardSource, dispatch: (CardIntent) -> Unit) {
+    val context = LocalContext.current
+    val requestAnki = rememberAnkiPermissionRequest(onResult = { dispatch(CardIntent.Resumed) })
+    val (label, onClick) = when (source) {
+        is CardSource.Unavailable -> when (source.availability) {
+            AnkiAvailability.NOT_INSTALLED -> R.string.inbox_banner_get to { openAnkiDroidStore(context) }
+            AnkiAvailability.NO_PERMISSION -> R.string.inbox_banner_allow to requestAnki
+            AnkiAvailability.NOT_SET_UP -> R.string.anki_open to { openAnkiDroid(context) }
+            AnkiAvailability.READY -> return
+        }
+        is CardSource.ReadFailed -> R.string.sheet_retry to { dispatch(CardIntent.Resumed) }
+        else -> return
+    }
+    TextButton(onClick = onClick) { Text(stringResource(label)) }
 }
 
 private fun messageText(r: Resources, event: CardMessage): String? = when (event) {
