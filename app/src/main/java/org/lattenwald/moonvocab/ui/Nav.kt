@@ -35,10 +35,9 @@ val TabKeys: List<NavKey> = listOf(InboxKey, LibraryKey, SettingsKey)
 class Navigator(private val stack: MutableList<NavKey>) {
     val top: NavKey get() = stack.last()
 
-    // A second tap during a transition must not push twice, and a late back must pop only its own page.
     fun at(key: NavKey): Page = Page(key)
 
-    fun back() {
+    fun popTop() {
         stack.removeLastOrNull()
     }
 
@@ -48,19 +47,7 @@ class Navigator(private val stack: MutableList<NavKey>) {
         if (tab != InboxKey) stack.add(tab)
     }
 
-    fun openFromTab(from: NavKey, tab: NavKey, page: NavKey) {
-        if (stack.lastOrNull() != from) return
-        selectTab(tab)
-        stack.add(page)
-    }
-
-    fun finishSetup(): Boolean {
-        if (stack.lastOrNull() != SetupKey) return false
-        stack.add(InboxKey)
-        while (stack.size > 1) stack.removeAt(0)
-        return true
-    }
-
+    // A second tap during a transition must not push twice, and a late back must pop only its own page.
     inner class Page(private val key: NavKey) {
         private val onTop: Boolean get() = stack.lastOrNull() == key
 
@@ -76,6 +63,19 @@ class Navigator(private val stack: MutableList<NavKey>) {
             if (!onTop) return
             stack.removeLastOrNull()
             stack.add(next)
+        }
+
+        fun openAbove(tab: NavKey, next: NavKey) {
+            if (!onTop) return
+            selectTab(tab)
+            stack.add(next)
+        }
+
+        fun startOver(root: NavKey): Boolean {
+            if (!onTop) return false
+            stack.add(root)
+            while (stack.size > 1) stack.removeAt(0)
+            return true
         }
     }
 }

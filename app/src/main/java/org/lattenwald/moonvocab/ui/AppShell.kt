@@ -150,7 +150,7 @@ fun AppShell(share: ShareViewModel) {
         val layoutDirection = LocalLayoutDirection.current
         NavDisplay(
             backStack = backStack,
-            onBack = navigator::back,
+            onBack = navigator::popTop,
             transitionSpec = { pageSlide(push = true, slideSpec, layoutDirection) },
             popTransitionSpec = { pageSlide(push = false, slideSpec, layoutDirection) },
             predictivePopTransitionSpec = { _ -> pageSlide(push = false, slideSpec, layoutDirection) },
@@ -163,7 +163,7 @@ fun AppShell(share: ShareViewModel) {
                     // The Inbox's own top bar handles the top insets.
                     val bottom = PaddingValues(bottom = shellPadding.calculateBottomPadding())
                     InboxScreen(
-                        onOpenServices = { navigator.openFromTab(InboxKey, SettingsKey, ServicesKey) },
+                        onOpenServices = { navigator.at(InboxKey).openAbove(SettingsKey, ServicesKey) },
                         onOpenCard = { id -> navigator.at(InboxKey).open(CardKey(id)) },
                         modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
                         vm = inbox,
@@ -185,7 +185,12 @@ fun AppShell(share: ShareViewModel) {
                 }
                 entry<CardKey> { key ->
                     val nav = navigator.at(key)
-                    CardPage(key.cardId, onBack = nav::back, onPreview = { id -> nav.open(PreviewKey(id)) }, leaveRequested = leaveForShare)
+                    CardPage(
+                        key.cardId,
+                        onBack = nav::back,
+                        onPreview = { id -> nav.open(PreviewKey(id)) },
+                        leaveRequested = leaveForShare,
+                    )
                 }
                 entry<PreviewKey> { key ->
                     PreviewPage(key.cardId, onBack = navigator.at(key)::back)
@@ -212,7 +217,7 @@ fun AppShell(share: ShareViewModel) {
                     SetupFlow(
                         onOpen = navigator.at(SetupKey)::open,
                         onFinish = { importNow ->
-                            if (navigator.finishSetup() && importNow) {
+                            if (navigator.at(SetupKey).startOver(InboxKey) && importNow) {
                                 sheet.open()
                                 inbox.requestImportSheet()
                             }
