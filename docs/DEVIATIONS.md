@@ -77,7 +77,7 @@ Departures from the spec or a plan: what the plan said, what was done instead, a
 ## 2026-10-12: Inbox actions take the AnkiDroid lock
 
 - Plan said: M3 Task 2's `class InboxActions(private val db: AppDatabase)` runs each method in one transaction.
-- Actual: `InboxActions(db, lock)` takes the `Mutex` that `CardSender` and `AnkiCheck` share, and runs each method's transaction under it.
+- Actual: there is no `InboxActions`. Discard, restore and translate again's forget are `CardStore` methods, each a transaction under the store's AnkiDroid lock, which sends and the check also take.
 - Reason: a send saves its snapshot of PENDING cards one by one. A card discarded meanwhile would be overwritten as SENT, and a card deleted for translate again would leave its note orphaned in AnkiDroid.
 
 ## 2026-10-12: The Inbox has a generic Failed event
@@ -188,11 +188,11 @@ Departures from the spec or a plan: what the plan said, what was done instead, a
 - Actual: it reads `getModelList()` once and uses the stored id if the list contains it. If not, it takes the smallest id among note types named "Moon+ Vocab", and if there are none it creates one. A null model list throws `IllegalStateException`.
 - Reason: for a deleted mid, AnkiDroid's provider throws a NullPointerException across Binder rather than returning null, so `getFieldList` never reports the type as missing.
 
-## 2026-10-11: `writeBatch` returns the inserted card ids
+## 2026-10-11: The batch write returns the inserted card ids
 
 - Plan said: Task 10's `AppDatabase.writeBatch(cards: List<Pair<CardEntity, List<Long>>>)` inserts each card and links its marks in one transaction, and returns nothing.
-- Actual: the function is `writeBatch(batch: List<Pair<CardEntity, List<Long>>>): List<Long>`. It returns the inserted card ids, in input order.
-- Reason: a parameter named `cards` shadows the `cards()` DAO accessor inside the body. The pipeline needs the new card ids without querying for them again.
+- Actual: the batch write is `CardStore.add(batch, links): List<Long>`. It returns the inserted card ids, in input order.
+- Reason: the pipeline needs the new card ids without querying for them again.
 
 ## 2026-10-11: Settings keep a list of saved translation services
 

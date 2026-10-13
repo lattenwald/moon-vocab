@@ -14,7 +14,8 @@ import org.lattenwald.moonvocab.data.db.CardWriteDao
 @OptIn(CardWriteAccess::class)
 class CardStore(private val db: AppDatabase) {
     private val lock = Mutex()
-    private val writes = CardWrites(db.cardWrites())
+    private val dao = db.cardWrites()
+    private val writes = CardWrites(dao)
 
     @get:VisibleForTesting
     val isLocked: Boolean get() = lock.isLocked
@@ -26,7 +27,7 @@ class CardStore(private val db: AppDatabase) {
             val live = db.cards().byIds(links.map { it.second }.distinct()).map { it.id }.toSet()
             for ((markId, cardId) in links) if (cardId in live) db.marks().link(listOf(markId), cardId)
             batch.map { (card, markIds) ->
-                val id = writes.dao.insert(card)
+                val id = dao.insert(card)
                 db.marks().link(markIds, id)
                 id
             }
@@ -34,14 +35,14 @@ class CardStore(private val db: AppDatabase) {
 
     suspend fun discard(ids: List<Long>): List<Long> = transaction {
         db.cards().byIds(ids).filter { it.status in UNSENT }.map { card ->
-            writes.dao.update(card.discarded())
+            dao.update(card.discarded())
             card.id
         }
     }
 
     suspend fun restore(ids: List<Long>): Int = transaction {
         val discarded = db.cards().byIds(ids).filter { it.status == CardStatus.DISCARDED && it.previousStatus != null }
-        for (card in discarded) writes.dao.update(card.restored())
+        for (card in discarded) dao.update(card.restored())
         discarded.size
     }
 
@@ -49,11 +50,11 @@ class CardStore(private val db: AppDatabase) {
 
     suspend fun forgetFailed(): Int = transaction { forget(db.cards().byStatus(CardStatus.FAILED)) }
 
-    suspend fun forgetUnsent(): Int = transaction { writes.dao.deleteUnsent() }
+    suspend fun forgetUnsent(): Int = transaction { dao.deleteUnsent() }
 
     private suspend fun forget(cards: List<CardEntity>): Int {
         val forgotten = cards.filter { it.status in UNSENT && it.ankiNoteId == null }.map { it.id }
-        if (forgotten.isNotEmpty()) writes.dao.delete(forgotten) // mark.cardId is ON DELETE SET NULL
+        if (forgotten.isNotEmpty()) dao.delete(forgotten) // mark.cardId is ON DELETE SET NULL
         return forgotten.size
     }
 
@@ -64,7 +65,7 @@ class CardStore(private val db: AppDatabase) {
     }
 }
 
-class CardWrites internal constructor(internal val dao: CardWriteDao) {
-    // AnkiDroid already holds the change; a write lost to cancellation would make it again.
+class CardWrites internal constructor(private val dao: CardWriteDao) {
+    // A save recording an AnkiDroid write must survive cancellation, or the write is made again.
     suspend fun save(card: CardEntity) = withContext(NonCancellable) { dao.update(card) }
 }

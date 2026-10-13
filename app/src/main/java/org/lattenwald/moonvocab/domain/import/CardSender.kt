@@ -129,7 +129,7 @@ class CardSender(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            return DeleteResult.Failed(e.message ?: e::class.simpleName.orEmpty())
+            return DeleteResult.Failed(e.message ?: e.javaClass.name)
         }
         if (!deleted) return DeleteResult.Refused
         save(card.deletedFromAnki())
