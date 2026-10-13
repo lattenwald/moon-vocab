@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,6 +47,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import kotlinx.coroutines.flow.first
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
@@ -91,14 +93,17 @@ fun AppShell(share: ShareViewModel) {
     val selecting = top == InboxKey && inboxState.selection.active
 
     val shared by share.pending.collectAsStateWithLifecycle()
+    val leaveForShare by rememberUpdatedState(shared != null && app.setupDone)
     LaunchedEffect(shared) {
         val uri = shared ?: return@LaunchedEffect
+        if (app.setupDone) {
+            snapshotFlow { backStack.last() }.first { it !is CardKey }
+            sheet.share(uri)
+            inbox.clearSelection()
+            backStack.selectTab(InboxKey)
+            inbox.requestImportSheet()
+        }
         share.clear()
-        if (!app.setupDone) return@LaunchedEffect
-        sheet.share(uri)
-        inbox.clearSelection()
-        backStack.selectTab(InboxKey)
-        inbox.requestImportSheet()
     }
 
     Scaffold(
@@ -190,6 +195,7 @@ fun AppShell(share: ShareViewModel) {
                         key.cardId,
                         onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
                         onPreview = { id -> if (backStack.lastOrNull() == key) backStack.add(PreviewKey(id)) },
+                        leaveRequested = leaveForShare,
                     )
                 }
                 entry<PreviewKey> { key ->

@@ -84,6 +84,7 @@ fun CardPage(
     cardId: Long,
     onBack: () -> Unit,
     onPreview: ((Long) -> Unit)?,
+    leaveRequested: Boolean = false,
     vm: CardPageViewModel = viewModel(factory = CardPageViewModel.factory(cardId)),
 ) {
     val state = vm.state
@@ -107,6 +108,7 @@ fun CardPage(
         }
     }
     LaunchedEffect(state.closed) { if (state.closed) leave() }
+    LaunchedEffect(leaveRequested) { if (leaveRequested) vm.dispatch(CardIntent.Back) }
     LifecycleResumeEffect(vm) {
         vm.dispatch(CardIntent.Resumed)
         onPauseOrDispose {}
