@@ -17,8 +17,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -66,7 +64,7 @@ class CardPageViewModel(
 
     init {
         viewModelScope.launch {
-            runs.state.map { it.running }.distinctUntilChanged()
+            runs.running
                 .catch { e -> Log.e(TAG, "import state query failed", e) }
                 .collect { running -> dispatch(CardIntent.ImportRunning(running)) }
         }

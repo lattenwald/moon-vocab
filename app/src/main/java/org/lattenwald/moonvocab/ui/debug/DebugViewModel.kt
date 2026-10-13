@@ -76,11 +76,11 @@ class DebugViewModel(
     private val local = MutableStateFlow(Local())
 
     val state: StateFlow<DebugState> = combine(
-        local, settings.snapshot, runs.state,
-    ) { l, s, i ->
+        local, settings.snapshot, runs.running,
+    ) { l, s, importRunning ->
         DebugState(
             testDeck = s.deckOverride,
-            importRunning = i.running,
+            importRunning = importRunning,
             running = l.running,
             reportStep = l.reportStep,
             outcomes = l.outcomes,

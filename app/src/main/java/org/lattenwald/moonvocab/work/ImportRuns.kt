@@ -12,6 +12,7 @@ import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -54,6 +55,8 @@ class ImportRuns(private val queue: RunQueue, private val store: DataStore<Prefe
     val state: Flow<ImportState> = combine(queue.active, result) { run, r ->
         if (run != null) ImportState(running = true, progress = run.progress) else ImportState(summary = r?.summary, failure = r?.failure)
     }
+
+    val running: Flow<Boolean> = queue.active.map { it != null }.distinctUntilChanged()
 
     suspend fun start(request: ImportRequest): Start = launch(RunKind.Import(request))
 
