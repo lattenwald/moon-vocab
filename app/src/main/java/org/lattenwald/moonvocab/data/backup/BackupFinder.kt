@@ -57,7 +57,8 @@ class BackupFinder(
                     val file = File(dir, name)
                     check(part.renameTo(file)) { "cannot rename $part" }
                     keepOnly(name)
-                    FoundBackup(file, name, lastModified, contents.marks)
+                    // Share providers such as FileProvider report no last-modified column.
+                    FoundBackup(file, name, lastModified.takeIf { it > 0 } ?: contents.writtenAt ?: 0L, contents.marks)
                 }
             }
         } finally {

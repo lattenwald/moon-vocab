@@ -14,7 +14,7 @@ import org.lattenwald.moonvocab.domain.mark.markKeys
 import org.lattenwald.moonvocab.domain.mark.styleOf
 
 sealed interface BackupContents {
-    data class Complete(val marks: List<RawMark>, val bookmarksSkipped: Int) : BackupContents
+    data class Complete(val marks: List<RawMark>, val bookmarksSkipped: Int, val writtenAt: Long? = null) : BackupContents
     data class Incomplete(val reason: String) : BackupContents
 }
 
@@ -31,7 +31,8 @@ class BackupReader(private val cacheDir: File) {
 
     // Entries are read in order: a truncated backup has no central directory (spec §2).
     private fun scan(zip: ZipInputStream): BackupContents {
-        while (zip.nextEntry != null) {
+        while (true) {
+            val entry = zip.nextEntry ?: break
             val header = zip.readUpTo(SQLITE_HEADER.size)
             if (!header.contentEquals(SQLITE_HEADER)) continue
             val copy = File(cacheDir, "mrbooks-${UUID.randomUUID()}.db")
@@ -40,7 +41,7 @@ class BackupReader(private val cacheDir: File) {
                     out.write(header)
                     zip.copyTo(out)
                 }
-                readNotes(copy)?.let { return it }
+                readNotes(copy)?.let { return it.copy(writtenAt = entry.time.takeIf { t -> t > 0 }) }
             } finally {
                 SQLiteDatabase.deleteDatabase(copy)
             }

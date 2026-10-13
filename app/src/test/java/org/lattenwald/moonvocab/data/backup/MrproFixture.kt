@@ -27,7 +27,7 @@ enum class Cut { NONE, BEFORE_DB, INSIDE_DB }
 object MrproFixture {
     private const val DIR = "com.flyersoft.moonreaderp/"
 
-    fun build(dir: File, notes: List<NoteRow>, cut: Cut = Cut.NONE): File {
+    fun build(dir: File, notes: List<NoteRow>, cut: Cut = Cut.NONE, writtenAt: Long? = null): File {
         val db = database(dir, notes)
         val bytes = ByteArrayOutputStream()
         var endOfFirstEntry = 0
@@ -37,6 +37,7 @@ object MrproFixture {
             zip.entry("1.tag", "<?xml version='1.0' encoding='utf-8'?><map />".toByteArray())
             endOfFirstEntry = bytes.size()
             val dbEntry = ZipEntry(DIR + "2.tag")
+            writtenAt?.let { dbEntry.time = it }
             zip.putNextEntry(dbEntry)
             val dbDataStart = bytes.size()
             zip.write(db)

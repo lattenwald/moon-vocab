@@ -32,6 +32,12 @@ class BackupReaderTest {
         assertTrue(tmp.listFiles()!!.none { it.name.startsWith("mrbooks-") })
     }
 
+    @Test fun writtenAtIsTheDatabaseEntryTime() {
+        val writtenAt = 1_760_348_280_000L // even seconds: zip entries store DOS time
+        val c = BackupReader(tmp).read(MrproFixture.build(tmp, rows, writtenAt = writtenAt)) as BackupContents.Complete
+        assertEquals(writtenAt, c.writtenAt)
+    }
+
     @Test fun truncatedBeforeDatabaseIsIncomplete() = assertEquals(
         BackupContents.Incomplete("no database in backup"),
         BackupReader(tmp).read(MrproFixture.build(tmp, rows, Cut.BEFORE_DB)),
