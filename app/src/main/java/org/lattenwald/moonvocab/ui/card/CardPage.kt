@@ -88,6 +88,7 @@ fun CardPage(
 ) {
     val state = vm.state
     val anki by vm.anki.collectAsStateWithLifecycle()
+    val ankiDown = anki.let { it != null && it != AnkiAvailability.READY }
     val card = state.card
     val resources = LocalResources.current
     val leave by rememberUpdatedState(onBack)
@@ -137,7 +138,7 @@ fun CardPage(
                 Busy(state.busy)
             }
         },
-        bottomBar = { if (card != null) BottomActions(card, state, vm::dispatch) },
+        bottomBar = { if (card != null) BottomActions(card, state, ankiDown, vm::dispatch) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         if (card == null) return@Scaffold
@@ -232,7 +233,7 @@ private fun TopActions(card: CardEntity, state: CardEditState, onPreview: ((Long
 }
 
 @Composable
-private fun BottomActions(card: CardEntity, state: CardEditState, dispatch: (CardIntent) -> Unit) {
+private fun BottomActions(card: CardEntity, state: CardEditState, ankiDown: Boolean, dispatch: (CardIntent) -> Unit) {
     val idle = !state.busy
     val valid = state.parsed is FormResult.Ok
     Row(
@@ -251,7 +252,7 @@ private fun BottomActions(card: CardEntity, state: CardEditState, dispatch: (Car
                 Tonal(R.drawable.ic_delete, R.string.card_discard, enabled = idle) { dispatch(CardIntent.Discard) }
                 Filled(R.drawable.ic_translate, R.string.card_translate_again, enabled = idle && !state.importRunning) { dispatch(CardIntent.TranslateAgain) }
             }
-            CardStatus.SENT -> Filled(R.drawable.ic_check, R.string.card_save, enabled = idle && state.dirty && valid && state.source == CardSource.Fresh) {
+            CardStatus.SENT -> Filled(R.drawable.ic_check, R.string.card_save, enabled = idle && state.dirty && valid && state.source == CardSource.Fresh && !ankiDown) {
                 dispatch(CardIntent.Save)
             }
             CardStatus.DISCARDED -> Filled(R.drawable.ic_restore_from_trash, R.string.card_restore, enabled = idle) { dispatch(CardIntent.Restore) }
@@ -292,9 +293,9 @@ private fun Subheader(text: String) {
 private fun Notes(card: CardEntity, source: CardSource, anki: AnkiAvailability?, dispatch: (CardIntent) -> Unit) {
     val colors = MaterialTheme.colorScheme
     val (text, color) = when (card.status) {
-        CardStatus.SENT -> when (source) {
-            is CardSource.Unavailable -> stringResource(R.string.card_local_note)
-            is CardSource.ReadFailed -> stringResource(R.string.card_read_failed_note, source.message)
+        CardStatus.SENT -> when {
+            source is CardSource.ReadFailed -> stringResource(R.string.card_read_failed_note, source.message)
+            source is CardSource.Unavailable || anki.let { it != null && it != AnkiAvailability.READY } -> stringResource(R.string.card_local_note)
             else -> stringResource(R.string.card_sent_note)
         } to colors.onSurfaceVariant
         CardStatus.DELETED_IN_ANKI -> stringResource(R.string.card_deleted_note) to colors.onSurfaceVariant

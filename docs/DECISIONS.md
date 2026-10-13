@@ -216,7 +216,7 @@
 - Discard on a pending card saves its unsaved edits first, so Restore brings them back.
 - Unsaved edits, and the stored fields they were made against, survive process death in the page's `SavedStateHandle`.
 - A sent card whose note couldn't be read, because AnkiDroid was unavailable or the read failed, is read again on resume. Its note line names the cause and offers the Inbox banner's fix, or Try again after a read error.
-- While AnkiDroid is unavailable, a pending card's note line shows the Inbox banner's text and fix; a sent card offers the fix too.
+- While AnkiDroid is unavailable, a pending card's note line shows the Inbox banner's text and fix; a sent card shows the local-copy note and the fix, and Save is off.
 - Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, transcription, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
 - Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
 - Tapping a card outside selection opens its page.

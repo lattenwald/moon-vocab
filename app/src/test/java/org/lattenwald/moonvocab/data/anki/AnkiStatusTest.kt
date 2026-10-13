@@ -1,12 +1,12 @@
-package org.lattenwald.moonvocab.domain.import
+package org.lattenwald.moonvocab.data.anki
 
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.lattenwald.moonvocab.data.anki.AnkiAvailability
-import org.lattenwald.moonvocab.data.anki.AnkiStatus
 import org.lattenwald.moonvocab.domain.card.CardStatus.PENDING
+import org.lattenwald.moonvocab.domain.import.CardSender
+import org.lattenwald.moonvocab.domain.import.ImportTestBase
 
 class AnkiStatusTest : ImportTestBase() {
     @Test fun aSendThatFindsAnkiDroidUnavailableUpdatesTheStatus() = runTest {
