@@ -13,6 +13,8 @@ class NormalizeTest {
 
     @Test fun collapsesNbspAndNewlines() = assertEquals("a b c", normalize("a\u00A0\n  b\tc").text)
 
+    @Test fun anImageReadsAsASpace() = assertEquals("a b c", normalize("a \uFFFC b\uFFFCc").text)
+
     @Test fun unifiesQuotes() = assertEquals("Hacker's \"Mind\"", normalize("Hacker\u2019s \u201CMind\u201D").text)
 
     @Test fun composesNfd() = assertEquals("\u00E9", normalize("e\u0301").text)

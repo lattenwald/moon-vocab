@@ -47,9 +47,10 @@ fun normalize(s: String): NormalizedText {
 fun normalizeForMatch(s: String): String = normalize(s).text
 
 private const val SOFT_HYPHEN = 0x00AD
+private const val OBJECT_REPLACEMENT = 0xFFFC
 
-private fun isSpace(cp: Int): Boolean = Character.isWhitespace(cp) || Character.isSpaceChar(cp)
-
+// Moon+ text holds U+FFFC where an image is.
+private fun isSpace(cp: Int): Boolean = Character.isWhitespace(cp) || Character.isSpaceChar(cp) || cp == OBJECT_REPLACEMENT
 private fun isCombiningMark(cp: Int): Boolean = when (Character.getType(cp)) {
     Character.NON_SPACING_MARK.toInt(),
     Character.COMBINING_SPACING_MARK.toInt(),

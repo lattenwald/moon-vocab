@@ -29,6 +29,24 @@ class BookSentencesTest {
         assertEquals(Via.AT_POSITION, find(book, mark(0, 0, 10, "grim", markedAt = 1_800_000_000_000L)).via)
     }
 
+    @Test fun aSentenceAcrossAPageLabelComesWhole() {
+        val book = moonBook("He met a grim man on the road today.", labelled = listOf("He met a grim man\n\nPage 7 \non the road today."))
+        val lookup = find(book, mark(0, 0, 9, "grim", markedAt = 1_800_000_000_000L))
+        assertEquals(Via.AT_POSITION, lookup.via)
+        assertEquals("He met a grim man on the road today.", lookup.found)
+    }
+
+    @Test fun aLabelledMarkPlacedByAnchorsCountsWithoutTheLabels() {
+        val filler = (1..10).map { "Filler sentence number $it here. " }
+        val plain = "Owls. gr­im one. " + filler.joinToString("") + "gr­im two."
+        val labelled = "Owls. gr­im one. " + filler.mapIndexed { i, f -> "$f\n\nPage ${i + 1} \n" }.joinToString("") + "gr­im two."
+        val book = moonBook(plain, labelled = listOf(labelled))
+        val owls = mark(0, 0, 0, "Owls", markedAt = 1_800_000_000_000L)
+        val lookup = find(book, mark(0, 0, labelled.indexOf("gr­im two"), "grim", markedAt = 1_800_000_000_000L), marks = listOf(owls))
+        assertEquals(Via.ANCHORS, lookup.via)
+        assertEquals("Filler sentence number 10 here. gr­im two.", lookup.found)
+    }
+
     @Test fun aRepeatedWordMissedInTheMoonTextIsTheOneInTheMarksSplit() {
         val book = moonBook("A grim one stood by the door.", "A gr­im two stood by the door.")
         val lookup = find(book, mark(0, 1, 2, "grim"))

@@ -45,13 +45,14 @@
 - A mark whose chapter and split name no part, or with a split other than 0 in a book without Moon+ text, gets a sentence only if its text occurs once in the book, and is no anchor.
 - The Moon+ text port uses the user's Moon+ settings: trimBlankSpace off, indentParagraph on, maxHtmlChapterSize5 100000, CSS margins applied.
 - EPUB page labels ("Page N ") count only for marks made at or after 1 700 000 000 000 ms.
+- A labelled mark is found in the labelled part, and its sentence is taken at the same place in the part without labels. Its position for the anchor search is moved there too. The two parts are aligned by skipping label lines and whitespace; where they don't align, the labelled part is used.
 - Block images: EPUB when width × 2.75 (capped at 1000) exceeds 1000/3; FB2 when the larger side is at least 30 px.
 - HTML is parsed with TagSoup 1.2.1, as in Moon+ Reader.
 - A sentence never crosses a paragraph `\n`. Widening a short sentence stays inside its paragraph.
 - A mark that spans a paragraph break is its own sentence.
 - Each run keeps the text and normalized chapters of at most 3 books, least recently used out.
 - The model receives the normalized sentence.
-- The card's Sentence and Excerpt are built from the normalized sentence: no soft hyphens, no line breaks, straight quotes.
+- The card's Sentence and Excerpt are built from the normalized sentence: no soft hyphens, no line breaks, straight quotes. An image placeholder (U+FFFC) normalizes as whitespace.
 - The focus word is located case-insensitively, at the occurrence nearest the mark.
 - The model's excerpt is used only when all of these hold:
   - it is a substring of the sentence;
