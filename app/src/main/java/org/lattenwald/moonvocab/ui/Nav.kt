@@ -42,7 +42,7 @@ class Navigator(private val stack: MutableList<NavKey>) {
     }
 
     fun selectTab(tab: NavKey) {
-        if (stack.lastOrNull() == tab) return
+        if (top == tab) return
         while (stack.size > 1) stack.removeLastOrNull()
         if (tab != InboxKey) stack.add(tab)
     }
@@ -60,9 +60,7 @@ class Navigator(private val stack: MutableList<NavKey>) {
         }
 
         fun replace(next: NavKey) {
-            if (!onTop) return
-            stack.removeLastOrNull()
-            stack.add(next)
+            if (onTop) stack[stack.lastIndex] = next
         }
 
         fun openAbove(tab: NavKey, next: NavKey) {
