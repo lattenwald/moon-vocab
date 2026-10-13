@@ -209,7 +209,7 @@
 
 ## Import sheet
 - The import sheet's import count is the new marks in the chosen combinations plus the stored marks with no card.
-- A mark combination is named by its style and a colour name taken from its hue.
+- A mark combination is named by its style and a colour name taken from its hue. When two combinations of one style share a name, each gets "dark" or "light" by lightness (not black or white); if they still clash, the hex colour follows in brackets.
 - `BackupFinder` keeps only the chosen backup's copy in `cacheDir/backups`.
 - `BackupFinder.newest` and `open` run one at a time under the finder's own lock, held until a cancelled call's copy finishes.
 - The import sheet reads the newest complete backup each time it opens, except when opened by a share, which shows the shared file.

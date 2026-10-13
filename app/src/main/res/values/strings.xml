@@ -210,6 +210,9 @@
     <string name="color_gray">gray</string>
     <string name="color_black">black</string>
     <string name="color_white">white</string>
+    <string name="color_shade_dark">dark %1$s</string>
+    <string name="color_shade_light">light %1$s</string>
+    <string name="color_with_hex" translatable="false">%1$s (%2$s)</string>
     <plurals name="sheet_counts">
         <item quantity="one">%1$d mark, %2$d new</item>
         <item quantity="other">%1$d marks, %2$d new</item>

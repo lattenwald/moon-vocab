@@ -73,10 +73,12 @@ import kotlinx.coroutines.launch
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.backup.FoundBackup
 import org.lattenwald.moonvocab.domain.mark.ColorName
+import org.lattenwald.moonvocab.domain.mark.ComboName
 import org.lattenwald.moonvocab.domain.mark.ComboRow
 import org.lattenwald.moonvocab.domain.mark.MarkStyle
+import org.lattenwald.moonvocab.domain.mark.Shade
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
-import org.lattenwald.moonvocab.domain.mark.colorName
+import org.lattenwald.moonvocab.domain.mark.comboNames
 import org.lattenwald.moonvocab.ui.common.addWave
 import org.lattenwald.moonvocab.ui.common.waveStroke
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
@@ -175,8 +177,9 @@ private fun Ready(
     BackupRow(s.backup, onChange)
     BackupNotes(s.skipped, s.pickIncomplete)
     SubHeader(stringResource(R.string.sheet_marks))
-    for (row in s.counts.rows) {
-        MarkRow(row, checked = row.combo in s.selected, onToggle = { onToggle(row.combo) })
+    val names = remember(s.counts.rows) { comboNames(s.counts.rows.map { it.combo }) }
+    s.counts.rows.forEachIndexed { i, row ->
+        MarkRow(row, names[i], checked = row.combo in s.selected, onToggle = { onToggle(row.combo) })
     }
     SubHeader(stringResource(R.string.sheet_after))
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(start = SidePadding, top = 6.dp, end = SidePadding)) {
@@ -262,7 +265,7 @@ private fun SubHeader(text: String) {
 }
 
 @Composable
-private fun MarkRow(row: ComboRow, checked: Boolean, onToggle: () -> Unit) {
+private fun MarkRow(row: ComboRow, name: ComboName, checked: Boolean, onToggle: () -> Unit) {
     Row(
         Modifier.fillMaxWidth()
             .toggleable(checked, role = Role.Checkbox, onValueChange = { onToggle() })
@@ -274,7 +277,7 @@ private fun MarkRow(row: ComboRow, checked: Boolean, onToggle: () -> Unit) {
         Checkbox(checked = checked, onCheckedChange = null)
         MarkSample(row.combo)
         Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.sheet_combo, stringResource(styleName(row.combo.style)), stringResource(colorString(colorName(row.combo.color)))), fontSize = 16.sp, lineHeight = 22.sp)
+            Text(stringResource(R.string.sheet_combo, stringResource(styleName(row.combo.style)), comboColor(name)), fontSize = 16.sp, lineHeight = 22.sp)
             Text(
                 if (row.new > 0) {
                     pluralStringResource(R.plurals.sheet_counts, row.total, row.total, row.new)
@@ -337,6 +340,17 @@ private fun styleName(style: MarkStyle): Int = when (style) {
     MarkStyle.UNDERLINE -> R.string.style_underline
     MarkStyle.HIGHLIGHT -> R.string.style_highlight
     MarkStyle.STRIKETHROUGH -> R.string.style_strikethrough
+}
+
+@Composable
+private fun comboColor(name: ComboName): String {
+    val color = stringResource(colorString(name.color))
+    val shaded = when (name.shade) {
+        null -> color
+        Shade.DARK -> stringResource(R.string.color_shade_dark, color)
+        Shade.LIGHT -> stringResource(R.string.color_shade_light, color)
+    }
+    return name.hex?.let { stringResource(R.string.color_with_hex, shaded, it) } ?: shaded
 }
 
 private fun colorString(name: ColorName): Int = when (name) {

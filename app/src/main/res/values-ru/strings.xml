@@ -241,6 +241,8 @@
     <string name="color_gray">серое</string>
     <string name="color_black">чёрное</string>
     <string name="color_white">белое</string>
+    <string name="color_shade_dark">тёмно-%1$s</string>
+    <string name="color_shade_light">светло-%1$s</string>
     <plurals name="sheet_counts">
         <item quantity="one">%1$d пометка, новых: %2$d</item>
         <item quantity="few">%1$d пометки, новых: %2$d</item>
