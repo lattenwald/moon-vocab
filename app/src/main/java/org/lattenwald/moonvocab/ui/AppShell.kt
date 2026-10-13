@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -84,7 +85,8 @@ private fun pageSlide(push: Boolean, spec: FiniteAnimationSpec<IntOffset>, layou
 fun AppShell(share: ShareViewModel) {
     val app = LocalContext.current.applicationContext as App
     val backStack = rememberNavBackStack(if (app.setupDone) InboxKey else SetupKey)
-    val top = backStack.last()
+    val navigator = remember(backStack) { Navigator(backStack) }
+    val top = navigator.top
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
     val sheet: ImportSheetViewModel = viewModel(factory = ImportSheetViewModel.Factory)
     val library: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)
@@ -97,10 +99,10 @@ fun AppShell(share: ShareViewModel) {
     LaunchedEffect(shared) {
         val uri = shared ?: return@LaunchedEffect
         if (app.setupDone) {
-            snapshotFlow { backStack.last() }.first { it !is CardKey }
+            snapshotFlow { navigator.top }.first { it !is CardKey }
             sheet.share(uri)
             inbox.clearSelection()
-            backStack.selectTab(InboxKey)
+            navigator.selectTab(InboxKey)
             inbox.requestImportSheet()
         }
         share.clear()
@@ -117,7 +119,7 @@ fun AppShell(share: ShareViewModel) {
                 ShortNavigationBar {
                     ShortNavigationBarItem(
                         selected = top == InboxKey,
-                        onClick = { backStack.selectTab(InboxKey) },
+                        onClick = { navigator.selectTab(InboxKey) },
                         icon = {
                             BadgedBox(badge = { if (total > 0) Badge { Text(total.toString()) } }) {
                                 Icon(painterResource(R.drawable.ic_inbox), contentDescription = null)
@@ -127,13 +129,13 @@ fun AppShell(share: ShareViewModel) {
                     )
                     ShortNavigationBarItem(
                         selected = top == LibraryKey,
-                        onClick = { backStack.selectTab(LibraryKey) },
+                        onClick = { navigator.selectTab(LibraryKey) },
                         icon = { Icon(painterResource(R.drawable.ic_menu_book), contentDescription = null) },
                         label = { Text(stringResource(R.string.nav_library)) },
                     )
                     ShortNavigationBarItem(
                         selected = top == SettingsKey,
-                        onClick = { backStack.selectTab(SettingsKey) },
+                        onClick = { navigator.selectTab(SettingsKey) },
                         icon = { Icon(painterResource(R.drawable.ic_settings), contentDescription = null) },
                         label = { Text(stringResource(R.string.nav_settings)) },
                     )
@@ -148,7 +150,7 @@ fun AppShell(share: ShareViewModel) {
         val layoutDirection = LocalLayoutDirection.current
         NavDisplay(
             backStack = backStack,
-            onBack = { backStack.removeLastOrNull() },
+            onBack = navigator::back,
             transitionSpec = { pageSlide(push = true, slideSpec, layoutDirection) },
             popTransitionSpec = { pageSlide(push = false, slideSpec, layoutDirection) },
             predictivePopTransitionSpec = { _ -> pageSlide(push = false, slideSpec, layoutDirection) },
@@ -161,14 +163,8 @@ fun AppShell(share: ShareViewModel) {
                     // The Inbox's own top bar handles the top insets.
                     val bottom = PaddingValues(bottom = shellPadding.calculateBottomPadding())
                     InboxScreen(
-                        onOpenServices = {
-                            if (backStack.lastOrNull() == InboxKey) {
-                                backStack.selectTab(SettingsKey)
-                                backStack.add(ServicesKey)
-                            }
-                        },
-                        // A second tap during the transition must not push another page.
-                        onOpenCard = { id -> if (backStack.lastOrNull() == InboxKey) backStack.add(CardKey(id)) },
+                        onOpenServices = { navigator.openFromTab(InboxKey, SettingsKey, ServicesKey) },
+                        onOpenCard = { id -> navigator.at(InboxKey).open(CardKey(id)) },
                         modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
                         vm = inbox,
                         sheetVm = sheet,
@@ -177,78 +173,55 @@ fun AppShell(share: ShareViewModel) {
                 entry<LibraryKey>(metadata = TabTransitions) {
                     val bottom = PaddingValues(bottom = shellPadding.calculateBottomPadding())
                     LibraryScreen(
-                        onOpenBook = { id -> if (backStack.lastOrNull() == LibraryKey) backStack.add(BookKey(id)) },
+                        onOpenBook = { id -> navigator.at(LibraryKey).open(BookKey(id)) },
                         modifier = Modifier.padding(bottom).consumeWindowInsets(bottom),
                         vm = library,
                     )
                 }
-                // The page's own Scaffold handles the insets; a late onBack pops only this page.
+                // The page's own Scaffold handles the insets.
                 entry<BookKey> { key ->
-                    BookPage(
-                        key.bookId,
-                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
-                        onOpenCard = { id -> if (backStack.lastOrNull() == key) backStack.add(CardKey(id)) },
-                    )
+                    val nav = navigator.at(key)
+                    BookPage(key.bookId, onBack = nav::back, onOpenCard = { id -> nav.open(CardKey(id)) })
                 }
                 entry<CardKey> { key ->
-                    CardPage(
-                        key.cardId,
-                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
-                        onPreview = { id -> if (backStack.lastOrNull() == key) backStack.add(PreviewKey(id)) },
-                        leaveRequested = leaveForShare,
-                    )
+                    val nav = navigator.at(key)
+                    CardPage(key.cardId, onBack = nav::back, onPreview = { id -> nav.open(PreviewKey(id)) }, leaveRequested = leaveForShare)
                 }
                 entry<PreviewKey> { key ->
-                    PreviewPage(key.cardId, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                    PreviewPage(key.cardId, onBack = navigator.at(key)::back)
                 }
                 entry<LanguageKey> { key ->
-                    LanguagePicker(key.kind, onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                    LanguagePicker(key.kind, onBack = navigator.at(key)::back)
                 }
                 entry<ServicesKey> { key ->
-                    ServicesPage(
-                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
-                        onOpen = { id -> if (backStack.lastOrNull() == key) backStack.add(ServiceKey(id)) },
-                    )
+                    val nav = navigator.at(key)
+                    ServicesPage(onBack = nav::back, onOpen = { id -> nav.open(ServiceKey(id)) })
                 }
                 entry<ServiceKey> { key ->
-                    ServicePage(
-                        key.id,
-                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
-                        onOpen = { id ->
-                            if (backStack.lastOrNull() == key) {
-                                backStack.removeLastOrNull()
-                                backStack.add(ServiceKey(id))
-                            }
-                        },
-                    )
+                    val nav = navigator.at(key)
+                    ServicePage(key.id, onBack = nav::back, onOpen = { id -> nav.replace(ServiceKey(id)) })
                 }
                 entry<CardsSettingsKey> { key ->
-                    CardsPage(
-                        onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() },
-                        onPreview = { if (backStack.lastOrNull() == key) backStack.add(PreviewKey(null)) },
-                    )
+                    val nav = navigator.at(key)
+                    CardsPage(onBack = nav::back, onPreview = { nav.open(PreviewKey(null)) })
                 }
                 entry<DeveloperKey> { key ->
-                    DebugScreen(onBack = { if (backStack.lastOrNull() == key) backStack.removeLastOrNull() })
+                    DebugScreen(onBack = navigator.at(key)::back)
                 }
                 entry<SetupKey> {
                     SetupFlow(
-                        onOpen = { next -> if (backStack.lastOrNull() == SetupKey) backStack.add(next) },
+                        onOpen = navigator.at(SetupKey)::open,
                         onFinish = { importNow ->
-                            if (backStack.lastOrNull() == SetupKey) {
-                                if (importNow) {
-                                    sheet.open()
-                                    inbox.requestImportSheet()
-                                }
-                                backStack.add(InboxKey)
-                                while (backStack.size > 1) backStack.removeAt(0)
+                            if (navigator.finishSetup() && importNow) {
+                                sheet.open()
+                                inbox.requestImportSheet()
                             }
                         },
                     )
                 }
                 entry<SettingsKey>(metadata = TabTransitions) {
                     SettingsScreen(
-                        onOpen = { next -> if (backStack.lastOrNull() == SettingsKey) backStack.add(next) },
+                        onOpen = navigator.at(SettingsKey)::open,
                         contentPadding = PaddingValues(bottom = shellPadding.calculateBottomPadding()),
                     )
                 }

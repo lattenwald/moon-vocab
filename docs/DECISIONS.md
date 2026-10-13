@@ -326,6 +326,7 @@
 - The app opens on the Inbox, or on setup while `setupDone` is false. The bottom bar has Inbox, Library and Settings. Settings shows the settings page.
 - Navigation 3 holds one back stack that starts with the Inbox, or with `SetupKey` until setup finishes. Another tab sits on top of it, and pages are pushed above. Back from a tab returns to the Inbox.
 - The bottom bar shows only on tabs.
+- Only `Navigator` changes the back stack; a page's `at(key)` handle moves only while that page is on top.
 - Motion: tab switches, and setup's replacement by the Inbox, cross-fade. A pushed page slides in from the end edge, full width, on a spring with no bounce, while the page below slides a third of the way toward the start edge. Pop reverses it; predictive back runs the pop with the gesture. Each page keeps its own opaque background.
 - Predictive back is on (`android:enableOnBackInvokedCallback="true"`). Back closes, in order: the sheet, then selection mode, then the page.
 - The Advanced page (`DeveloperKey`, `DebugScreen`) is pushed from the last row of Settings, with its own top bar. `DebugViewModel` is scoped to its entry.
