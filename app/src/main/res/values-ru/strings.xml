@@ -185,6 +185,7 @@
         <item quantity="other">%d карточки в Anki</item>
     </plurals>
     <string name="library_subtitle">%1$s, %2$s</string>
+    <string name="library_loading">Загрузка…</string>
     <plurals name="library_in_anki">
         <item quantity="one">В Anki: %d</item>
         <item quantity="few">В Anki: %d</item>

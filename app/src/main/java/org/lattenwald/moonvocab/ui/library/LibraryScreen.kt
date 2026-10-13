@@ -64,11 +64,15 @@ fun LibraryScreen(
                 title = { Text(stringResource(R.string.library_title)) },
                 subtitle = {
                     Text(
-                        stringResource(
-                            R.string.library_subtitle,
-                            pluralStringResource(R.plurals.library_books, library.books, library.books),
-                            pluralStringResource(R.plurals.library_cards_in_anki, library.inAnki, library.inAnki),
-                        ),
+                        if (state.loaded) {
+                            stringResource(
+                                R.string.library_subtitle,
+                                pluralStringResource(R.plurals.library_books, library.books, library.books),
+                                pluralStringResource(R.plurals.library_cards_in_anki, library.inAnki, library.inAnki),
+                            )
+                        } else {
+                            stringResource(R.string.library_loading)
+                        },
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screen),

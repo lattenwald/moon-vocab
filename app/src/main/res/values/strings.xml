@@ -159,6 +159,7 @@
         <item quantity="other">%d cards in Anki</item>
     </plurals>
     <string name="library_subtitle">%1$s, %2$s</string>
+    <string name="library_loading">Loading…</string>
     <plurals name="library_in_anki">
         <item quantity="one">%d in Anki</item>
         <item quantity="other">%d in Anki</item>
