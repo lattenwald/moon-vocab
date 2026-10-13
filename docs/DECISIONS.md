@@ -154,7 +154,7 @@
 - `Stop` ends the import with nothing written for that batch. `Failed` makes the batch's cards FAILED.
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
-- A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created, the check runs if the last one is 10 minutes old or more.
+- A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created, the check runs if the last one is 10 minutes old or more, or the clock is now behind it.
 - Only `CardStore` writes cards: the write DAO's getter needs `@OptIn(CardWriteAccess::class)`. Every card write runs under the store's one lock, the AnkiDroid lock.
 - `CardStore.locked` holds the lock without a transaction, for `CardSender` and `NoteSync`, whose AnkiDroid calls and card saves run under it. A pending card's local save, discard, restore, translate again's forget, retry's forget, Forget unsent cards and the import's batch write run under it in a transaction.
 - Status changes and the fields that go with them live in `CardStatus.kt` (`sent`, `unsent`, `deletedFromAnki`, `discarded`, `restored`, `noteMissing`).

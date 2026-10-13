@@ -65,4 +65,11 @@ class AnkiCheckTest : ImportTestBase() {
         assertEquals(reads + 1, fakeAnki.reads)
         assertEquals(now, settings.current().lastCheckAt)
     }
+
+    @Test fun runIfDueRunsWhenTheClockMovedBack() = runTest {
+        sendOne()
+        clocked.check()
+        now -= 1
+        assertTrue(clocked.runIfDue())
+    }
 }

@@ -12,7 +12,7 @@ class AnkiCheck(
     private val clock: () -> Long,
 ) {
     suspend fun runIfDue(): Boolean {
-        if (clock() - settings.current().lastCheckAt < START_INTERVAL_MS) return false
+        if (clock() - settings.current().lastCheckAt in 0 until START_INTERVAL_MS) return false
         run()
         return true
     }
