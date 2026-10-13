@@ -8,6 +8,8 @@ import org.lattenwald.moonvocab.domain.card.CardField
 import org.lattenwald.moonvocab.domain.card.CardFields
 import org.lattenwald.moonvocab.domain.card.CardStatus
 import org.lattenwald.moonvocab.domain.card.FormResult
+import org.lattenwald.moonvocab.domain.card.OpenResult
+import org.lattenwald.moonvocab.domain.card.SaveResult
 import org.lattenwald.moonvocab.domain.card.cardFields
 import org.lattenwald.moonvocab.domain.card.mergeAfterConflict
 import org.lattenwald.moonvocab.domain.card.parseForm

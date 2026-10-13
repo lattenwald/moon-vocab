@@ -116,10 +116,12 @@
 - `setupDone` defaults to `true` when `backupTree` is set, else `false`. Its key is stored only when the value differs from that default.
 
 ## AnkiDroid
-- `ankiFields` HTML-escapes Word, Transcription, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid.
+- `NoteField` in `NoteFields.kt` is the one list of note fields and says which are HTML and which optional. Only that file converts between a card and its note.
+- `toNote` HTML-escapes Word, Transcription, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid. The settings sample card goes through the same encoding.
 - Book is `Title, Author`, or just `Title` when there is no author.
 - A field changed in Anki is read back into the card as plain text with `ankiToPlain`. Excerpt and Sentence are kept as raw HTML.
-- `reconcile` compares the fields the card stores (Word, Transcription, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note: plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML.
+- A note changed a card when `readFrom` gives a different card: the fields the card stores (Word, Transcription, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note, plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML.
+- `NoteSync` does every sync between a sent card and its note, under the AnkiDroid lock: the card page's open and Save, and the check. `AnkiCheck` only schedules the check and records its time.
 - `update` merges with the note's current note type in AnkiDroid, and writes the union of the note's tags and ours.
 - `ensureNoteType`:
   - uses the stored id while it is in AnkiDroid's model list;
@@ -150,7 +152,7 @@
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
 - A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created, the check runs if the last one is 10 minutes old or more.
 - Only `CardStore` writes cards: the write DAO's getter needs `@OptIn(CardWriteAccess::class)`. Every card write runs under the store's one lock, the AnkiDroid lock.
-- `CardStore.locked` holds the lock without a transaction, for `CardSender`, `AnkiCheck` and `CardEditor`, whose AnkiDroid calls and card saves run under it. Discard, restore, translate again's forget, retry's forget, Forget unsent cards and the import's batch write run under it in a transaction.
+- `CardStore.locked` holds the lock without a transaction, for `CardSender` and `NoteSync`, whose AnkiDroid calls and card saves run under it. A pending card's local save, discard, restore, translate again's forget, retry's forget, Forget unsent cards and the import's batch write run under it in a transaction.
 - Status changes and the fields that go with them live in `CardStatus.kt` (`sent`, `unsent`, `deletedFromAnki`, `discarded`, `restored`, `noteMissing`).
 - An import batch leaves a mark unlinked when the card it merges into was deleted during the batch.
 - `CardSender`:
@@ -191,7 +193,7 @@
 - Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs none or one.
 - Changed form values are trimmed. A blank sentence is saved empty. A changed transcription goes through `cleanTranscription`.
 - The transcription shows between slashes: under the word on the card front, and before the grammar note in Inbox and book page rows.
-- Save sends AnkiDroid only the fields the user changed, and no tags. When any changed field also changed in AnkiDroid since the page read it, nothing is written to AnkiDroid. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
+- Save sends AnkiDroid only the fields the user changed, and no tags. When any changed field also changed in AnkiDroid since the page read it, to something other than the user's edit, nothing is written to AnkiDroid. A changed field that AnkiDroid already holds isn't written again. Fields the user didn't change, Source included, take AnkiDroid's text. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
 - On a conflict, the page shows AnkiDroid's text for the conflicting fields and for fields the user didn't change. The user's other edits stay.
 - A sent card's page reads its note when it opens, under the AnkiDroid lock. A missing note makes the card DELETED_IN_ANKI.
 - A pending card's edits are saved in the app only while it is still PENDING. When it is now SENT, they stay as unsaved edits and Back asks first. When it is neither, the page drops them and shows the stored card with `card_snack_not_pending`, and Back stays on the page.

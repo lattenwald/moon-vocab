@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.lattenwald.moonvocab.data.backup.MrproFixture
@@ -87,6 +88,26 @@ class CardStoreTest : ImportTestBase() {
         val failed = db.cards().byStatus(FAILED).single()
         waitingOnALockedWrite({ it.save(failed.discarded()) }) { pipeline().retryFailed {} }
         assertEquals(DISCARDED, stored(failed.id).status)
+    }
+
+    @Test fun saveLocalUpdatesAPendingCard() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val card = stored(allIds().single())
+
+        val saved = store.saveLocal(card.id, card.cardFields().copy(translation = "Y"), CardExtras("lemma", widened = true))
+        val room = stored(card.id)
+        assertEquals(saved, room)
+        assertEquals("Y", room.translation)
+        assertEquals("lemma", room.lemma)
+        assertTrue(room.widened)
+    }
+
+    @Test fun saveLocalRefusesACardThatIsNoLongerPending() = runTest {
+        pipeline().run(req(backup(1)), {})
+        val card = stored(sender.send(allIds()).sentIds.single())
+
+        assertNull(store.saveLocal(card.id, card.cardFields().copy(translation = "Y"), null))
+        assertEquals(card, stored(card.id))
     }
 
     @Test fun restoreTwiceRestoresOnce() = runTest {

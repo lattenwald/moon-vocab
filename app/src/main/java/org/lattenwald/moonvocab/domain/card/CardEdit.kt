@@ -1,14 +1,13 @@
 package org.lattenwald.moonvocab.domain.card
 
-import org.lattenwald.moonvocab.data.anki.NoteTypeSpec
-import org.lattenwald.moonvocab.data.anki.ankiToPlain
+import org.lattenwald.moonvocab.data.anki.NoteField
+import org.lattenwald.moonvocab.data.anki.readFrom
 import org.lattenwald.moonvocab.data.db.CardEntity
 
-enum class CardField(val ankiName: String) {
-    WORD("Word"), TRANSCRIPTION("Transcription"), GRAMMAR("Grammar"), EXCERPT("Excerpt"), TRANSLATION("Translation"), MEANING("Meaning"), SENTENCE("Sentence")
+enum class CardField(val note: NoteField) {
+    WORD(NoteField.WORD), TRANSCRIPTION(NoteField.TRANSCRIPTION), GRAMMAR(NoteField.GRAMMAR), EXCERPT(NoteField.EXCERPT),
+    TRANSLATION(NoteField.TRANSLATION), MEANING(NoteField.MEANING), SENTENCE(NoteField.SENTENCE),
 }
-
-private val CardField.isHtml: Boolean get() = ankiName in NoteTypeSpec.HTML_FIELDS
 
 // Stored form: excerpt and sentence are HTML with a mark span; the others are plain text.
 data class CardFields(
@@ -116,15 +115,12 @@ sealed interface SavePlan {
 }
 
 fun planSave(baseline: CardFields, edited: CardFields, note: Map<String, String>): SavePlan {
-    val fresh = CardField.entries.fold(baseline) { acc, f ->
-        val value = note[f.ankiName] ?: return@fold acc
-        acc.with(f, if (f.isHtml) value else ankiToPlain(value))
-    }
+    val fresh = baseline.readFrom(note)
     val changed = CardField.entries.filter { edited[it] != baseline[it] }
-    val conflicting = changed.filterTo(mutableSetOf()) { fresh[it] != baseline[it] }
+    val conflicting = changed.filterTo(mutableSetOf()) { fresh[it] != baseline[it] && fresh[it] != edited[it] }
     if (conflicting.isNotEmpty()) return SavePlan.Conflict(conflicting, fresh)
     return SavePlan.Write(
-        anki = changed.associate { it.ankiName to if (it.isHtml) edited[it] else escapeHtml(edited[it]) },
+        anki = changed.filter { fresh[it] != edited[it] }.associate { it.note.noteName to it.note.encode(edited[it]) },
         result = changed.fold(fresh) { acc, f -> acc.with(f, edited[f]) },
     )
 }

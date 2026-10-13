@@ -5,7 +5,7 @@ import org.junit.Test
 import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.domain.card.CardStatus
 
-class AnkiTextTest {
+class NoteFieldsTest {
     private val card = CardEntity(
         uuid = "0f8e-uuid",
         bookId = 1,
@@ -44,32 +44,27 @@ class AnkiTextTest {
             "Source" to "example by &lt;model&gt;",
             "AppId" to "0f8e-uuid",
         ),
-        card.ankiFields("Q&A, <Anon>"),
+        card.toNote("Q&A, <Anon>"),
     )
 
-    @Test fun coversEveryNoteTypeField() = assertEquals(NoteTypeSpec.FIELDS, card.ankiFields("B").keys.toList())
+    @Test fun coversEveryNoteTypeField() = assertEquals(NoteTypeSpec.FIELDS, card.toNote("B").keys.toList())
 
-    @Test fun storedFieldsArePlainExceptExcerptAndSentence() = assertEquals(
-        mapOf(
-            "Word" to card.word,
-            "Transcription" to card.transcription,
-            "Grammar" to card.grammar,
-            "Excerpt" to card.excerptHtml,
-            "Translation" to card.translation,
-            "Meaning" to card.meaning,
-            "Sentence" to card.sentenceHtml,
-            "Source" to card.sourceNote,
+    @Test fun everyStoredFieldSurvivesTheRoundTrip() = assertEquals(card, card.readFrom(card.toNote("Q&A, <Anon>")))
+
+    @Test fun anEditInAnkiDroidIsReadBackPlainExceptExcerptAndSentence() = assertEquals(
+        card.copy(translation = "neu & mehr", sourceNote = "by me", excerptHtml = "the <b>lab</b>"),
+        card.readFrom(
+            card.toNote("B") +
+                mapOf("Translation" to "<div>neu &amp; mehr</div>", "Source" to "by me", "Excerpt" to "the <b>lab</b>"),
         ),
-        card.storedFields(),
     )
 
-    @Test fun plainFieldsSurviveTheRoundTrip() {
-        val fields = card.ankiFields("Q&A, <Anon>")
-        assertEquals(
-            listOf(card.word, card.transcription, card.grammar, card.translation, card.meaning, "Q&A, <Anon>", card.sourceNote),
-            listOf("Word", "Transcription", "Grammar", "Translation", "Meaning", "Book", "Source").map { ankiToPlain(fields.getValue(it)) },
-        )
-    }
+    @Test fun formattingOnlyChangeReadsAsTheSameCard() =
+        assertEquals(card, card.readFrom(card.toNote("B") + ("Translation" to "<b>${card.toNote("B").getValue("Translation")}</b>")))
+
+    @Test fun bookAndAppIdAreNotReadBack() = assertEquals(card, card.readFrom(card.toNote("B") + mapOf("Book" to "Other", "AppId" to "x")))
+
+    @Test fun aFieldMissingFromTheNoteKeepsTheCardsValue() = assertEquals(card, card.readFrom(card.toNote("B") - "Meaning"))
 
     @Test fun lineBreaksBecomeNewlines() = assertEquals("one\ntwo\nthree", ankiToPlain("<div>one<br>two</div><div>three</div>"))
 

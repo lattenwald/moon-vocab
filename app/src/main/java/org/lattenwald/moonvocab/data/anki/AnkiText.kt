@@ -5,33 +5,6 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import org.jsoup.select.NodeVisitor
-import org.lattenwald.moonvocab.data.db.CardEntity
-import org.lattenwald.moonvocab.domain.card.escapeHtml
-
-// AnkiDroid fields are HTML.
-fun CardEntity.ankiFields(bookLine: String): Map<String, String> = mapOf(
-    "Word" to escapeHtml(word),
-    "Transcription" to escapeHtml(transcription),
-    "Grammar" to escapeHtml(grammar),
-    "Excerpt" to excerptHtml,
-    "Translation" to escapeHtml(translation),
-    "Meaning" to escapeHtml(meaning),
-    "Sentence" to sentenceHtml,
-    "Book" to escapeHtml(bookLine),
-    "Source" to escapeHtml(sourceNote),
-    "AppId" to uuid,
-)
-
-fun CardEntity.storedFields(): Map<String, String> = mapOf(
-    "Word" to word,
-    "Transcription" to transcription,
-    "Grammar" to grammar,
-    "Excerpt" to excerptHtml,
-    "Translation" to translation,
-    "Meaning" to meaning,
-    "Sentence" to sentenceHtml,
-    "Source" to sourceNote,
-)
 
 fun ankiToPlain(html: String): String {
     val out = StringBuilder()

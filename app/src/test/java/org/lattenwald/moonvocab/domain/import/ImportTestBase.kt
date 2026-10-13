@@ -24,6 +24,7 @@ import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.card.DraftResult
+import org.lattenwald.moonvocab.domain.card.NoteSync
 import org.lattenwald.moonvocab.domain.card.SenseJudge
 import org.lattenwald.moonvocab.domain.card.Translation
 import org.lattenwald.moonvocab.domain.card.TranslationItem
@@ -49,7 +50,8 @@ abstract class ImportTestBase {
     protected val fakeBooks = FakeBooks(mapOf(PATH to bookText(30)))
     protected val store = CardStore(db)
     protected val sender by lazy { CardSender(db, fakeAnki, settings, store) { NOW } }
-    protected val check by lazy { AnkiCheck(db, fakeAnki, store, settings) { NOW } }
+    protected val sync by lazy { NoteSync(db, fakeAnki, store) }
+    protected val check by lazy { AnkiCheck(sync, settings) { NOW } }
 
     protected suspend fun stored(id: Long): CardEntity = db.cards().byIds(listOf(id)).single()
 

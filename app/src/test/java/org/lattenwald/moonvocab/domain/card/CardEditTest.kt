@@ -60,6 +60,10 @@ class CardEditTest {
             planSave(stored, edited, note(inAnki)),
         )
     }
+    @Test fun aRetryAfterTheNoteWasWrittenSavesWithoutAConflict() {
+        val edited = stored.copy(translation = "одолеть")
+        assertEquals(SavePlan.Write(emptyMap(), edited), planSave(stored, edited, note(edited)))
+    }
     @Test fun planWithNoChangesWritesNothing() =
         assertEquals(SavePlan.Write(emptyMap(), stored), planSave(stored, stored, note(stored)))
     @Test fun aWhitespaceOnlyEditCountsAsUntouched() {

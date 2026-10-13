@@ -1,5 +1,7 @@
 package org.lattenwald.moonvocab.domain.card
 
+import org.lattenwald.moonvocab.data.anki.noteFields
+
 // The book's sentence runs on past both ends, hence the ellipses.
 private const val SENTENCE = "…and especially whenever my hypos get such an upper hand of me, that it requires a strong moral principle " +
     "to prevent me from deliberately stepping into the street, and methodically knocking people's hats off…"
@@ -24,15 +26,5 @@ fun sampleCard(maxExcerptWords: Int, accent: EnglishAccent): CardFields {
     )
 }
 
-fun sampleCardFields(maxExcerptWords: Int, accent: EnglishAccent): Map<String, String> {
-    val card = sampleCard(maxExcerptWords, accent)
-    return mapOf(
-        "Word" to escapeHtml(card.word),
-        "Transcription" to escapeHtml(card.transcription),
-        "Grammar" to escapeHtml(card.grammar),
-        "Excerpt" to card.excerptHtml,
-        "Translation" to escapeHtml(card.translation),
-        "Sentence" to card.sentenceHtml,
-        "Book" to escapeHtml(BOOK),
-    )
-}
+fun sampleCardFields(maxExcerptWords: Int, accent: EnglishAccent): Map<String, String> =
+    noteFields(sampleCard(maxExcerptWords, accent), source = "", bookLine = BOOK, appId = "")

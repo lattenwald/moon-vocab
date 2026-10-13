@@ -1,7 +1,6 @@
 package org.lattenwald.moonvocab.domain.import
 
 import kotlin.test.assertFailsWith
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -9,8 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
-import org.lattenwald.moonvocab.domain.card.CardStatus.DELETED_IN_ANKI
-import org.lattenwald.moonvocab.domain.card.CardStatus.SENT
+import org.lattenwald.moonvocab.domain.card.CheckResult
 
 class AnkiCheckTest : ImportTestBase() {
     @Test fun checkHoldsTheAnkiLock() = runTest {
@@ -19,23 +17,6 @@ class AnkiCheckTest : ImportTestBase() {
         fakeAnki.onRead = { locked = store.isLocked }
         check.check()
         assertTrue(locked)
-    }
-
-    @Test fun editedNoteRefreshesCardAndMissingNoteMarksItDeleted() = runTest {
-        pipeline().run(req(backup(2), send = true), {})
-        assertEquals(0, check.run())
-        val (edited, gone) = db.cards().byStatus(SENT)
-        val noteId = edited.ankiNoteId!!
-        val note = fakeAnki.notes.getValue(noteId)
-        fakeAnki.notes[noteId] = note.copy(fields = note.fields + ("Translation" to "neu &amp; <b>x</b>"), mod = 5)
-        fakeAnki.notes.remove(gone.ankiNoteId)
-
-        assertEquals(2, check.run())
-        val cards = db.cards().observeAll().first().associateBy { it.id }
-        assertEquals("neu & x", cards.getValue(edited.id).translation)
-        assertEquals(5L, cards.getValue(edited.id).ankiMod)
-        assertEquals(DELETED_IN_ANKI, cards.getValue(gone.id).status)
-        assertEquals(gone.ankiNoteId, cards.getValue(gone.id).ankiNoteId)
     }
 
     @Test fun failingReadThrowsFromCheckButNotFromRun() = runTest {
@@ -51,7 +32,7 @@ class AnkiCheckTest : ImportTestBase() {
     }
 
     private var now = T0
-    private val clocked by lazy { AnkiCheck(db, fakeAnki, store, settings) { now } }
+    private val clocked by lazy { AnkiCheck(sync, settings) { now } }
 
     private suspend fun TestScope.sendOne() = pipeline().run(req(backup(1), send = true), {})
 

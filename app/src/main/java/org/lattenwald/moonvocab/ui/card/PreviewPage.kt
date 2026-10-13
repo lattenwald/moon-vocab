@@ -57,7 +57,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
-import org.lattenwald.moonvocab.data.anki.ankiFields
+import org.lattenwald.moonvocab.data.anki.toNote
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.previewHtml
@@ -72,7 +72,7 @@ class PreviewViewModel(cardId: Long?, db: AppDatabase, settings: Settings, io: C
         flow {
             val card = db.cards().byIds(listOf(cardId)).firstOrNull()
             val book = card?.let { db.books().byId(it.bookId) }
-            emit(if (card != null && book != null) card.ankiFields(bookLine(book)) else null)
+            emit(if (card != null && book != null) card.toNote(bookLine(book)) else null)
         }
     }
 

@@ -28,9 +28,9 @@ import org.lattenwald.moonvocab.domain.card.CardExtras
 import org.lattenwald.moonvocab.domain.card.CardField
 import org.lattenwald.moonvocab.domain.card.CardFields
 import org.lattenwald.moonvocab.domain.card.CardStore
+import org.lattenwald.moonvocab.domain.card.NoteSync
 import org.lattenwald.moonvocab.domain.card.with
 import org.lattenwald.moonvocab.domain.cardpage.CardEditState
-import org.lattenwald.moonvocab.domain.cardpage.CardEditor
 import org.lattenwald.moonvocab.domain.cardpage.CardEffect
 import org.lattenwald.moonvocab.domain.cardpage.CardIntent
 import org.lattenwald.moonvocab.domain.cardpage.CardMessage
@@ -44,7 +44,7 @@ import org.lattenwald.moonvocab.work.ImportWork
 class CardPageViewModel(
     private val cardId: Long,
     private val db: AppDatabase,
-    private val editor: CardEditor,
+    private val sync: NoteSync,
     private val sender: CardSender,
     private val store: CardStore,
     private val retranslator: CardRetranslator,
@@ -107,9 +107,9 @@ class CardPageViewModel(
     }
 
     private suspend fun resultOf(effect: CardEffect): CardIntent = when (effect) {
-        is CardEffect.Open -> CardIntent.Opened(editor.open(cardId), effect.after)
-        is CardEffect.SaveLocal -> CardIntent.LocalSaved(editor.saveLocal(cardId, effect.fields, effect.extras), effect.then)
-        is CardEffect.Save -> CardIntent.SaveDone(editor.save(cardId, effect.baseline, effect.fields, effect.extras))
+        is CardEffect.Open -> CardIntent.Opened(sync.open(cardId), effect.after)
+        is CardEffect.SaveLocal -> CardIntent.LocalSaved(store.saveLocal(cardId, effect.fields, effect.extras), effect.then)
+        is CardEffect.Save -> CardIntent.SaveDone(sync.save(cardId, effect.baseline, effect.fields, effect.extras))
         CardEffect.Send -> CardIntent.SendDone(sender.send(listOf(cardId)))
         CardEffect.Discard -> CardIntent.DiscardDone(store.discard(listOf(cardId)).isNotEmpty())
         CardEffect.Restore -> {
@@ -175,7 +175,7 @@ class CardPageViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                CardPageViewModel(cardId, c.db, c.cardEditor, c.sender, c.cards, c.retranslator, c.workManager, c.io, createSavedStateHandle())
+                CardPageViewModel(cardId, c.db, c.noteSync, c.sender, c.cards, c.retranslator, c.workManager, c.io, createSavedStateHandle())
             }
         }
     }

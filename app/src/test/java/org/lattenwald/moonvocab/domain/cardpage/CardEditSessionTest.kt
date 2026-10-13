@@ -9,6 +9,8 @@ import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.domain.card.CardExtras
 import org.lattenwald.moonvocab.domain.card.CardField
 import org.lattenwald.moonvocab.domain.card.CardStatus
+import org.lattenwald.moonvocab.domain.card.OpenResult
+import org.lattenwald.moonvocab.domain.card.SaveResult
 import org.lattenwald.moonvocab.domain.card.cardFields
 
 private fun card(status: CardStatus) = CardEntity(

@@ -46,6 +46,11 @@ class CardStore(private val db: AppDatabase) {
         discarded.size
     }
 
+    suspend fun saveLocal(cardId: Long, edited: CardFields, extras: CardExtras?): CardEntity? = transaction {
+        val card = db.cards().byIds(listOf(cardId)).singleOrNull()?.takeIf { it.status == CardStatus.PENDING }
+        card?.withFields(edited, extras)?.also { dao.update(it) }
+    }
+
     suspend fun forgetForRetranslation(ids: List<Long>): Int = transaction { forget(db.cards().byIds(ids)) }
 
     suspend fun forgetFailed(): Int = transaction { forget(db.cards().byStatus(CardStatus.FAILED)) }

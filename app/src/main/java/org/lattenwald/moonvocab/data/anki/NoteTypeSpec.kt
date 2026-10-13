@@ -5,13 +5,10 @@ object NoteTypeSpec {
     const val VERSION = 2
     const val CARD_NAME = "Recall"
 
-    val FIELDS = listOf("Word", "Transcription", "Grammar", "Excerpt", "Translation", "Meaning", "Sentence", "Book", "Source", "AppId")
+    val FIELDS = NoteField.entries.map { it.noteName }
 
     // Appended to older note types; left out of notes whose type lacks them.
-    val OPTIONAL_FIELDS = setOf("Transcription")
-
-    val STORED_FIELDS = listOf("Word", "Transcription", "Grammar", "Excerpt", "Translation", "Meaning", "Sentence", "Source")
-    val HTML_FIELDS = setOf("Excerpt", "Sentence")
+    val OPTIONAL_FIELDS = NoteField.entries.filter { it.optional }.mapTo(mutableSetOf()) { it.noteName }
 
     const val FRONT = """<div class="word">{{Word}}</div>{{#Transcription}}<div class="ipa">/{{Transcription}}/</div>{{/Transcription}}""" +
         """<div class="gram">{{Grammar}}</div><div class="ex">{{Excerpt}}</div>"""

@@ -4,7 +4,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.anki.NoteTypeChanged
-import org.lattenwald.moonvocab.data.anki.ankiFields
+import org.lattenwald.moonvocab.data.anki.toNote
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.BookEntity
 import org.lattenwald.moonvocab.data.settings.Settings
@@ -81,7 +81,7 @@ class CardSender(
                     val book = books.getOrPut(card.bookId) { checkNotNull(db.books().byId(card.bookId)) { "no book ${card.bookId}" } }
                     val deck = deckName(s.deckPattern, card.sourceLanguage, s.deckOverride)
                     val deckId = decks.getOrPut(deck) { anki.ensureDeck(deck) }
-                    anki.add(mid, deckId, card.ankiFields(bookLine(book)), bookTags(s.tagPattern, book.title))
+                    anki.add(mid, deckId, card.toNote(bookLine(book)), bookTags(s.tagPattern, book.title))
                 }
                 save(card.sent(noteId, clock()))
                 sentIds += card.id
