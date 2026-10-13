@@ -1,6 +1,6 @@
 ---
 id: mv-6z5t
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-10-12T08:26:11Z
@@ -13,3 +13,9 @@ tags: [ui, library]
 
 ui/library/BookPage.kt:166 shows card_no_translation for a card without a translation, including FAILED cards. The Inbox shows inbox_label_failed for those; match it.
 
+
+## Notes
+
+**2026-10-13T09:28:45Z**
+
+Fixed: BookPage shows inbox_label_failed for failed cards.

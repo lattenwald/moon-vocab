@@ -151,7 +151,9 @@ private fun CardText(card: InboxCard, deletedInAnki: Boolean) {
         )
         WordNote(card.transcription, card.grammar, Modifier.alignByBaseline())
     }
-    if (card.translation.isBlank()) {
+    if (card.failed) {
+        Text(stringResource(R.string.inbox_label_failed), color = colors.error, fontSize = 13.5.sp, lineHeight = 19.sp)
+    } else if (card.translation.isBlank()) {
         Text(stringResource(R.string.card_no_translation), color = colors.error, fontSize = 13.5.sp, lineHeight = 19.sp)
     } else {
         Text(card.translation, color = colors.onSurfaceVariant, fontSize = 13.5.sp, lineHeight = 19.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
