@@ -26,13 +26,15 @@ class ImportWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx
             Log.w(TAG, "import runs without a foreground notification", e)
         }
         return try {
+            val progress = { p: ImportProgress ->
+                setProgressAsync(ImportWork.progress(p))
+                setForegroundAsync(foregroundInfo(p))
+                Unit
+            }
             val summary = if (ImportWork.isRetry(inputData)) {
-                pipeline.retryFailed()
+                pipeline.retryFailed(progress)
             } else {
-                pipeline.run(ImportWork.request(inputData)) { p ->
-                    setProgressAsync(ImportWork.progress(p))
-                    setForegroundAsync(foregroundInfo(p))
-                }
+                pipeline.run(ImportWork.request(inputData), progress)
             }
             Result.success(ImportWork.output(summary))
         } catch (e: CancellationException) {

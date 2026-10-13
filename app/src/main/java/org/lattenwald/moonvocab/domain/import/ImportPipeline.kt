@@ -101,6 +101,7 @@ class ImportPipeline(
         var sent = 0
         var sendError: String? = null
         var stopped: LlmException.Stop.Kind? = null
+        todo.firstOrNull()?.let { progress(ImportProgress(0, todo.size, run.book(it.bookId).title)) }
         for (batch in todo.chunked(BATCH_SIZE)) {
             val prepared = batch.map { run.prepare(it) }
             val ready = prepared.filter { it.error == null }
@@ -157,10 +158,10 @@ class ImportPipeline(
         return ImportSummary(newCards, failed, alreadyCard, skippedDiscarded, senseFailed, sent, incomplete, stopped, sendError)
     }
 
-    suspend fun retryFailed(): ImportSummary {
+    suspend fun retryFailed(progress: (ImportProgress) -> Unit): ImportSummary {
         val failed = db.cards().byStatus(CardStatus.FAILED).map { it.id }
         if (failed.isNotEmpty()) db.cards().delete(failed) // mark.cardId is ON DELETE SET NULL
-        return run(ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false)) {}
+        return run(ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false), progress)
     }
 
     private suspend fun store(marks: List<RawMark>, request: ImportRequest) {

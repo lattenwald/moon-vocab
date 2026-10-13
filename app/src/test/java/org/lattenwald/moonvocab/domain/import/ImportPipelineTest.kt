@@ -86,10 +86,12 @@ class ImportPipelineTest : ImportTestBase() {
 
     @Test fun retryFailedTranslatesFailedMarksAgain() = runTest {
         pipeline(translate = { _, _, _, _ -> throw LlmException.Failed("503") }).run(req(backup(3)), {})
-        val s = pipeline().retryFailed()
+        val progress = mutableListOf<ImportProgress>()
+        val s = pipeline().retryFailed { progress += it }
         assertEquals(3, s.newCards)
         assertTrue(db.cards().byStatus(FAILED).isEmpty())
         assertEquals(3, db.cards().byStatus(PENDING).size)
+        assertEquals(listOf(ImportProgress(0, 3, TITLE), ImportProgress(3, 3, TITLE)), progress)
     }
 
     @Test fun eachBookIsReadOnce() = runTest {
