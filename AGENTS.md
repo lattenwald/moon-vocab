@@ -34,3 +34,17 @@ Design source of truth: `docs/superpowers/specs/2026-10-11-moon-vocab-design.md`
 - **Wrap Gradle and `adb` commands in `timeout --signal=KILL <secs>`** (540 s for Gradle runs, 120 s for `adb`) and set the Bash tool timeout slightly higher. Backgrounded Gradle: `--console=plain`, no `tail`.
 - **Robolectric on the JDK 25 toolchain needs `--add-exports=java.base/jdk.internal.access=ALL-UNNAMED`** as a test jvmArg (already in `app/build.gradle.kts` `testOptions`). Without it every Robolectric test fails with "Failed to interact with raw FileDescriptor internals".
 - **A string resource whose value starts or ends with a space must be double-quoted** (`<string name="unit_suffix">" ml"</string>`); AAPT trims unquoted edge whitespace silently and no lint check catches it. Prefer positional format strings (`%1$s and %2$s`) over space-carrying values.
+
+## Agent skills
+
+### Issue tracker
+
+Tickets live in `.tickets/` and are managed with the `tk` CLI, not GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage roles are tk tags, each paired with a tk status. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context. Decisions go in `docs/DECISIONS.md`, not ADR files. See `docs/agents/domain.md`.
