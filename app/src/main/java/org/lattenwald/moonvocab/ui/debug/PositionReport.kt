@@ -3,7 +3,6 @@ package org.lattenwald.moonvocab.ui.debug
 import java.io.File
 import java.io.OutputStream
 import java.time.LocalDate
-import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.serialization.json.Json
@@ -24,7 +23,6 @@ import org.lattenwald.moonvocab.domain.text.BookSentences
 import org.lattenwald.moonvocab.domain.text.Lookup
 import org.lattenwald.moonvocab.domain.text.PositionCheck
 import org.lattenwald.moonvocab.domain.text.SentenceResult
-import org.lattenwald.moonvocab.domain.text.Via
 import org.lattenwald.moonvocab.domain.text.checkPosition
 
 private val reportJson = Json { prettyPrint = true }
@@ -89,14 +87,18 @@ fun writePositionReport(
 
 private fun parts(text: BookText): List<List<String>> = text.moon?.parts ?: text.chapters.map { listOf(it) }
 
-private data class Check(val mark: RawMark, val position: PositionCheck, val lookup: Lookup)
+private data class Check(val mark: RawMark, val position: PositionCheck, val lookup: Lookup?, val lookupError: String?)
 
 private fun checks(text: BookText, marks: List<RawMark>): List<Check> {
     val sentences = BookSentences(text, marks.map { it.place })
-    val locale = text.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
+    val parts = parts(text)
     return marks.map { mark ->
-        val position = checkPosition(parts(text), sentences.part(mark.place), mark.position, mark.text)
-        Check(mark, position, sentences.find(mark.place, locale))
+        val position = checkPosition(parts, sentences.part(mark.place), mark.position, mark.text)
+        try {
+            Check(mark, position, sentences.find(mark.place, text.language), null)
+        } catch (e: Exception) {
+            Check(mark, position, null, e.message ?: e.javaClass.name)
+        }
     }
 }
 
@@ -115,7 +117,6 @@ private fun bookJson(
     if (text == null || checks == null) return@buildJsonObject
     put("exact", checks.count { it.position.exact })
     put("reanchored", checks.count { !it.position.exact && it.position.shownAt != null })
-    put("byAnchors", checks.count { it.lookup.via == Via.ANCHORS })
     put("moonText", text.moon != null)
     putJsonArray("chapters") {
         for (splits in parts(text)) addJsonArray {
@@ -126,7 +127,7 @@ private fun bookJson(
         }
     }
     putJsonArray("misses") {
-        for ((mark, check, lookup) in checks) if (!check.exact) addJsonObject {
+        for ((mark, check, lookup, lookupError) in checks) if (!check.exact) addJsonObject {
             put("chapter", mark.chapter)
             put("split", mark.split)
             put("position", mark.position)
@@ -143,8 +144,9 @@ private fun bookJson(
                     add(o.position)
                 }
             }
-            put("via", lookup.via?.name)
-            put("sentence", (lookup.sentence as? SentenceResult.Found)?.sentence)
+            put("via", lookup?.via?.name)
+            put("sentence", (lookup?.sentence as? SentenceResult.Found)?.sentence)
+            put("lookupError", lookupError)
         }
     }
 }

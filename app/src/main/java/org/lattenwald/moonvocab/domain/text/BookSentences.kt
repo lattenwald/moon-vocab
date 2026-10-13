@@ -9,10 +9,11 @@ enum class Via { AT_POSITION, MOVED, ANCHORS }
 
 data class Lookup(val sentence: SentenceResult, val via: Via?)
 
-class BookSentences(private val text: BookText, private val notes: List<MarkPlace>) {
+class BookSentences(private val text: BookText, private val marks: List<MarkPlace>) {
     fun part(mark: MarkPlace): String? = text.moon?.part(mark.chapter, mark.split, mark.markedAt)
 
-    fun find(mark: MarkPlace, locale: Locale): Lookup {
+    fun find(mark: MarkPlace, language: String?): Lookup {
+        val locale = language?.let(Locale::forLanguageTag) ?: Locale.ROOT
         val part = part(mark)
         val start = part?.let { moonNoteStart(it, mark.position, mark.text) }
         if (part != null && start != null) {
@@ -27,7 +28,7 @@ class BookSentences(private val text: BookText, private val notes: List<MarkPlac
     private inner class Anchors(val parts: List<String>, val index: (MarkPlace) -> Int?, proven: Boolean) {
         val locator = MarkLocator(
             parts.map(::normalize),
-            notes.mapNotNull { n -> index(n)?.let { NoteRef(it, n.position, n.text) } },
+            marks.mapNotNull { m -> index(m)?.let { NoteRef(it, m.position, m.text) } },
             chaptersMatchMoonReader = proven,
         )
     }
@@ -37,8 +38,9 @@ class BookSentences(private val text: BookText, private val notes: List<MarkPlac
         if (moon == null) {
             Anchors(text.chapters, { m -> m.chapter.takeIf { m.split == 0 && it in text.chapters.indices } }, proven = false)
         } else {
-            val first = moon.runningFold(0) { at, splits -> at + splits.size }
-            Anchors(moon.flatten(), { m -> moon.getOrNull(m.chapter)?.takeIf { m.split in it.indices }?.let { first[m.chapter] + m.split } }, proven = true)
+            val firstIndex = moon.runningFold(0) { at, splits -> at + splits.size }
+            val index = { m: MarkPlace -> moon.getOrNull(m.chapter)?.takeIf { m.split in it.indices }?.let { firstIndex[m.chapter] + m.split } }
+            Anchors(moon.flatten(), index, proven = true)
         }
     }
 }

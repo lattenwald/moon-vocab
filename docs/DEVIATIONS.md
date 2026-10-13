@@ -4,8 +4,8 @@ Departures from the spec or a plan: what the plan said, what was done instead, a
 
 ## 2026-10-13: The anchor search runs over the Moon+ parts, and FB2 chapter numbers aren't taken as proven
 
-- Spec said (§5.2): `SentenceFinder.find(book, mark)` searches every chapter of `EpubText`/`Fb2Text`; FB2 chapter numbers are proven unless an anchor contradicts them.
-- Actual: `BookSentences.find(mark, locale)` searches the Moon+ parts in reading order, one per chapter and split, and takes their numbers as proven. Only a book without Moon+ text is searched by `EpubText`/`Fb2Text` chapters, and then no chapter numbers are proven without anchors, FB2 included.
+- Plan said: spec §5.2, `SentenceFinder.find(book, mark)` searches every chapter of `EpubText`/`Fb2Text`; FB2 chapter numbers are proven unless an anchor contradicts them.
+- Actual: `BookSentences.find(mark, language)` searches the Moon+ parts in reading order, one per chapter and split, and takes their numbers as proven. Only a book without Moon+ text is searched by `EpubText`/`Fb2Text` chapters, and then no chapter numbers are proven without anchors, FB2 included. A mark whose chapter and split name no part, or with a split other than 0 in a book without Moon+ text, is neither an anchor nor placed by anchors: it gets a sentence only if its text occurs once.
 - Reason: Moon+ positions count within a split, which whole chapters don't have. `Fb2Text` makes every section a chapter, while Moon+ merges a section without a `<title>` into the one before, so its numbers can be shifted.
 
 ## 2026-10-12: Setup names the active service, and its folder step shows no book count

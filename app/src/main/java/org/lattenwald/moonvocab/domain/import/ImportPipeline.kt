@@ -2,7 +2,6 @@ package org.lattenwald.moonvocab.domain.import
 
 import android.util.Log
 import java.io.File
-import java.util.Locale
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -280,6 +279,8 @@ class ImportPipeline(
         previousStatus = null, ankiNoteId = null, ankiMod = null, sentAt = null, error = error,
     )
 
+    private val MarkEntity.place get() = MarkPlace(chapter, split, position, markedAt, text)
+
     private class Prepared(val mark: MarkEntity, val sentence: SentenceResult, val item: TranslationItem, val error: String? = null)
 
     private class Built(val prepared: Prepared, val card: CardEntity, val focus: String?)
@@ -311,9 +312,7 @@ class ImportPipeline(
             val book = book(mark.bookId)
             fun item(sentence: String?) = TranslationItem(mark.id.toString(), mark.text, sentence, book.title, book.language)
             return try {
-                val locale = book.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
-                val place = MarkPlace(mark.chapter, mark.split, mark.position, mark.markedAt, mark.text)
-                val sentence = sentences?.let { withContext(io) { it.find(place, locale) }.sentence } ?: SentenceResult.NotFound
+                val sentence = sentences?.let { withContext(io) { it.find(mark.place, book.language) }.sentence } ?: SentenceResult.NotFound
                 Prepared(mark, sentence, item((sentence as? SentenceResult.Found)?.let { normalize(it.sentence).text }))
             } catch (e: CancellationException) {
                 throw e

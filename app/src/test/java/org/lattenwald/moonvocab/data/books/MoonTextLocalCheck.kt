@@ -9,8 +9,6 @@ import kotlinx.serialization.json.long
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.lattenwald.moonvocab.domain.text.BookSentences
-import org.lattenwald.moonvocab.domain.text.MarkPlace
 import org.lattenwald.moonvocab.domain.text.moonNoteStart
 import org.robolectric.RobolectricTestRunner
 
@@ -29,7 +27,6 @@ class MoonTextLocalCheck {
             val format = path.substringAfterLast('.').lowercase().let { if (path.lowercase().endsWith(".fb2.zip")) "fb2" else it }
             val t = totals.getOrPut(format) { IntArray(4) } // notes, exact, shown, no moon text
             val book = readBookText(File(path), File(path).name)
-            val sentences = book?.let { BookSentences(it, emptyList()) }
             var bookExact = 0
             val lines = StringBuilder()
             for (n in ns) {
@@ -43,7 +40,7 @@ class MoonTextLocalCheck {
                     t[3]++
                     continue
                 }
-                val part = sentences?.part(MarkPlace(c, s, p, n.getValue("time").jsonPrimitive.long, w))
+                val part = moon.part(c, s, n.getValue("time").jsonPrimitive.long)
                 if (part != null && part.startsWith(w, p)) {
                     t[1]++
                     t[2]++

@@ -42,7 +42,7 @@
 - A mark's sentence comes first from the Moon+ text port (`MoonEpub`, `MoonFb2`, `MoonMobi`, `moonText`): the part `chapter`/`split`, at `position` or the nearest occurrence within 200 characters. The anchor search runs only when that fails.
 - `BookSentences` finds a mark's sentence for both the import and the position report.
 - The anchor search runs over the Moon+ parts in reading order, the plain ones, whose chapter and split numbers count as proven. A book without Moon+ text is searched by its own chapters, whose numbers only anchors prove.
-- A mark whose chapter and split name no part gets a sentence only if its text occurs once in the book.
+- A mark whose chapter and split name no part, or with a split other than 0 in a book without Moon+ text, gets a sentence only if its text occurs once in the book, and is no anchor.
 - The Moon+ text port uses the user's Moon+ settings: trimBlankSpace off, indentParagraph on, maxHtmlChapterSize5 100000, CSS margins applied.
 - EPUB page labels ("Page N ") count only for marks made at or after 1 700 000 000 000 ms.
 - Block images: EPUB when width × 2.75 (capped at 1000) exceeds 1000/3; FB2 when the larger side is at least 30 px.
@@ -299,7 +299,7 @@
 - The Advanced page holds only what the rest of the app can't do, in Settings-style groups. Testing: Send to test deck, Delete every note this build created, Forget unsent cards. Reports: Export cards, Export position report.
 - Delete and Forget ask first and are drawn in the error colour. Each action shows its result, or its error, in its own row. Actions are off while one runs or an import runs.
 - Export cards writes JSON (no settings or keys). Forget unsent cards deletes PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
-- Export position report finds the newest complete backup itself, then writes a zip: `report.json` (every note of that backup checked at its saved chapter and position, misses with the text there, its occurrences, and how the sentence lookup finds it now and its sentence), the backup, and every book with a miss or unreadable text. With no backups folder or no complete backup, it deletes the file the picker made.
+- Export position report finds the newest complete backup itself, then writes a zip: `report.json` (every note of that backup checked at its saved chapter and position, misses with the text there, its occurrences, and how the sentence lookup finds it now and its sentence; in a book without Moon+ text every note is a miss), the backup, and every book with a miss or unreadable text. With no backups folder or no complete backup, it deletes the file the picker made.
 - While it runs, its row shows a progress bar, "Book N of M" with the title, and a line saying the zip is incomplete until the result shows.
 
 ## UI

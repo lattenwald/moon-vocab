@@ -1,6 +1,5 @@
 package org.lattenwald.moonvocab.domain.text
 
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.lattenwald.moonvocab.data.books.BookText
@@ -10,7 +9,7 @@ class BookSentencesTest {
     private fun moonBook(vararg splits: String, labelled: List<String> = splits.toList()) =
         BookText(null, null, null, chapters = listOf(splits.joinToString("\n")), moon = MoonChapters(listOf(splits.toList()), listOf(labelled)))
 
-    private fun find(text: BookText, mark: MarkPlace, notes: List<MarkPlace> = emptyList()) = BookSentences(text, notes).find(mark, Locale.ROOT)
+    private fun find(text: BookText, mark: MarkPlace, marks: List<MarkPlace> = emptyList()) = BookSentences(text, marks).find(mark, null)
 
     private fun mark(chapter: Int, split: Int, position: Int, text: String, markedAt: Long = 0L) = MarkPlace(chapter, split, position, markedAt, text)
 
@@ -37,14 +36,22 @@ class BookSentencesTest {
         assertEquals("A gr­im two stood by the door.", lookup.found)
     }
 
-    @Test fun aNoteInTheNextSplitPlacesARepeatedWord() {
+    @Test fun theSplitPicksThePart() {
+        val book = moonBook("A grim one stood by the door.", "A grim two stood by the door.")
+        val lookup = find(book, mark(0, 1, 2, "grim"))
+        assertEquals(Via.AT_POSITION, lookup.via)
+        assertEquals("A grim two stood by the door.", lookup.found)
+    }
+
+    @Test fun aMarkInTheNextSplitPlacesARepeatedWord() {
         val book = moonBook("Alpha. A grim one stood by the door.", "Delta. A grim two stood by the door.")
-        val lookup = find(book, mark(0, 0, 500, "grim"), notes = listOf(mark(0, 1, 0, "Delta")))
+        val lookup = find(book, mark(0, 0, 500, "grim"), marks = listOf(mark(0, 1, 0, "Delta")))
         assertEquals("A grim one stood by the door.", lookup.found)
     }
 
-    @Test fun withoutMoonTextChapterNumbersAreNotTrusted() {
-        val book = BookText(null, null, null, listOf("A grim one stood by the door.", "A grim two stood by the door."))
+    @Test fun withoutMoonTextTheChaptersAreSearchedButTheirNumbersNotTrusted() {
+        val book = BookText(null, null, null, listOf("A grim one stood by the door.", "A grim two stood by the old gate."))
+        assertEquals("A grim two stood by the old gate.", find(book, mark(1, 0, 2, "gate")).found)
         assertEquals(Lookup(SentenceResult.NotFound, null), find(book, mark(1, 0, 2, "grim")))
     }
 
