@@ -16,6 +16,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import org.lattenwald.moonvocab.data.books.BookCopy
 import org.lattenwald.moonvocab.data.books.BookText
+import org.lattenwald.moonvocab.data.books.parts
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.fileKey
 import org.lattenwald.moonvocab.domain.mark.place
@@ -85,19 +86,20 @@ fun writePositionReport(
     return PositionReportSummary(notes, exact)
 }
 
-private fun parts(text: BookText): List<List<String>> = text.moon?.parts ?: text.chapters.map { listOf(it) }
-
-private data class Check(val mark: RawMark, val position: PositionCheck, val lookup: Lookup?, val lookupError: String?)
+private data class Check(val mark: RawMark, val position: PositionCheck, val lookup: Lookup? = null, val lookupError: String? = null)
 
 private fun checks(text: BookText, marks: List<RawMark>): List<Check> {
     val sentences = BookSentences(text, marks.map { it.place })
-    val parts = parts(text)
+    val parts = text.parts
     return marks.map { mark ->
         val position = checkPosition(parts, sentences.part(mark.place), mark.position, mark.text)
-        try {
-            Check(mark, position, sentences.find(mark.place, text.language), null)
-        } catch (e: Exception) {
-            Check(mark, position, null, e.message ?: e.javaClass.name)
+        when {
+            position.exact -> Check(mark, position)
+            else -> try {
+                Check(mark, position, sentences.find(mark.place, text.language))
+            } catch (e: Exception) {
+                Check(mark, position, lookupError = e.message ?: e.javaClass.name)
+            }
         }
     }
 }
@@ -119,7 +121,7 @@ private fun bookJson(
     put("reanchored", checks.count { !it.position.exact && it.position.shownAt != null })
     put("moonText", text.moon != null)
     putJsonArray("chapters") {
-        for (splits in parts(text)) addJsonArray {
+        for (splits in text.parts) addJsonArray {
             for (part in splits) addJsonObject {
                 put("length", part.length)
                 put("start", part.take(CHAPTER_HEAD))

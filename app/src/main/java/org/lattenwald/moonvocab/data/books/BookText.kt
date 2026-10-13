@@ -13,6 +13,8 @@ data class BookText(
     val moon: MoonChapters? = null,
 )
 
+val BookText.parts: List<List<String>> get() = moon?.parts ?: chapters.map(::listOf)
+
 class MoonChapters(private val plain: List<List<String>>, private val labelled: List<List<String>> = plain) {
     fun part(chapter: Int, split: Int, markedAt: Long): String? =
         (if (markedAt >= PAGE_LABELS_SINCE) labelled else plain).getOrNull(chapter)?.getOrNull(split)
