@@ -202,6 +202,7 @@ private fun DebugContent(contentPadding: PaddingValues, vm: DebugViewModel) {
                 Text(stringResource(R.string.debug_position_report))
             }
         }
+        state.reportProgress?.let { p -> item { ReportProgress(p) } }
         if (state.notice !is Notice.Checked && state.notice != null) item { NoticeText(state.notice) }
         item {
             Text(
@@ -441,6 +442,20 @@ private fun BookChoice(state: DebugState, onSelect: (String?) -> Unit, onSend: (
             Text(stringResource(R.string.debug_send_after), modifier = Modifier.weight(1f))
             Switch(checked = state.sendToAnki, onCheckedChange = onSend)
         }
+    }
+}
+
+@Composable
+private fun ReportProgress(p: PositionReportProgress) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        LinearProgressIndicator(progress = { if (p.total == 0) 0f else p.done.toFloat() / p.total }, modifier = Modifier.fillMaxWidth())
+        if (p.bookTitle == null) {
+            Text(stringResource(R.string.debug_report_backup))
+        } else {
+            Text(pluralStringResource(R.plurals.debug_report_books, p.total, p.done + 1, p.total))
+            Text(stringResource(R.string.debug_import_book, p.bookTitle))
+        }
+        Text(stringResource(R.string.debug_report_keep_open), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

@@ -72,6 +72,7 @@ data class DebugState(
     val importState: ImportState = ImportState(),
     val cards: List<CardEntity> = emptyList(),
     val busy: Boolean = false,
+    val reportProgress: PositionReportProgress? = null,
     val notice: Notice? = null,
 )
 
@@ -97,6 +98,7 @@ class DebugViewModel(
         val book: String? = null,
         val sendToAnki: Boolean = false,
         val busy: Boolean = false,
+        val reportProgress: PositionReportProgress? = null,
         val notice: Notice? = null,
     )
 
@@ -124,6 +126,7 @@ class DebugViewModel(
             importState = ImportWork.state(infos.firstOrNull()),
             cards = cards,
             busy = l.busy,
+            reportProgress = l.reportProgress,
             notice = l.notice,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DebugState())
@@ -196,12 +199,18 @@ class DebugViewModel(
     fun exportPositionReport(uri: Uri) = whileBusy {
         val backup = checkNotNull(local.value.picked) { "no backup" }
         val source = bookSource()
-        val summary = withContext(io) {
-            val sentences = db.cards().observeAll().first().associate { it.id to it.sentenceHtml }
-            val cardSentences = db.marks().all().mapNotNull { m -> m.cardId?.let(sentences::get)?.let { m.key to it } }.toMap()
-            checkNotNull(resolver.openOutputStream(uri)) { "cannot open $uri" }.use { out ->
-                writePositionReport(out, appVersion, backup.file, backup.marks, cardSentences, source::copy, source::read)
+        val summary = try {
+            withContext(io) {
+                val sentences = db.cards().observeAll().first().associate { it.id to it.sentenceHtml }
+                val cardSentences = db.marks().all().mapNotNull { m -> m.cardId?.let(sentences::get)?.let { m.key to it } }.toMap()
+                checkNotNull(resolver.openOutputStream(uri)) { "cannot open $uri" }.use { out ->
+                    writePositionReport(out, appVersion, backup.file, backup.marks, cardSentences, source::copy, source::read) { p ->
+                        local.update { it.copy(reportProgress = p) }
+                    }
+                }
             }
+        } finally {
+            local.update { it.copy(reportProgress = null) }
         }
         Notice.PositionsReported(summary)
     }

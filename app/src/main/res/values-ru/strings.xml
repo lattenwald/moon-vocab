@@ -401,6 +401,14 @@
         <item quantity="many">%1$d из %2$d заметок на своих местах</item>
         <item quantity="other">%1$d из %2$d заметки на своих местах</item>
     </plurals>
+    <string name="debug_report_backup">Копируется бэкап</string>
+    <plurals name="debug_report_books">
+        <item quantity="one">Книга %1$d из %2$d</item>
+        <item quantity="few">Книга %1$d из %2$d</item>
+        <item quantity="many">Книга %1$d из %2$d</item>
+        <item quantity="other">Книга %1$d из %2$d</item>
+    </plurals>
+    <string name="debug_report_keep_open">Не закрывайте страницу, пока не появится результат. До этого zip неполный.</string>
     <string name="debug_forget_unsent">Забыть неотправленные карточки</string>
     <string name="debug_forget_title">Забыть неотправленные карточки?</string>
     <string name="debug_forget_text">Будут удалены все ожидающие и непереведённые карточки, которых нет в AnkiDroid, и все карточки, чьи записи удалены в AnkiDroid. Следующий импорт заново переведёт их пометки.</string>

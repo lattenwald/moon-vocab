@@ -25,6 +25,8 @@ private val reportJson = Json { prettyPrint = true }
 
 data class PositionReportSummary(val notes: Int, val exact: Int)
 
+data class PositionReportProgress(val done: Int, val total: Int, val bookTitle: String?)
+
 fun positionReportName(today: LocalDate): String = "moon-vocab-positions-$today.zip"
 
 fun writePositionReport(
@@ -35,15 +37,19 @@ fun writePositionReport(
     cardSentences: Map<String, String>,
     copy: (String) -> BookCopy?,
     read: (BookCopy) -> BookText?,
+    onProgress: (PositionReportProgress) -> Unit = {},
 ): PositionReportSummary {
     var notes = 0
     var exact = 0
     val books = mutableListOf<JsonObject>()
+    val byBook = marks.groupBy { it.fileKey }.values
     ZipOutputStream(out).use { zip ->
+        onProgress(PositionReportProgress(0, byBook.size, null))
         zip.putNextEntry(ZipEntry("backup/${backup.name}"))
         backup.inputStream().use { it.copyTo(zip) }
         zip.closeEntry()
-        for (bookMarks in marks.groupBy { it.fileKey }.values) {
+        for ((i, bookMarks) in byBook.withIndex()) {
+            onProgress(PositionReportProgress(i, byBook.size, bookMarks.first().bookTitle))
             val bookPath = bookMarks.first().bookPath
             val bookCopy = copy(bookPath)
             try {

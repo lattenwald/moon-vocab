@@ -338,6 +338,12 @@
         <item quantity="one">%1$d of %2$d note at its saved place</item>
         <item quantity="other">%1$d of %2$d notes at their saved places</item>
     </plurals>
+    <string name="debug_report_backup">Copying the backup</string>
+    <plurals name="debug_report_books">
+        <item quantity="one">Book %1$d of %2$d</item>
+        <item quantity="other">Book %1$d of %2$d</item>
+    </plurals>
+    <string name="debug_report_keep_open">Keep this page open until the result shows. The zip is incomplete until then.</string>
     <string name="debug_forget_unsent">Forget unsent cards</string>
     <string name="debug_forget_title">Forget unsent cards?</string>
     <string name="debug_forget_text">This deletes every pending and failed card that is not in AnkiDroid, and every card whose note was deleted in AnkiDroid. The next import translates their marks again.</string>

@@ -34,6 +34,7 @@ class PositionReportTest {
             mark("lost.epub", 0, 0, "x"),
         )
         val out = ByteArrayOutputStream()
+        val progress = mutableListOf<PositionReportProgress>()
         val summary = writePositionReport(
             out, "0.1.0 (68)", backup, marks, mapOf("bad.epub-0" to "<b>sentence</b>"),
             copy = { path ->
@@ -41,9 +42,19 @@ class PositionReportTest {
                 if (name == "lost.epub") null else BookCopy("Books/$name", tmp.newFile(name).apply { writeText(name) })
             },
             read = { copy -> texts.getValue(copy.file.name)?.let { BookText(null, null, null, it) } },
+            onProgress = { progress += it },
         )
 
         assertEquals(PositionReportSummary(notes = 4, exact = 2), summary)
+        assertEquals(
+            listOf(
+                PositionReportProgress(0, 3, null),
+                PositionReportProgress(0, 3, "good.epub"),
+                PositionReportProgress(1, 3, "bad.epub"),
+                PositionReportProgress(2, 3, "lost.epub"),
+            ),
+            progress,
+        )
         val entries = unzip(out.toByteArray())
         assertEquals(setOf("backup/b.mrpro", "books/Books/bad.epub", "report.json"), entries.keys)
         val books = Json.parseToJsonElement(entries.getValue("report.json")).jsonObject.getValue("books").jsonArray
