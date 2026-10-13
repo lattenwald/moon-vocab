@@ -51,7 +51,7 @@ class CardSenderTest : ImportTestBase() {
 
     @Test fun deleteAllCreatedRemovesNotesAndResetsCards() = runTest {
         pipeline().run(req(backup(2), send = true), {})
-        assertEquals(2, sender.deleteAllCreated())
+        assertEquals(DeleteAllResult.Deleted(2), sender.deleteAllCreated())
         assertTrue(fakeAnki.notes.isEmpty())
         val cards = db.cards().byStatus(PENDING)
         assertEquals(2, cards.size)
@@ -62,9 +62,16 @@ class CardSenderTest : ImportTestBase() {
         pipeline().run(req(backup(2), send = true), {})
         val (kept, deleted) = db.cards().byStatus(SENT)
         fakeAnki.notes.remove(kept.ankiNoteId)
-        assertEquals(1, sender.deleteAllCreated())
+        assertEquals(DeleteAllResult.Deleted(1), sender.deleteAllCreated())
         assertEquals(listOf(kept), db.cards().byStatus(SENT))
         assertEquals(listOf(deleted.id), db.cards().byStatus(PENDING).map { it.id })
+    }
+
+    @Test fun deleteAllCreatedChangesNothingWhileAnkiDroidIsUnavailable() = runTest {
+        pipeline().run(req(backup(2), send = true), {})
+        fakeAnki.availability = AnkiAvailability.NO_PERMISSION
+        assertEquals(DeleteAllResult.Unavailable(AnkiAvailability.NO_PERMISSION), sender.deleteAllCreated())
+        assertEquals(2, db.cards().byStatus(SENT).size)
     }
 
     @Test fun gatewayFailurePartwayStopsAndLeavesRestPending() = runTest {

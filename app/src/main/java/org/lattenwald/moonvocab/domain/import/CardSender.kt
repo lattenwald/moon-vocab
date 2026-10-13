@@ -38,6 +38,11 @@ sealed interface DeleteResult {
     data class Failed(val message: String) : DeleteResult
 }
 
+sealed interface DeleteAllResult {
+    data class Deleted(val notes: Int) : DeleteAllResult
+    data class Unavailable(val availability: AnkiAvailability) : DeleteAllResult
+}
+
 class CardSender(
     private val db: AppDatabase,
     private val anki: AnkiGateway,
@@ -49,7 +54,7 @@ class CardSender(
 
     suspend fun send(cardIds: List<Long>): SendResult = store.locked { it.sendLocked(cardIds) }
 
-    suspend fun deleteAllCreated(): Int = store.locked { it.deleteAllCreatedLocked() }
+    suspend fun deleteAllCreated(): DeleteAllResult = store.locked { it.deleteAllCreatedLocked() }
 
     suspend fun undoSend(cardIds: List<Long>): UndoResult = store.locked { it.undoSendLocked(cardIds) }
 
@@ -137,15 +142,16 @@ class CardSender(
         return DeleteResult.Deleted
     }
 
-    private suspend fun CardWrites.deleteAllCreatedLocked(): Int {
-        if (anki.availability() != AnkiAvailability.READY) return 0
+    private suspend fun CardWrites.deleteAllCreatedLocked(): DeleteAllResult {
+        val availability = anki.availability()
+        if (availability != AnkiAvailability.READY) return DeleteAllResult.Unavailable(availability)
         var deleted = 0
         for (card in db.cards().withNoteIds()) {
             if (!anki.delete(checkNotNull(card.ankiNoteId))) continue
             deleted++
             save(card.noteDeleted())
         }
-        return deleted
+        return DeleteAllResult.Deleted(deleted)
     }
 }
 

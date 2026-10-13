@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import org.lattenwald.moonvocab.R
+import org.lattenwald.moonvocab.ui.common.problemText
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
 import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
@@ -205,6 +206,7 @@ private fun ReportProgress(step: ReportStep) {
 private fun OutcomeText(outcome: Outcome) {
     val text = when (outcome) {
         is Outcome.Deleted -> pluralStringResource(R.plurals.debug_deleted, outcome.notes, outcome.notes)
+        is Outcome.Unavailable -> outcome.availability.problemText()?.let { stringResource(it) }.orEmpty()
         is Outcome.Forgotten -> pluralStringResource(R.plurals.debug_forgotten, outcome.cards, outcome.cards)
         is Outcome.Exported -> pluralStringResource(R.plurals.debug_exported, outcome.cards, outcome.cards)
         is Outcome.Reported -> outcome.summary.let { pluralStringResource(R.plurals.debug_position_reported, it.notes, it.exact, it.notes) }
@@ -212,7 +214,7 @@ private fun OutcomeText(outcome: Outcome) {
         Outcome.NoBackup -> stringResource(R.string.debug_report_no_backup)
         is Outcome.Failed -> stringResource(R.string.debug_error, outcome.message)
     }
-    val failed = outcome is Outcome.Failed || outcome is Outcome.NoBackupFolder || outcome is Outcome.NoBackup
+    val failed = outcome is Outcome.Failed || outcome is Outcome.Unavailable || outcome is Outcome.NoBackupFolder || outcome is Outcome.NoBackup
     Text(
         text,
         color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,

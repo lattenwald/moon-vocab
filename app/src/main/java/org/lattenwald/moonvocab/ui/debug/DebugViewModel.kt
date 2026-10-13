@@ -22,16 +22,19 @@ import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.data.backup.BackupFinder
 import org.lattenwald.moonvocab.data.books.FolderBookSource
+import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.import.CardSender
+import org.lattenwald.moonvocab.domain.import.DeleteAllResult
 import org.lattenwald.moonvocab.work.ImportRuns
 
 enum class DebugAction { DELETE_NOTES, FORGET_UNSENT, EXPORT_CARDS, POSITION_REPORT }
 
 sealed interface Outcome {
     data class Deleted(val notes: Int) : Outcome
+    data class Unavailable(val availability: AnkiAvailability) : Outcome
     data class Forgotten(val cards: Int) : Outcome
     data class Exported(val cards: Int) : Outcome
     data class Reported(val summary: PositionReportSummary) : Outcome
@@ -89,7 +92,12 @@ class DebugViewModel(
 
     fun setTestDeck(on: Boolean) = viewModelScope.launch { settings.update { it.copy(deckOverride = if (on) TEST_DECK else null) } }
 
-    fun deleteAllCreated() = run(DebugAction.DELETE_NOTES) { Outcome.Deleted(withContext(io) { sender.deleteAllCreated() }) }
+    fun deleteAllCreated() = run(DebugAction.DELETE_NOTES) {
+        when (val r = withContext(io) { sender.deleteAllCreated() }) {
+            is DeleteAllResult.Deleted -> Outcome.Deleted(r.notes)
+            is DeleteAllResult.Unavailable -> Outcome.Unavailable(r.availability)
+        }
+    }
 
     fun forgetUnsent() = run(DebugAction.FORGET_UNSENT) { Outcome.Forgotten(withContext(io) { store.forgetUnsent() }) }
 
