@@ -137,6 +137,7 @@
     <string name="card_field_meaning">Meaning</string>
     <string name="card_field_sentence">Sentence</string>
     <string name="card_brackets_help">Put the word you marked in [square brackets].</string>
+    <string name="card_brackets_invalid">Put only the word you marked in [square brackets]. Write any other brackets as ( ).</string>
     <string name="card_field_required">Can’t be empty</string>
     <string name="card_snack_sent">Sent to AnkiDroid</string>
     <string name="card_snack_discarded">Card discarded</string>
@@ -145,6 +146,7 @@
     <string name="card_snack_delete_refused">AnkiDroid didn’t delete the note, so the card stays there.</string>
     <string name="card_snack_conflict">Changed in AnkiDroid while you were editing: %1$s. The page now shows AnkiDroid’s text.</string>
     <string name="card_snack_note_gone">This card was deleted in AnkiDroid. Your changes are kept here.</string>
+    <string name="card_snack_not_in_note">This note has no %1$s field in AnkiDroid, so nothing was saved. Undo that change to save the rest.</string>
     <string name="card_snack_not_pending">This card changed while you were editing. Your changes weren’t saved.</string>
     <string name="card_snack_retranslated">New translation filled in.</string>
     <string name="card_delete_title">Delete from AnkiDroid?</string>

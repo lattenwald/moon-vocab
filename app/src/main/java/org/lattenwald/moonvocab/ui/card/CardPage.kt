@@ -333,6 +333,7 @@ private fun messageText(r: Resources, event: CardMessage): String? = when (event
     is CardMessage.Unavailable -> event.availability.problemText()?.let(r::getString)
     is CardMessage.SendFailed -> r.getString(R.string.inbox_send_failed, event.message)
     is CardMessage.MissingFields -> r.getString(R.string.inbox_note_type_missing, event.fields.joinToString(", "))
+    is CardMessage.NotInNote -> r.getString(R.string.card_snack_not_in_note, event.fields.joinToString(", ") { r.getString(it.label) })
     is CardMessage.UndoKept -> r.getQuantityString(R.plurals.inbox_undo_kept, event.count, event.count)
     is CardMessage.Failed -> r.getString(R.string.inbox_action_failed, event.message)
 }

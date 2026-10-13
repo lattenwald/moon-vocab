@@ -159,6 +159,7 @@
     <string name="card_field_meaning">Значение</string>
     <string name="card_field_sentence">Предложение</string>
     <string name="card_brackets_help">Возьмите отмеченное слово в [квадратные скобки].</string>
+    <string name="card_brackets_invalid">В [квадратные скобки] возьмите только отмеченное слово. Другие скобки пишите как ( ).</string>
     <string name="card_field_required">Не может быть пустым</string>
     <string name="card_snack_sent">Отправлено в AnkiDroid</string>
     <string name="card_snack_discarded">Карточка убрана</string>
@@ -167,6 +168,7 @@
     <string name="card_snack_delete_refused">AnkiDroid не удалил запись, поэтому карточка осталась там.</string>
     <string name="card_snack_conflict">Пока вы редактировали, в AnkiDroid изменились поля: %1$s. Теперь здесь текст из AnkiDroid.</string>
     <string name="card_snack_note_gone">Эта карточка удалена в AnkiDroid. Ваши правки сохранены здесь.</string>
+    <string name="card_snack_not_in_note">У этой записи в AnkiDroid нет поля «%1$s», поэтому ничего не сохранено. Отмените это изменение, чтобы сохранить остальное.</string>
     <string name="card_snack_not_pending">Карточка изменилась, пока вы её редактировали. Ваши правки не сохранены.</string>
     <string name="card_snack_retranslated">Новый перевод подставлен.</string>
     <string name="card_delete_title">Удалить из AnkiDroid?</string>

@@ -21,6 +21,7 @@ sealed interface SaveResult {
     data class Conflict(val card: CardEntity, val fields: Set<CardField>) : SaveResult
     data class Deleted(val card: CardEntity) : SaveResult
     data class Unavailable(val availability: AnkiAvailability) : SaveResult
+    data class NotInNote(val fields: Set<CardField>) : SaveResult
     data class Failed(val message: String, val missingFields: List<String> = emptyList()) : SaveResult
 }
 
@@ -103,6 +104,7 @@ class NoteSync(
                     save(fresh)
                     SaveResult.Conflict(fresh, plan.fields)
                 }
+                is SavePlan.NotInNote -> SaveResult.NotInNote(plan.fields)
                 is SavePlan.Write -> {
                     // update ignores mid; empty tags keep the note's own.
                     if (plan.anki.isNotEmpty()) anki.update(noteId, 0L, plan.anki, emptySet())

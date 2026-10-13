@@ -113,11 +113,14 @@ sealed interface SavePlan {
     /** [anki]: AnkiDroid field name → HTML value, only the fields to write. [result]: what the card stores afterwards. */
     data class Write(val anki: Map<String, String>, val result: CardFields) : SavePlan
     data class Conflict(val fields: Set<CardField>, val fresh: CardFields) : SavePlan
+    data class NotInNote(val fields: Set<CardField>) : SavePlan
 }
 
 fun planSave(baseline: CardFields, edited: CardFields, note: Map<String, String>): SavePlan {
     val fresh = baseline.readFrom(note)
     val changed = CardField.entries.filter { edited[it] != baseline[it] }
+    val absent = changed.filterTo(mutableSetOf()) { it.noteField.noteName !in note }
+    if (absent.isNotEmpty()) return SavePlan.NotInNote(absent)
     val inNote = edited.readFrom(edited.toNote(changed))
     val unwritten = changed.filter { fresh[it] != inNote[it] }
     val conflicting = unwritten.filterTo(mutableSetOf()) { fresh[it] != baseline[it] }

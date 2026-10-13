@@ -69,6 +69,7 @@ sealed interface CardMessage {
     data class Unavailable(val availability: AnkiAvailability) : CardMessage
     data class SendFailed(val message: String) : CardMessage
     data class MissingFields(val fields: List<String>) : CardMessage
+    data class NotInNote(val fields: Set<CardField>) : CardMessage
     data class UndoKept(val count: Int) : CardMessage
     data class Failed(val message: String) : CardMessage
 }
@@ -296,7 +297,8 @@ private fun saveDone(s: CardEditState, r: SaveResult): CardStep = when (r) {
         finish(s.copy(card = r.card, baseline = fresh).withForm(mergeAfterConflict(s.form, s.baseline, fresh, r.fields)), CardMessage.Conflict(r.fields))
     }
     is SaveResult.Deleted -> finish(s.showing(r.card, CardSource.Deleted).copy(editing = false), CardMessage.NoteGone)
-    is SaveResult.Unavailable -> finish(s.copy(source = CardSource.Unavailable),CardMessage.Unavailable(r.availability))
+    is SaveResult.Unavailable -> finish(s.copy(source = CardSource.Unavailable), CardMessage.Unavailable(r.availability))
+    is SaveResult.NotInNote -> finish(s, CardMessage.NotInNote(r.fields))
     is SaveResult.Failed ->
         finish(s, if (r.missingFields.isNotEmpty()) CardMessage.MissingFields(r.missingFields) else CardMessage.Failed(r.message))
 }

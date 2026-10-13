@@ -203,7 +203,8 @@
 
 ## Card page
 - In the edit form, the excerpt's and the sentence's focus is written in square brackets. A field left unchanged keeps its stored HTML.
-- Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs none or one.
+- Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs one or is empty. An invalid excerpt or sentence says to bracket only the marked word and write other brackets as ( ).
+- A Save that changes a field the note's type lacks (an older type without Transcription) saves nothing and names the field.
 - Changed form values are trimmed. A blank sentence is saved empty. A changed transcription goes through `cleanTranscription`.
 - The transcription shows between slashes: under the word on the card front, and before the grammar note in Inbox and book page rows.
 - Save sends AnkiDroid only the fields the user changed, and no tags. When any changed field also changed in AnkiDroid since the page read it, to something other than the user's edit, nothing is written to AnkiDroid. A changed field that AnkiDroid already holds isn't written again. The app stores each changed field as the note reads it back. Fields the user didn't change, Source included, take AnkiDroid's text. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.

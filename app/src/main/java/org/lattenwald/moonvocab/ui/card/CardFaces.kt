@@ -140,7 +140,7 @@ private fun FormField(
         label = { Text(stringResource(field.label)) },
         supportingText = when {
             bracketed -> {
-                { Text(stringResource(R.string.card_brackets_help)) }
+                { Text(stringResource(if (error) R.string.card_brackets_invalid else R.string.card_brackets_help)) }
             }
             error -> {
                 { Text(stringResource(R.string.card_field_required)) }

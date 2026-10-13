@@ -66,6 +66,10 @@ class CardEditTest {
         val written = noteFields(edited, source = "", bookLine = "Moby-Dick", appId = "u1")
         assertEquals(SavePlan.Write(emptyMap(), edited.copy(translation = "т. е. одолеть & co")), planSave(stored, edited, written))
     }
+    @Test fun planRefusesAChangeToAFieldTheNoteLacks() {
+        val edited = stored.copy(transcription = "ɡɛt", translation = "одолеть")
+        assertEquals(SavePlan.NotInNote(setOf(CardField.TRANSCRIPTION)), planSave(stored, edited, note(stored)))
+    }
     @Test fun planWithNoChangesWritesNothing() =
         assertEquals(SavePlan.Write(emptyMap(), stored), planSave(stored, stored, note(stored)))
     @Test fun aWhitespaceOnlyEditCountsAsUntouched() {
