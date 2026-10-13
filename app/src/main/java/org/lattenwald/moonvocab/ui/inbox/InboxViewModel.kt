@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkManager
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
@@ -30,7 +29,6 @@ import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.import.CardSender
-import org.lattenwald.moonvocab.domain.import.ImportRequest
 import org.lattenwald.moonvocab.domain.import.SendResult
 import org.lattenwald.moonvocab.domain.inbox.InboxList
 import org.lattenwald.moonvocab.domain.inbox.InboxFilter
@@ -43,8 +41,8 @@ import org.lattenwald.moonvocab.domain.inbox.startDrag
 import org.lattenwald.moonvocab.domain.inbox.toggle
 import org.lattenwald.moonvocab.domain.inbox.toggleAll
 import org.lattenwald.moonvocab.domain.inbox.toggleGroup
+import org.lattenwald.moonvocab.work.ImportRuns
 import org.lattenwald.moonvocab.work.ImportState
-import org.lattenwald.moonvocab.work.ImportWork
 
 data class InboxState(
     val list: InboxList = inboxList(emptyList(), InboxFilter.All),
@@ -70,7 +68,7 @@ class InboxViewModel(
     private val db: AppDatabase,
     private val settings: Settings,
     private val anki: AnkiGateway,
-    private val workManager: WorkManager,
+    private val runs: ImportRuns,
     private val store: CardStore,
     private val sender: CardSender,
     private val io: CoroutineDispatcher,
@@ -94,9 +92,9 @@ class InboxViewModel(
     }.onEach { l -> selection.update { it.retain(l.visibleIds.toSet()) } }
 
     val state: StateFlow<InboxState> = combine(
-        list, selection, workManager.getWorkInfosForUniqueWorkFlow(ImportWork.NAME), availability, missingFields,
-    ) { l, s, infos, a, m ->
-        InboxState(list = l, selection = s, import = ImportWork.state(infos.firstOrNull()), anki = a, missingFields = m, loaded = true)
+        list, selection, runs.state, availability, missingFields,
+    ) { l, s, i, a, m ->
+        InboxState(list = l, selection = s, import = i, anki = a, missingFields = m, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InboxState())
 
     private val visibleIds: List<Long> get() = state.value.list.visibleIds
@@ -129,12 +127,23 @@ class InboxViewModel(
         }
     }
 
-    fun dismissResult() {
-        workManager.pruneWork()
-    }
+    fun dismissResult() = act("dismissing the import result failed") { runs.dismiss() }
 
     fun retryFailed() {
-        if (!state.value.import.running) ImportWork.enqueue(workManager, ImportWork.retryInput())
+        if (state.value.import.canRetryFailed) act("retrying failed cards failed") { runs.retryFailed() }
+    }
+
+    private fun act(failure: String, block: suspend () -> Unit) {
+        viewModelScope.launch {
+            try {
+                block()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, failure, e)
+                eventChannel.send(InboxEvent.Failed(messageOf(e)))
+            }
+        }
     }
 
     override fun startDrag(id: Long) {
@@ -221,7 +230,7 @@ class InboxViewModel(
         clearSelection()
         viewModelScope.launch {
             val forgotten = try {
-                withContext(io) { store.forgetForRetranslation(ids) }
+                withContext(io) { store.forgetForRetranslation(ids) }.also { if (it > 0) runs.resume() }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -229,10 +238,7 @@ class InboxViewModel(
                 eventChannel.send(InboxEvent.Failed(messageOf(e)))
                 return@launch
             }
-            if (forgotten == 0) return@launch
-            val request = ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false)
-            ImportWork.enqueue(workManager, ImportWork.input(request))
-            eventChannel.send(InboxEvent.Retranslating(forgotten))
+            if (forgotten > 0) eventChannel.send(InboxEvent.Retranslating(forgotten))
         }
     }
 
@@ -277,7 +283,7 @@ class InboxViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                InboxViewModel(c.db, c.settings, c.anki, c.workManager, c.cards, c.sender, c.io)
+                InboxViewModel(c.db, c.settings, c.anki, c.importRuns, c.cards, c.sender, c.io)
             }
         }
     }

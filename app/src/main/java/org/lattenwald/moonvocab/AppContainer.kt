@@ -30,6 +30,9 @@ import org.lattenwald.moonvocab.domain.cardpage.CardRetranslator
 import org.lattenwald.moonvocab.domain.import.AnkiCheck
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.domain.import.ImportPipeline
+import org.lattenwald.moonvocab.work.ImportRuns
+import org.lattenwald.moonvocab.work.WorkRunQueue
+import org.lattenwald.moonvocab.work.importResultStore
 
 class AppContainer(context: Context) {
     private val app = context.applicationContext
@@ -72,5 +75,5 @@ class AppContainer(context: Context) {
     )
 
     // Lazy: Robolectric tests build App without WorkManager's startup initializer.
-    val workManager: WorkManager by lazy { WorkManager.getInstance(app) }
+    val importRuns: ImportRuns by lazy { ImportRuns(WorkRunQueue(WorkManager.getInstance(app)), app.importResultStore) }
 }

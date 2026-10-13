@@ -9,7 +9,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkManager
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,7 +33,8 @@ import org.lattenwald.moonvocab.domain.mark.SheetCounts
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.lattenwald.moonvocab.domain.mark.defaultStyles
 import org.lattenwald.moonvocab.domain.mark.sheetCounts
-import org.lattenwald.moonvocab.work.ImportWork
+import org.lattenwald.moonvocab.work.ImportRuns
+import org.lattenwald.moonvocab.work.Start
 
 sealed interface SheetState {
     data object Searching : SheetState
@@ -58,7 +58,7 @@ class ImportSheetViewModel(
     private val settings: Settings,
     private val db: AppDatabase,
     private val finder: BackupFinder,
-    private val workManager: WorkManager,
+    private val runs: ImportRuns,
     private val io: CoroutineDispatcher,
 ) : ViewModel() {
     private val lock = Mutex() // actions run in order, so start() follows every queued settings write
@@ -126,15 +126,11 @@ class ImportSheetViewModel(
     fun start(onStarted: () -> Unit) {
         act { // queued behind pending settings writes; a failed one leaves Error
             val ready = state.value as? SheetState.Ready ?: return@act
-            // ImportWork.enqueue keeps unfinished work and drops this request
-            val running = withContext(io) { workManager.getWorkInfosForUniqueWork(ImportWork.NAME).get() }.any { !it.state.isFinished }
-            if (running) {
-                mutableState.value = ready.copy(importRunning = true)
-                return@act
-            }
             val request = ImportRequest(ready.backup.file, ready.selected, onlyBookFileKey = null, sendToAnki = ready.sendToAnki)
-            ImportWork.enqueue(workManager, ImportWork.input(request))
-            onStarted()
+            when (runs.start(request)) {
+                Start.STARTED -> onStarted()
+                Start.ALREADY_RUNNING -> mutableState.value = ready.copy(importRunning = true)
+            }
         }
     }
 
@@ -192,7 +188,7 @@ class ImportSheetViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                ImportSheetViewModel(app.contentResolver, c.settings, c.db, c.backupFinder, c.workManager, c.io)
+                ImportSheetViewModel(app.contentResolver, c.settings, c.db, c.backupFinder, c.importRuns, c.io)
             }
         }
     }

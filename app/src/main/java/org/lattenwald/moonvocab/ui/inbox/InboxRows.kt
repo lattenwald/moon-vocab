@@ -416,8 +416,7 @@ internal fun ImportResultCard(
     onRetryFailed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val retry = import.failure == null && import.summary?.let { it.failed > 0 && it.stopped == null } == true
-    val clickable = if (retry) {
+    val clickable = if (import.canRetryFailed) {
         Modifier.clip(PanelShape).clickable(onClickLabel = stringResource(R.string.inbox_translate_again), onClick = onRetryFailed)
     } else {
         Modifier

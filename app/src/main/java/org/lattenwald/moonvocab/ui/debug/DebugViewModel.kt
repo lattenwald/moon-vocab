@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkManager
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +26,7 @@ import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.import.CardSender
-import org.lattenwald.moonvocab.work.ImportWork
+import org.lattenwald.moonvocab.work.ImportRuns
 
 enum class DebugAction { DELETE_NOTES, FORGET_UNSENT, EXPORT_CARDS, POSITION_REPORT }
 
@@ -63,7 +62,7 @@ class DebugViewModel(
     private val finder: BackupFinder,
     private val sender: CardSender,
     private val store: CardStore,
-    workManager: WorkManager,
+    runs: ImportRuns,
     private val io: CoroutineDispatcher,
     private val bookSource: suspend () -> FolderBookSource,
     private val appVersion: String,
@@ -77,11 +76,11 @@ class DebugViewModel(
     private val local = MutableStateFlow(Local())
 
     val state: StateFlow<DebugState> = combine(
-        local, settings.snapshot, workManager.getWorkInfosForUniqueWorkFlow(ImportWork.NAME),
-    ) { l, s, infos ->
+        local, settings.snapshot, runs.state,
+    ) { l, s, i ->
         DebugState(
             testDeck = s.deckOverride,
-            importRunning = ImportWork.state(infos.firstOrNull()).running,
+            importRunning = i.running,
             running = l.running,
             reportStep = l.reportStep,
             outcomes = l.outcomes,
@@ -147,7 +146,7 @@ class DebugViewModel(
                 val c = app.container
                 val info = app.packageManager.getPackageInfo(app.packageName, 0)
                 DebugViewModel(
-                    app.contentResolver, c.db, c.settings, c.backupFinder, c.sender, c.cards, c.workManager, c.io,
+                    app.contentResolver, c.db, c.settings, c.backupFinder, c.sender, c.cards, c.importRuns, c.io,
                     c::bookSource, "${info.versionName} (${info.longVersionCode})",
                 )
             }

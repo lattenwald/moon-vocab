@@ -242,7 +242,7 @@
 - The import sheet runs its `BackupFinder` calls and settings writes one at a time, under one lock.
 - A `SecurityException` or `IOException` from `BackupFinder.newest` shows FolderUnreadable.
 - The sheet's Error state offers Try again (`open()`) and Choose folder.
-- While unfinished import work exists, Start keeps the sheet open and shows `sheet_import_running`.
+- When `ImportRuns.start` reports `ALREADY_RUNNING`, Start keeps the sheet open and shows `sheet_import_running`.
 
 ## Language picker
 - One picker page, `LanguageKey(TARGET)` or `LanguageKey(APP)`, with the Inbox's segmented rows and a radio on each row.
@@ -301,6 +301,9 @@
 - A share that arrives while `App.setupDone` is false is dropped.
 
 ## App
+- `ImportRuns` starts, retries, reports and dismisses import runs; only its `WorkRunQueue` adapter knows WorkManager.
+- A start while a run is queued or going drops the new run and returns `ALREADY_RUNNING`.
+- `ImportWorker` stores each run's summary or failure through `ImportRuns`, in the `import_result` DataStore; WorkManager output data is unused.
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
 - App data is excluded from cloud backup and device transfer.
@@ -324,7 +327,7 @@
 - Motion: tab switches, and setup's replacement by the Inbox, cross-fade. A pushed page slides in from the end edge, full width, on a spring with no bounce, while the page below slides a third of the way toward the start edge. Pop reverses it; predictive back runs the pop with the gesture. Each page keeps its own opaque background.
 - Predictive back is on (`android:enableOnBackInvokedCallback="true"`). Back closes, in order: the sheet, then selection mode, then the page.
 - The Advanced page (`DeveloperKey`, `DebugScreen`) is pushed from the last row of Settings, with its own top bar. `DebugViewModel` is scoped to its entry.
-- A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
+- The last finished run's result stays on the Inbox until it is dismissed or the next run finishes, and is hidden while a run is going.
 - An import stopped by the translation service shows its reason in the result card, with a button that opens the Services page on top of the Settings tab.
 - Tapping a result card that reports failed cards, from an import the service didn't stop, translates every failed card again.
 - The Inbox list provides the theme's large shape as 24 dp. Its rows take their outer, selected and pressed corners from it, and 6 dp inner corners from `segmentedShapes`' default shapes.

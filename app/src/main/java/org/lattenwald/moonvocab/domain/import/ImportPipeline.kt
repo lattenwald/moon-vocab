@@ -6,6 +6,7 @@ import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.backup.BackupContents
@@ -48,6 +49,7 @@ data class ImportRequest(val backup: File?, val styles: Set<StyleCombo>, val onl
 
 data class ImportProgress(val done: Int, val total: Int, val bookTitle: String?)
 
+@Serializable
 data class ImportSummary(
     val newCards: Int,
     val failed: Int,

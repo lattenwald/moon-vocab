@@ -24,6 +24,14 @@ _Avoid_: reconcile, refresh on its own
 
 ## Import
 
+**Import run**:
+One import, or one retry of failed cards, working in the background. At most one runs at a time.
+_Avoid_: import work, job
+
+**Import result**:
+What the last finished import run reported, kept until the user dismisses it.
+_Avoid_: summary on its own
+
 **Sentence lookup**:
 Finding the sentence of the book a mark was made in, or deciding no sentence is certainly it.
 _Avoid_: sentence finding, locating, on their own

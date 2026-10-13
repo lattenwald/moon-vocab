@@ -17,7 +17,9 @@ import org.lattenwald.moonvocab.domain.import.ImportProgress
 
 class ImportWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
-        val pipeline = (applicationContext as App).container.pipeline
+        val container = (applicationContext as App).container
+        val pipeline = container.pipeline
+        val runs = container.importRuns
         try {
             setForeground(foregroundInfo(null))
         } catch (e: CancellationException) {
@@ -31,17 +33,18 @@ class ImportWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx
                 setForegroundAsync(foregroundInfo(p))
                 Unit
             }
-            val summary = if (ImportWork.isRetry(inputData)) {
-                pipeline.retryFailed(progress)
-            } else {
-                pipeline.run(ImportWork.request(inputData), progress)
+            val summary = when (val job = ImportWork.job(inputData)) {
+                ImportJob.RetryFailed -> pipeline.retryFailed(progress)
+                is ImportJob.Import -> pipeline.run(job.request, progress)
             }
-            Result.success(ImportWork.output(summary))
+            runs.finished(summary)
+            Result.success()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "import failed", e)
-            Result.failure(ImportWork.failure(e.message ?: e::class.simpleName.orEmpty()))
+            runs.failed(e.message ?: e::class.simpleName.orEmpty())
+            Result.failure()
         }
     }
 

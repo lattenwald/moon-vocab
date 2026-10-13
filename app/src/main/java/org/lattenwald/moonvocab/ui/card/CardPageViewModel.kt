@@ -11,13 +11,14 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.work.WorkManager
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,8 +39,7 @@ import org.lattenwald.moonvocab.domain.cardpage.CardRetranslator
 import org.lattenwald.moonvocab.domain.cardpage.NO_FIELDS
 import org.lattenwald.moonvocab.domain.cardpage.reduce
 import org.lattenwald.moonvocab.domain.import.CardSender
-import org.lattenwald.moonvocab.domain.import.ImportRequest
-import org.lattenwald.moonvocab.work.ImportWork
+import org.lattenwald.moonvocab.work.ImportRuns
 
 class CardPageViewModel(
     private val cardId: Long,
@@ -48,7 +48,7 @@ class CardPageViewModel(
     private val sender: CardSender,
     private val store: CardStore,
     private val retranslator: CardRetranslator,
-    private val workManager: WorkManager,
+    private val runs: ImportRuns,
     private val io: CoroutineDispatcher,
     private val handle: SavedStateHandle,
 ) : ViewModel() {
@@ -66,9 +66,9 @@ class CardPageViewModel(
 
     init {
         viewModelScope.launch {
-            workManager.getWorkInfosForUniqueWorkFlow(ImportWork.NAME)
+            runs.state.map { it.running }.distinctUntilChanged()
                 .catch { e -> Log.e(TAG, "import state query failed", e) }
-                .collect { infos -> dispatch(CardIntent.ImportRunning(ImportWork.state(infos.firstOrNull()).running)) }
+                .collect { running -> dispatch(CardIntent.ImportRunning(running)) }
         }
         run(CardEffect.Open(null))
     }
@@ -85,9 +85,14 @@ class CardPageViewModel(
     private fun run(effect: CardEffect) {
         when (effect) {
             CardEffect.CancelRetranslate -> retranslation?.cancel()
-            CardEffect.StartImport -> {
-                val request = ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false)
-                ImportWork.enqueue(workManager, ImportWork.input(request))
+            CardEffect.StartImport -> viewModelScope.launch {
+                try {
+                    runs.resume()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "starting the import failed", e)
+                }
             }
             else -> {
                 val job = viewModelScope.launch {
@@ -175,7 +180,7 @@ class CardPageViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                CardPageViewModel(cardId, c.db, c.noteSync, c.sender, c.cards, c.retranslator, c.workManager, c.io, createSavedStateHandle())
+                CardPageViewModel(cardId, c.db, c.noteSync, c.sender, c.cards, c.retranslator, c.importRuns, c.io, createSavedStateHandle())
             }
         }
     }
