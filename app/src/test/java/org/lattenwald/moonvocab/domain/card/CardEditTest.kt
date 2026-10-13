@@ -2,6 +2,7 @@ package org.lattenwald.moonvocab.domain.card
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.lattenwald.moonvocab.data.anki.noteFields
 
 class CardEditTest {
     private val stored = CardFields(
@@ -61,8 +62,9 @@ class CardEditTest {
         )
     }
     @Test fun aRetryAfterTheNoteWasWrittenSavesWithoutAConflict() {
-        val edited = stored.copy(translation = "одолеть")
-        assertEquals(SavePlan.Write(emptyMap(), edited), planSave(stored, edited, note(edited)))
+        val edited = stored.copy(translation = "т. е. одолеть & co")
+        val written = noteFields(edited, source = "", bookLine = "Moby-Dick", appId = "u1")
+        assertEquals(SavePlan.Write(emptyMap(), edited), planSave(stored, edited, written))
     }
     @Test fun planWithNoChangesWritesNothing() =
         assertEquals(SavePlan.Write(emptyMap(), stored), planSave(stored, stored, note(stored)))

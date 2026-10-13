@@ -27,15 +27,18 @@ enum class NoteField(val noteName: String, val html: Boolean = false, val option
     fun decode(value: String): String = if (html) value else ankiToPlain(value)
 }
 
+fun CardFields.toNote(only: Collection<CardField>): Map<String, String> =
+    only.associate { it.noteField.noteName to it.noteField.encode(this[it]) }
+
 fun noteFields(fields: CardFields, source: String, bookLine: String, appId: String): Map<String, String> =
-    CardField.entries.associate { it.note.noteName to it.note.encode(fields[it]) } +
+    fields.toNote(CardField.entries) +
         listOf(NoteField.BOOK to bookLine, NoteField.SOURCE to source, NoteField.APP_ID to appId)
             .associate { (f, value) -> f.noteName to f.encode(value) }
 
 fun CardEntity.toNote(bookLine: String): Map<String, String> = noteFields(cardFields(), sourceNote, bookLine, uuid)
 
 fun CardFields.readFrom(note: Map<String, String>): CardFields = CardField.entries.fold(this) { acc, f ->
-    note[f.note.noteName]?.let { acc.with(f, f.note.decode(it)) } ?: acc
+    note[f.noteField.noteName]?.let { acc.with(f, f.noteField.decode(it)) } ?: acc
 }
 
 fun CardEntity.readFrom(note: Map<String, String>): CardEntity =

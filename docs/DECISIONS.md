@@ -119,8 +119,7 @@
 - `NoteField` in `NoteFields.kt` is the one list of note fields and says which are HTML and which optional. Only that file converts between a card and its note.
 - `toNote` HTML-escapes Word, Transcription, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid. The settings sample card goes through the same encoding.
 - Book is `Title, Author`, or just `Title` when there is no author.
-- A field changed in Anki is read back into the card as plain text with `ankiToPlain`. Excerpt and Sentence are kept as raw HTML.
-- A note changed a card when `readFrom` gives a different card: the fields the card stores (Word, Transcription, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note, plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML.
+- `readFrom` reads the fields the card stores (Word, Transcription, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note: plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML. A note changed a card when `readFrom` gives a different card.
 - `NoteSync` does every sync between a sent card and its note, under the AnkiDroid lock: the card page's open and Save, and the check. `AnkiCheck` only schedules the check and records its time.
 - `update` merges with the note's current note type in AnkiDroid, and writes the union of the note's tags and ours.
 - `ensureNoteType`:

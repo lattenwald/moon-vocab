@@ -116,7 +116,7 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
         val out = HashMap<String, Long>()
         for (chunk in wanted.chunked(APP_ID_CHUNK)) {
             for (note in queryRaw(appIdQuery(mid, chunk))) {
-                val appId = fieldNames.getOrPut(note.mid) { fieldList(note.mid) }.indexOf(APP_ID_FIELD)
+                val appId = fieldNames.getOrPut(note.mid) { fieldList(note.mid) }.indexOf(NoteField.APP_ID.noteName)
                 val value = note.values.getOrNull(appId) ?: continue
                 if (value in wanted) out[value] = note.id
             }
@@ -188,7 +188,6 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
         const val TAG = "AnkiDroidGateway"
         const val READ_CHUNK = 200
         const val APP_ID_CHUNK = 50
-        const val APP_ID_FIELD = "AppId"
         const val FIELD_SEPARATOR = '\u001f'
         val WHITESPACE = Regex("\\s+")
     }

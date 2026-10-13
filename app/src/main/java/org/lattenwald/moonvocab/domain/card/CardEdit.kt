@@ -2,9 +2,10 @@ package org.lattenwald.moonvocab.domain.card
 
 import org.lattenwald.moonvocab.data.anki.NoteField
 import org.lattenwald.moonvocab.data.anki.readFrom
+import org.lattenwald.moonvocab.data.anki.toNote
 import org.lattenwald.moonvocab.data.db.CardEntity
 
-enum class CardField(val note: NoteField) {
+enum class CardField(val noteField: NoteField) {
     WORD(NoteField.WORD), TRANSCRIPTION(NoteField.TRANSCRIPTION), GRAMMAR(NoteField.GRAMMAR), EXCERPT(NoteField.EXCERPT),
     TRANSLATION(NoteField.TRANSLATION), MEANING(NoteField.MEANING), SENTENCE(NoteField.SENTENCE),
 }
@@ -117,10 +118,11 @@ sealed interface SavePlan {
 fun planSave(baseline: CardFields, edited: CardFields, note: Map<String, String>): SavePlan {
     val fresh = baseline.readFrom(note)
     val changed = CardField.entries.filter { edited[it] != baseline[it] }
-    val conflicting = changed.filterTo(mutableSetOf()) { fresh[it] != baseline[it] && fresh[it] != edited[it] }
+    val inNote = edited.readFrom(edited.toNote(changed))
+    val conflicting = changed.filterTo(mutableSetOf()) { fresh[it] != baseline[it] && fresh[it] != inNote[it] }
     if (conflicting.isNotEmpty()) return SavePlan.Conflict(conflicting, fresh)
     return SavePlan.Write(
-        anki = changed.filter { fresh[it] != edited[it] }.associate { it.note.noteName to it.note.encode(edited[it]) },
+        anki = edited.toNote(changed.filter { fresh[it] != inNote[it] }),
         result = changed.fold(fresh) { acc, f -> acc.with(f, edited[f]) },
     )
 }

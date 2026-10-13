@@ -8,7 +8,7 @@ object NoteTypeSpec {
     val FIELDS = NoteField.entries.map { it.noteName }
 
     // Appended to older note types; left out of notes whose type lacks them.
-    val OPTIONAL_FIELDS = NoteField.entries.filter { it.optional }.mapTo(mutableSetOf()) { it.noteName }
+    val OPTIONAL_FIELDS = NoteField.entries.filter { it.optional }.map { it.noteName }.toSet()
 
     const val FRONT = """<div class="word">{{Word}}</div>{{#Transcription}}<div class="ipa">/{{Transcription}}/</div>{{/Transcription}}""" +
         """<div class="gram">{{Grammar}}</div><div class="ex">{{Excerpt}}</div>"""
