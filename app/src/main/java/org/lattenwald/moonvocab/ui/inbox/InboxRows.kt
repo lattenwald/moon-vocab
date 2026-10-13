@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.triStateToggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -37,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.SegmentedListItem
@@ -58,7 +56,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -71,7 +68,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,16 +83,18 @@ import org.lattenwald.moonvocab.domain.inbox.InboxList
 import org.lattenwald.moonvocab.domain.inbox.CardKind
 import org.lattenwald.moonvocab.domain.inbox.InboxFilter
 import org.lattenwald.moonvocab.domain.inbox.RowLabel
+import org.lattenwald.moonvocab.ui.common.EmptyState
+import org.lattenwald.moonvocab.ui.common.InnerCorner
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
+import org.lattenwald.moonvocab.ui.common.OuterCorner
 import org.lattenwald.moonvocab.ui.common.WordNote
 import org.lattenwald.moonvocab.ui.common.ankiFix
 import org.lattenwald.moonvocab.ui.common.languageName
 import org.lattenwald.moonvocab.ui.common.problemText
+import org.lattenwald.moonvocab.ui.common.segmentedRowShapes
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
 import org.lattenwald.moonvocab.work.ImportState
 
-private val OuterCorner = 24.dp
-private val InnerCorner = 6.dp
 private val PanelShape = RoundedCornerShape(24.dp)
 private val RowPadding = PaddingValues(start = 14.dp, top = 14.dp, end = 18.dp, bottom = 15.dp)
 private const val SWIPE_THRESHOLD = 0.35f
@@ -111,10 +109,6 @@ internal fun inboxColors(): InboxColors {
 
 // SegmentedListItem's outer, selected and pressed corners come from the theme's large shape.
 internal fun Shapes.forInboxList(): Shapes = copy(large = RoundedCornerShape(OuterCorner))
-
-@Composable
-internal fun segmentedRowShapes(index: Int, count: Int): ListItemShapes =
-    ListItemDefaults.segmentedShapes(index, count, ListItemDefaults.shapes(shape = RoundedCornerShape(InnerCorner)))
 
 private fun rowShape(index: Int, count: Int) = RoundedCornerShape(
     topStart = if (index == 0) OuterCorner else InnerCorner,
@@ -518,30 +512,4 @@ internal fun NoteTypeBanner(missingFields: List<String>, modifier: Modifier = Mo
 @Composable
 internal fun EmptyInbox(modifier: Modifier = Modifier) {
     EmptyState(R.drawable.ic_inbox, R.string.inbox_empty_title, R.string.inbox_empty_text, modifier)
-}
-
-@Composable
-internal fun EmptyState(icon: Int, title: Int, text: Int, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    Column(
-        modifier.fillMaxWidth().padding(horizontal = 36.dp, vertical = 72.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Box(
-            Modifier.padding(bottom = 10.dp).size(96.dp).rotate(-8f).background(colors.primaryContainer, RoundedCornerShape(32.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(44.dp).rotate(8f), tint = colors.onPrimaryContainer)
-        }
-        Text(stringResource(title), fontSize = 22.sp, lineHeight = 28.sp, textAlign = TextAlign.Center)
-        Text(
-            stringResource(text),
-            modifier = Modifier.widthIn(max = 240.dp),
-            color = colors.onSurfaceVariant,
-            fontSize = 14.5.sp,
-            lineHeight = 21.sp,
-            textAlign = TextAlign.Center,
-        )
-    }
 }

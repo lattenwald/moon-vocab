@@ -85,7 +85,7 @@ import org.lattenwald.moonvocab.ui.LanguageKind
 import org.lattenwald.moonvocab.ui.common.languageName
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
-import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
+import org.lattenwald.moonvocab.ui.common.segmentedRowShapes
 import org.lattenwald.moonvocab.ui.library.LibrarySubheader
 
 class LanguagePickerViewModel(private val settings: Settings, private val io: CoroutineDispatcher) : ViewModel() {

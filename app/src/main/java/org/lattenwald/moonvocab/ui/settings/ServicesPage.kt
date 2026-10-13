@@ -41,7 +41,7 @@ import org.lattenwald.moonvocab.domain.settings.SERVICE_TEMPLATES
 import org.lattenwald.moonvocab.domain.settings.ServiceTemplate
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
-import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
+import org.lattenwald.moonvocab.ui.common.segmentedRowShapes
 
 private val RowPadding = PaddingValues(start = 6.dp, top = 10.dp, end = 16.dp, bottom = 10.dp)
 

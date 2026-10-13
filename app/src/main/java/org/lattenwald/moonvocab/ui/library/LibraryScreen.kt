@@ -38,10 +38,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.db.LibraryRow
 import org.lattenwald.moonvocab.ui.common.languageName
-import org.lattenwald.moonvocab.ui.inbox.EmptyState
+import org.lattenwald.moonvocab.ui.common.EmptyState
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
-import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
+import org.lattenwald.moonvocab.ui.common.segmentedRowShapes
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
 
 private val RowPadding = PaddingValues(start = 18.dp, top = 14.dp, end = 12.dp, bottom = 14.dp)

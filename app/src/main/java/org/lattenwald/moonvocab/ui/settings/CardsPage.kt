@@ -87,7 +87,7 @@ import org.lattenwald.moonvocab.domain.card.sampleCard
 import org.lattenwald.moonvocab.ui.card.FrontFace
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
-import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
+import org.lattenwald.moonvocab.ui.common.segmentedRowShapes
 import org.lattenwald.moonvocab.ui.library.LibrarySubheader
 
 class CardsViewModel(
