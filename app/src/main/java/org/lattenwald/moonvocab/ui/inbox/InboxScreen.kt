@@ -51,7 +51,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -62,15 +61,12 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
-import org.lattenwald.moonvocab.ui.common.openAnkiDroid
-import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
-import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
+import org.lattenwald.moonvocab.ui.common.problemText
 
 private const val DISABLED_ALPHA = 0.45f
 
@@ -83,13 +79,7 @@ fun InboxScreen(
     sheetVm: ImportSheetViewModel,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val resources = LocalResources.current
-    LifecycleResumeEffect(vm) {
-        vm.refreshAvailability()
-        onPauseOrDispose {}
-    }
-    val requestAnki = rememberAnkiPermissionRequest(onResult = vm::refreshAvailability)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val colors = inboxColors()
     val list = state.list
@@ -209,9 +199,6 @@ fun InboxScreen(
                         item(key = "banner") {
                             AnkiBanner(
                                 anki,
-                                onGet = { openAnkiDroidStore(context) },
-                                onAllow = requestAnki,
-                                onOpen = { openAnkiDroid(context) },
                                 modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 10.dp),
                             )
                         }
@@ -321,12 +308,7 @@ private fun eventMessage(r: Resources, event: InboxEvent): String? = when (event
     ).reduce { a, b -> r.getString(R.string.inbox_sent_and_stayed, a, b) }
     is InboxEvent.Stayed -> r.getQuantityString(R.plurals.inbox_stayed, event.count, event.count)
     is InboxEvent.Discarded -> r.getQuantityString(R.plurals.inbox_discarded, event.ids.size, event.ids.size)
-    is InboxEvent.Unavailable -> when (event.availability) {
-        AnkiAvailability.NOT_INSTALLED -> r.getString(R.string.inbox_banner_not_installed)
-        AnkiAvailability.NO_PERMISSION -> r.getString(R.string.inbox_banner_no_permission)
-        AnkiAvailability.NOT_SET_UP -> r.getString(R.string.inbox_banner_not_set_up)
-        AnkiAvailability.READY -> null
-    }
+    is InboxEvent.Unavailable -> event.availability.problemText()?.let(r::getString)
     is InboxEvent.SendFailed -> r.getString(R.string.inbox_send_failed, event.message)
     is InboxEvent.UndoKept -> r.getQuantityString(R.plurals.inbox_undo_kept, event.count, event.count)
     is InboxEvent.Retranslating -> r.getQuantityString(R.plurals.inbox_retranslating, event.count, event.count)

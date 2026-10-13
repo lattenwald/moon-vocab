@@ -46,7 +46,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,6 +54,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
@@ -72,9 +72,8 @@ import org.lattenwald.moonvocab.domain.cardpage.EDITABLE
 import org.lattenwald.moonvocab.domain.cardpage.undoable
 import org.lattenwald.moonvocab.domain.card.FormResult
 import org.lattenwald.moonvocab.domain.import.bookLine
-import org.lattenwald.moonvocab.ui.common.openAnkiDroid
-import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
-import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
+import org.lattenwald.moonvocab.ui.common.ankiFix
+import org.lattenwald.moonvocab.ui.common.problemText
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
 
 private val PREVIEWABLE = setOf(CardStatus.PENDING, CardStatus.SENT)
@@ -88,6 +87,7 @@ fun CardPage(
     vm: CardPageViewModel = viewModel(factory = CardPageViewModel.factory(cardId)),
 ) {
     val state = vm.state
+    val anki by vm.anki.collectAsStateWithLifecycle()
     val card = state.card
     val resources = LocalResources.current
     val leave by rememberUpdatedState(onBack)
@@ -152,7 +152,7 @@ fun CardPage(
             Subheader(stringResource(R.string.card_back))
             if (shown == null) BackForm(state.form, state.invalid, line, colors.row, readOnly = state.busy, edit) else BackFace(shown, line, colors.row)
             CardLabels(card, widened = state.extras?.widened ?: card.widened)
-            Notes(card, state.source, vm::dispatch)
+            Notes(card, state.source, anki, vm::dispatch)
         }
     }
 
@@ -289,7 +289,7 @@ private fun Subheader(text: String) {
 }
 
 @Composable
-private fun Notes(card: CardEntity, source: CardSource, dispatch: (CardIntent) -> Unit) {
+private fun Notes(card: CardEntity, source: CardSource, anki: AnkiAvailability?, dispatch: (CardIntent) -> Unit) {
     val colors = MaterialTheme.colorScheme
     val (text, color) = when (card.status) {
         CardStatus.SENT -> when (source) {
@@ -301,27 +301,14 @@ private fun Notes(card: CardEntity, source: CardSource, dispatch: (CardIntent) -
         CardStatus.DISCARDED -> stringResource(R.string.card_discarded_note) to colors.onSurfaceVariant
         CardStatus.FAILED ->
             (card.error?.let { stringResource(R.string.inbox_action_failed, it) } ?: stringResource(R.string.inbox_label_failed)) to colors.error
-        CardStatus.PENDING -> return
+        CardStatus.PENDING -> stringResource(anki?.problemText() ?: return) to colors.onSurfaceVariant
     }
     Text(text, Modifier.padding(start = 8.dp, top = 2.dp, end = 8.dp), color = color, fontSize = 12.5.sp, lineHeight = 17.sp)
-    if (card.status == CardStatus.SENT) FixAction(source, dispatch)
-}
-
-@Composable
-private fun FixAction(source: CardSource, dispatch: (CardIntent) -> Unit) {
-    val context = LocalContext.current
-    val requestAnki = rememberAnkiPermissionRequest(onResult = { dispatch(CardIntent.Resumed) })
-    val (label, onClick) = when (source) {
-        is CardSource.Unavailable -> when (source.availability) {
-            AnkiAvailability.NOT_INSTALLED -> R.string.inbox_banner_get to { openAnkiDroidStore(context) }
-            AnkiAvailability.NO_PERMISSION -> R.string.inbox_banner_allow to requestAnki
-            AnkiAvailability.NOT_SET_UP -> R.string.anki_open to { openAnkiDroid(context) }
-            AnkiAvailability.READY -> return
-        }
-        is CardSource.ReadFailed -> R.string.sheet_retry to { dispatch(CardIntent.Resumed) }
-        else -> return
+    if (card.status == CardStatus.SENT && source is CardSource.ReadFailed) {
+        TextButton(onClick = { dispatch(CardIntent.Resumed) }) { Text(stringResource(R.string.sheet_retry)) }
+    } else if (card.status in EDITABLE) {
+        ankiFix(anki)?.let { fix -> TextButton(onClick = fix.onClick) { Text(stringResource(fix.label)) } }
     }
-    TextButton(onClick = onClick) { Text(stringResource(label)) }
 }
 
 private fun messageText(r: Resources, event: CardMessage): String? = when (event) {
@@ -341,12 +328,7 @@ private fun messageText(r: Resources, event: CardMessage): String? = when (event
             LlmException.Stop.Kind.CONFIG -> R.string.inbox_result_stopped_config
         },
     )
-    is CardMessage.Unavailable -> when (event.availability) {
-        AnkiAvailability.NOT_INSTALLED -> r.getString(R.string.inbox_banner_not_installed)
-        AnkiAvailability.NO_PERMISSION -> r.getString(R.string.inbox_banner_no_permission)
-        AnkiAvailability.NOT_SET_UP -> r.getString(R.string.inbox_banner_not_set_up)
-        AnkiAvailability.READY -> null
-    }
+    is CardMessage.Unavailable -> event.availability.problemText()?.let(r::getString)
     is CardMessage.SendFailed -> r.getString(R.string.inbox_send_failed, event.message)
     is CardMessage.MissingFields -> r.getString(R.string.inbox_note_type_missing, event.fields.joinToString(", "))
     is CardMessage.UndoKept -> r.getQuantityString(R.plurals.inbox_undo_kept, event.count, event.count)

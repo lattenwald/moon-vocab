@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import java.io.IOException
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -27,7 +26,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
-import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.SettingsSnapshot
 import org.lattenwald.moonvocab.data.settings.ThemeMode
@@ -41,7 +39,7 @@ fun ThemeMode.nightMode(): Int = when (this) {
 class SettingsViewModel(
     private val resolver: ContentResolver,
     private val settings: Settings,
-    private val anki: AnkiGateway,
+    val ankiAvailability: StateFlow<AnkiAvailability?>,
     private val io: CoroutineDispatcher,
     private val appScope: CoroutineScope,
 ) : ViewModel() {
@@ -52,26 +50,10 @@ class SettingsViewModel(
     private val _readable = MutableStateFlow<Set<Uri>?>(null)
     val readable: StateFlow<Set<Uri>?> = _readable.asStateFlow()
 
-    private val _anki = MutableStateFlow<AnkiAvailability?>(null)
-    val ankiAvailability: StateFlow<AnkiAvailability?> = _anki.asStateFlow()
-
     private val writes = Mutex()
 
     fun refresh() {
         viewModelScope.launch { refreshReadable() }
-        refreshAnki()
-    }
-
-    fun refreshAnki() {
-        viewModelScope.launch {
-            try {
-                _anki.value = withContext(io) { anki.availability() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "AnkiDroid availability check failed", e)
-            }
-        }
     }
 
     fun setTheme(mode: ThemeMode) {
@@ -119,7 +101,7 @@ class SettingsViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                SettingsViewModel(app.contentResolver, c.settings, c.anki, c.io, c.appScope)
+                SettingsViewModel(app.contentResolver, c.settings, c.anki.state, c.io, c.appScope)
             }
         }
     }

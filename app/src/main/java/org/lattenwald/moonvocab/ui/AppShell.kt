@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -49,6 +51,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.ui.card.CardPage
@@ -87,6 +90,11 @@ fun AppShell(share: ShareViewModel) {
     val backStack = rememberNavBackStack(if (app.setupDone) InboxKey else SetupKey)
     val navigator = remember(backStack) { Navigator(backStack) }
     val top = navigator.top
+    val scope = rememberCoroutineScope()
+    LifecycleResumeEffect(app) {
+        scope.launch { app.container.anki.refresh() }
+        onPauseOrDispose {}
+    }
     val inbox: InboxViewModel = viewModel(factory = InboxViewModel.Factory)
     val sheet: ImportSheetViewModel = viewModel(factory = ImportSheetViewModel.Factory)
     val library: LibraryViewModel = viewModel(factory = LibraryViewModel.Factory)

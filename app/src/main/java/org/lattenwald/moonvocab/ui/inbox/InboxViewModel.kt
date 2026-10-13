@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
-import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.card.CardStore
@@ -68,14 +67,13 @@ sealed interface InboxEvent {
 class InboxViewModel(
     private val db: AppDatabase,
     private val settings: Settings,
-    private val anki: AnkiGateway,
+    private val anki: StateFlow<AnkiAvailability?>,
     private val runs: ImportRuns,
     private val store: CardStore,
     private val sender: CardSender,
     private val io: CoroutineDispatcher,
 ) : ViewModel(), SelectHandler {
     private val filter = MutableStateFlow<InboxFilter>(InboxFilter.All)
-    private val availability = MutableStateFlow<AnkiAvailability?>(null)
     private val selection = MutableStateFlow(Selection())
     override val selecting: Boolean get() = selection.value.active
     private val missingFields = MutableStateFlow<List<String>>(emptyList())
@@ -93,7 +91,7 @@ class InboxViewModel(
     }.onEach { l -> selection.update { it.retain(l.visibleIds.toSet()) } }
 
     val state: StateFlow<InboxState> = combine(
-        list, selection, runs.state, availability, missingFields,
+        list, selection, runs.state, anki, missingFields,
     ) { l, s, i, a, m ->
         InboxState(list = l, selection = s, import = i, anki = a, missingFields = m, loaded = true)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InboxState())
@@ -114,18 +112,6 @@ class InboxViewModel(
 
     fun setFilter(f: InboxFilter) {
         filter.value = f
-    }
-
-    fun refreshAvailability() {
-        viewModelScope.launch {
-            try {
-                availability.value = withContext(io) { anki.availability() }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "AnkiDroid availability check failed", e)
-            }
-        }
     }
 
     fun dismissResult() {
@@ -194,18 +180,13 @@ class InboxViewModel(
     }
 
     private fun sendEvent(ids: List<Long>, r: SendResult): InboxEvent {
-        r.unavailable?.let { return unavailable(it) }
+        r.unavailable?.let { return InboxEvent.Unavailable(it) }
         missingFields.value = r.missingFields
         return when {
             r.sentIds.isNotEmpty() -> InboxEvent.Sent(r.sentIds, stayed = r.skipped, error = r.error)
             r.error != null -> InboxEvent.SendFailed(r.error)
             else -> InboxEvent.Stayed(ids.size)
         }
-    }
-
-    private fun unavailable(a: AnkiAvailability): InboxEvent {
-        availability.value = a
-        return InboxEvent.Unavailable(a)
     }
 
     fun discard(ids: List<Long>, onStayed: () -> Unit = {}) {
@@ -258,7 +239,7 @@ class InboxViewModel(
         val r = withContext(io) { sender.undoSend(ids) }
         r.error?.let { Log.w(TAG, "undo send stopped: $it") }
         when {
-            r.unavailable != null -> unavailable(r.unavailable)
+            r.unavailable != null -> InboxEvent.Unavailable(r.unavailable)
             r.kept > 0 -> InboxEvent.UndoKept(r.kept)
             else -> null
         }
@@ -278,7 +259,7 @@ class InboxViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                InboxViewModel(c.db, c.settings, c.anki, c.importRuns, c.cards, c.sender, c.io)
+                InboxViewModel(c.db, c.settings, c.anki.state, c.importRuns, c.cards, c.sender, c.io)
             }
         }
     }

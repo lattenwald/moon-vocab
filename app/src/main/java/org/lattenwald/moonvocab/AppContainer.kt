@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import org.lattenwald.moonvocab.data.anki.AnkiDroidGateway
+import org.lattenwald.moonvocab.data.anki.AnkiStatus
 import org.lattenwald.moonvocab.data.backup.BackupFinder
 import org.lattenwald.moonvocab.data.backup.BackupReader
 import org.lattenwald.moonvocab.data.books.FolderBookSource
@@ -41,7 +42,7 @@ class AppContainer(context: Context) {
     val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + io)
     val db: AppDatabase = Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).build()
     val settings = Settings(app.settingsDataStore)
-    val anki = AnkiDroidGateway(app)
+    val anki = AnkiStatus(AnkiDroidGateway(app), io)
     val backupReader = BackupReader(app.cacheDir)
     val backupFinder = BackupFinder(app.contentResolver, app.cacheDir, backupReader, io)
     val cards = CardStore(db)

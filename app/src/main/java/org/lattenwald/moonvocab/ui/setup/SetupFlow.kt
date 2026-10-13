@@ -78,7 +78,6 @@ import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
@@ -127,10 +126,6 @@ fun SetupFlow(
     val backups by vm.backups.collectAsStateWithLifecycle()
     val newMarks by vm.newMarks.collectAsStateWithLifecycle()
     val anki by settingsVm.ankiAvailability.collectAsStateWithLifecycle()
-    LifecycleResumeEffect(settingsVm) {
-        settingsVm.refreshAnki()
-        onPauseOrDispose {}
-    }
     LaunchedEffect(step) { if (step == READY) vm.countNew() }
 
     val context = LocalContext.current
@@ -139,10 +134,7 @@ fun SetupFlow(
     }
     val pickBooks = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(settingsVm::setBooksTree) }
     var ankiAnswered by rememberSaveable { mutableStateOf(false) }
-    val requestAnki = rememberAnkiPermissionRequest(onResult = {
-        ankiAnswered = true
-        settingsVm.refreshAnki()
-    })
+    val requestAnki = rememberAnkiPermissionRequest(onResult = { ankiAnswered = true })
 
     val s = snapshot
     val canContinue = when (step) {

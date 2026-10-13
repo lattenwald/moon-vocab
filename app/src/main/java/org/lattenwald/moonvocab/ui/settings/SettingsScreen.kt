@@ -35,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,10 +53,8 @@ import org.lattenwald.moonvocab.ui.DeveloperKey
 import org.lattenwald.moonvocab.ui.LanguageKey
 import org.lattenwald.moonvocab.ui.LanguageKind
 import org.lattenwald.moonvocab.ui.ServicesKey
+import org.lattenwald.moonvocab.ui.common.ankiFix
 import org.lattenwald.moonvocab.ui.common.languageName
-import org.lattenwald.moonvocab.ui.common.openAnkiDroid
-import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
-import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
 import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
@@ -109,10 +106,8 @@ fun SettingsScreen(
 private fun SettingsGroups(s: SettingsSnapshot, vm: SettingsViewModel, rowColor: Color, onOpen: (NavKey) -> Unit) {
     val readable by vm.readable.collectAsStateWithLifecycle()
     val anki by vm.ankiAvailability.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val pickBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::setBackupTree) }
     val pickBooks = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::setBooksTree) }
-    val requestAnki = rememberAnkiPermissionRequest(onResult = vm::refreshAnki)
 
     Group(stringResource(R.string.settings_translation)) {
         LinkRow(0, 2, R.drawable.ic_translate, stringResource(R.string.settings_service), serviceTitle(s.activeService), rowColor) {
@@ -144,13 +139,7 @@ private fun SettingsGroups(s: SettingsSnapshot, vm: SettingsViewModel, rowColor:
             AnkiAvailability.NOT_INSTALLED -> stringResource(R.string.settings_anki_missing)
             AnkiAvailability.NOT_SET_UP -> stringResource(R.string.settings_anki_not_set_up)
         }
-        val ankiClick: (() -> Unit)? = when (anki) {
-            AnkiAvailability.NO_PERMISSION -> requestAnki
-            AnkiAvailability.NOT_INSTALLED -> { { openAnkiDroidStore(context) } }
-            AnkiAvailability.NOT_SET_UP -> { { openAnkiDroid(context) } }
-            else -> null
-        }
-        LinkRow(1, 2, R.drawable.ic_school, stringResource(R.string.settings_anki), ankiValue, rowColor, onClick = ankiClick)
+        LinkRow(1, 2, R.drawable.ic_school, stringResource(R.string.settings_anki), ankiValue, rowColor, onClick = ankiFix(anki)?.onClick)
     }
     Group(null) {
         LinkRow(0, 1, R.drawable.ic_code, stringResource(R.string.settings_developer), null, rowColor) { onOpen(DeveloperKey) }

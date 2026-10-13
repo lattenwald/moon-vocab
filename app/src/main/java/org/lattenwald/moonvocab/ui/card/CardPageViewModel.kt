@@ -16,11 +16,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
+import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.BookEntity
 import org.lattenwald.moonvocab.domain.card.CardExtras
@@ -47,6 +49,7 @@ class CardPageViewModel(
     private val store: CardStore,
     private val retranslator: CardRetranslator,
     private val runs: ImportRuns,
+    val anki: StateFlow<AnkiAvailability?>,
     private val io: CoroutineDispatcher,
     private val handle: SavedStateHandle,
 ) : ViewModel() {
@@ -178,7 +181,7 @@ class CardPageViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                CardPageViewModel(cardId, c.db, c.noteSync, c.sender, c.cards, c.retranslator, c.importRuns, c.io, createSavedStateHandle())
+                CardPageViewModel(cardId, c.db, c.noteSync, c.sender, c.cards, c.retranslator, c.importRuns, c.anki.state, c.io, createSavedStateHandle())
             }
         }
     }

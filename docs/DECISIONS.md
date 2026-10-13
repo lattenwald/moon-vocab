@@ -195,7 +195,8 @@
 - Send and discard offer Undo in a snackbar. Undoing a send deletes the notes it created.
 - A new Inbox snackbar replaces the one showing.
 - A send that stops after sending some cards shows one snackbar: the count sent, the cards without a translation that stayed, `inbox_send_stopped` with the reason, and Undo.
-- A send or undo that finds AnkiDroid unavailable updates the Inbox banner at once.
+- Every AnkiDroid availability check, whoever makes it, updates one app-wide `AnkiStatus`; the Inbox banner, the card page, Settings and setup show that status. The app checks on every resume and after the permission dialog.
+- The Inbox and the card page each map their own action results to messages.
 - Cards labelled "Already in Anki" can be sent from the Inbox.
 - While an import runs, the Import button shows its progress and opens nothing.
 
@@ -215,6 +216,7 @@
 - Discard on a pending card saves its unsaved edits first, so Restore brings them back.
 - Unsaved edits, and the stored fields they were made against, survive process death in the page's `SavedStateHandle`.
 - A sent card whose note couldn't be read, because AnkiDroid was unavailable or the read failed, is read again on resume. Its note line names the cause and offers the Inbox banner's fix, or Try again after a read error.
+- While AnkiDroid is unavailable, a pending card's note line shows the Inbox banner's text and fix; a sent card offers the fix too.
 - Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, transcription, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
 - Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
 - Tapping a card outside selection opens its page.
@@ -277,7 +279,7 @@
 - Theme is a segmented button. Selecting writes `theme` and calls `setDefaultNightMode`.
 - A folder row shows the path after `:` in the tree's document id, "Not chosen", or, when `persistedUriPermissions` holds no read grant for it, "Can't read this folder. Choose it again." in the error colour.
 - Choosing a folder takes the persistable read permission, then saves the folder even if that failed.
-- The AnkiDroid row reads Connected, Allow access (asks), Not installed (opens the Play Store), or Not set up yet (opens AnkiDroid). It and the folder grants are refreshed on resume.
+- The AnkiDroid row reads Connected, Allow access (asks), Not installed (opens the Play Store), or Not set up yet (opens AnkiDroid). The folder grants are refreshed on resume.
 - AnkiDroid is NOT_SET_UP when it is installed and permitted but its provider returns no note type list (no collection before its first launch) or throws. The Inbox banner, the setup step and the Settings row then offer Open AnkiDroid; setup's Continue needs READY.
 - Settings page writes run in `appScope` under one lock. Theme and Review before sending writes queue in tap order; a folder's write queues only after its permission is taken.
 
@@ -285,7 +287,7 @@
 - Setup shows while `setupDone` is false; an install that already has a backup folder counts as set up. The first back-stack key comes from `App.setupDone`, read at start and set when setup finishes.
 - Steps: Welcome, Folders, AnkiDroid, Translation, Ready. Folders to Translation show three progress bars; Back and Continue sit at the bottom. The step index is saveable.
 - Folders: the backup folder is required. Its row shows how many `.mrpro` files it holds and the newest one's relative date, "No backups in this folder yet" (Continue still works), or, when it can't be listed, the unreadable line and Choose folder again. The books folder is optional.
-- AnkiDroid: Continue waits for access. Not installed shows Get AnkiDroid (Play Store). A refused request shows the denied line. Availability is refreshed on resume.
+- AnkiDroid: Continue waits for access. Not installed shows Get AnkiDroid (Play Store). A refused request shows the denied line.
 - Translation: the active service's key with Test connection, then Use another service (Services page), then the Translate into row. Continue needs a non-blank key.
 - While the active service's host is openrouter.ai, the setup key field's help reads "Get a key at openrouter.ai/keys. It stays on this phone.", with openrouter.ai/keys linking to `https://openrouter.ai/keys`.
 - Ready counts the newest complete backup's marks in `defaultStyles` whose key isn't stored, with a progress indicator while it reads. It counts once per backup folder; returning to Ready keeps that count. Some new: Later or Import now. None, or the backup can't be read: Done.
@@ -309,7 +311,7 @@
 - `ImportWorker` runs both import and retry-failed in the foreground, as `dataSync`.
 - If `setForeground` is refused, the worker continues without the notification.
 - App data is excluded from cloud backup and device transfer.
-- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox, Library, book page and preview queries and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty screen.
+- UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox, Library, book page and preview queries and the app's AnkiDroid availability check only log theirs; a failed query shows an empty screen.
 - The Advanced page holds only what the rest of the app can't do, in Settings-style groups. Testing: Send to test deck, Delete every note this build created, Forget unsent cards. Reports: Export cards, Export position report.
 - Delete and Forget ask first and are drawn in the error colour. Each action shows its result, or its error, in its own row. Actions are off while one runs or an import runs.
 - Export cards writes JSON (no settings or keys). Forget unsent cards deletes PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.

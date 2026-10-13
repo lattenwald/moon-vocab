@@ -7,6 +7,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.StringRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -24,6 +25,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
+import org.lattenwald.moonvocab.R
+import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 
 private const val TAG = "AnkiPermission"
 private const val PERMISSION = AddContentApi.READ_WRITE_PERMISSION
@@ -31,7 +34,7 @@ private const val ANKIDROID_MARKET = "market://details?id=com.ichi2.anki"
 private const val ANKIDROID_WEB = "https://play.google.com/store/apps/details?id=com.ichi2.anki"
 
 @Composable
-fun rememberAnkiPermissionRequest(onResult: () -> Unit): () -> Unit {
+fun rememberAnkiPermissionRequest(onResult: () -> Unit = {}): () -> Unit {
     val activity = LocalActivity.current
     val container = (LocalContext.current.applicationContext as App).container
     val scope = rememberCoroutineScope()
@@ -47,6 +50,7 @@ fun rememberAnkiPermissionRequest(onResult: () -> Unit): () -> Unit {
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.packageName, null)),
             )
         }
+        scope.launch { container.anki.refresh() }
         onResult()
     }
     return remember(launcher, scope, container, activity) {
@@ -77,6 +81,28 @@ fun rememberAnkiPermissionRequest(onResult: () -> Unit): () -> Unit {
                 }
             }
         }
+    }
+}
+
+@StringRes
+fun AnkiAvailability.problemText(): Int? = when (this) {
+    AnkiAvailability.NOT_INSTALLED -> R.string.inbox_banner_not_installed
+    AnkiAvailability.NO_PERMISSION -> R.string.inbox_banner_no_permission
+    AnkiAvailability.NOT_SET_UP -> R.string.inbox_banner_not_set_up
+    AnkiAvailability.READY -> null
+}
+
+class AnkiFix(@StringRes val label: Int, val onClick: () -> Unit)
+
+@Composable
+fun ankiFix(availability: AnkiAvailability?): AnkiFix? {
+    val context = LocalContext.current
+    val requestAnki = rememberAnkiPermissionRequest()
+    return when (availability) {
+        AnkiAvailability.NOT_INSTALLED -> AnkiFix(R.string.inbox_banner_get) { openAnkiDroidStore(context) }
+        AnkiAvailability.NO_PERMISSION -> AnkiFix(R.string.inbox_banner_allow, requestAnki)
+        AnkiAvailability.NOT_SET_UP -> AnkiFix(R.string.anki_open) { openAnkiDroid(context) }
+        AnkiAvailability.READY, null -> null
     }
 }
 

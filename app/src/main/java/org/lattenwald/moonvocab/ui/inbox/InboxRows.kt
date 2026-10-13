@@ -89,7 +89,9 @@ import org.lattenwald.moonvocab.domain.inbox.InboxFilter
 import org.lattenwald.moonvocab.domain.inbox.RowLabel
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
 import org.lattenwald.moonvocab.ui.common.WordNote
+import org.lattenwald.moonvocab.ui.common.ankiFix
 import org.lattenwald.moonvocab.ui.common.languageName
+import org.lattenwald.moonvocab.ui.common.problemText
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
 import org.lattenwald.moonvocab.work.ImportState
 
@@ -481,13 +483,9 @@ private fun ResultLine(text: String, color: Color) {
 }
 
 @Composable
-internal fun AnkiBanner(availability: AnkiAvailability, onGet: () -> Unit, onAllow: () -> Unit, onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    val (text, action, onClick) = when (availability) {
-        AnkiAvailability.NOT_INSTALLED -> Triple(R.string.inbox_banner_not_installed, R.string.inbox_banner_get, onGet)
-        AnkiAvailability.NO_PERMISSION -> Triple(R.string.inbox_banner_no_permission, R.string.inbox_banner_allow, onAllow)
-        AnkiAvailability.NOT_SET_UP -> Triple(R.string.inbox_banner_not_set_up, R.string.anki_open, onOpen)
-        AnkiAvailability.READY -> return
-    }
+internal fun AnkiBanner(availability: AnkiAvailability, modifier: Modifier = Modifier) {
+    val text = availability.problemText() ?: return
+    val fix = ankiFix(availability) ?: return
     val colors = MaterialTheme.colorScheme
     Column(
         modifier.fillMaxWidth().background(colors.secondaryContainer, PanelShape).padding(start = 18.dp, top = 16.dp, end = 8.dp, bottom = 6.dp),
@@ -496,7 +494,7 @@ internal fun AnkiBanner(availability: AnkiAvailability, onGet: () -> Unit, onAll
             Icon(painterResource(R.drawable.ic_error), contentDescription = null, tint = colors.onSecondaryContainer)
             Text(stringResource(text), color = colors.onSecondaryContainer, fontSize = 14.sp, lineHeight = 20.sp)
         }
-        TextButton(onClick = onClick, modifier = Modifier.align(Alignment.End)) { Text(stringResource(action)) }
+        TextButton(onClick = fix.onClick, modifier = Modifier.align(Alignment.End)) { Text(stringResource(fix.label)) }
     }
 }
 
