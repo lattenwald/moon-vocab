@@ -317,11 +317,12 @@ private fun sendMessage(r: SendResult): CardMessage? = when {
     else -> null
 }
 
-private fun deleteMessage(r: DeleteResult): CardMessage = when {
-    r.deleted -> CardMessage.Deleted
-    r.unavailable != null -> CardMessage.Unavailable(r.unavailable)
-    r.error != null -> CardMessage.Failed(r.error)
-    else -> CardMessage.DeleteRefused
+private fun deleteMessage(r: DeleteResult): CardMessage? = when (r) {
+    DeleteResult.Deleted -> CardMessage.Deleted
+    DeleteResult.NotSent -> null
+    DeleteResult.Refused -> CardMessage.DeleteRefused
+    is DeleteResult.Unavailable -> CardMessage.Unavailable(r.availability)
+    is DeleteResult.Failed -> CardMessage.Failed(r.message)
 }
 
 private fun undoMessage(r: UndoResult): CardMessage? = when {

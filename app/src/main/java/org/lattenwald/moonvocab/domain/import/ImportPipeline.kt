@@ -24,6 +24,7 @@ import org.lattenwald.moonvocab.data.settings.SettingsSnapshot
 import org.lattenwald.moonvocab.domain.card.CardDraft
 import org.lattenwald.moonvocab.domain.card.CardEvent
 import org.lattenwald.moonvocab.domain.card.CardStatus
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.card.DraftResult
 import org.lattenwald.moonvocab.domain.card.KnownCard
 import org.lattenwald.moonvocab.domain.card.Merge
@@ -64,6 +65,7 @@ data class ImportSummary(
 
 class ImportPipeline(
     private val db: AppDatabase,
+    private val store: CardStore,
     private val reader: BackupReader,
     private val books: suspend () -> BookSource,
     private val translator: Translator,
@@ -136,7 +138,7 @@ class ImportPipeline(
                 break
             }
             val cards = search(merged.cards, run)
-            val ids = db.writeBatch(cards, merged.links)
+            val ids = store.add(cards, merged.links)
             newCards += cards.count { it.first.status == CardStatus.PENDING }
             failed += cards.count { it.first.status == CardStatus.FAILED }
             alreadyCard += merged.alreadyCard
@@ -159,8 +161,7 @@ class ImportPipeline(
     }
 
     suspend fun retryFailed(progress: (ImportProgress) -> Unit): ImportSummary {
-        val failed = db.cards().byStatus(CardStatus.FAILED).map { it.id }
-        if (failed.isNotEmpty()) db.cards().delete(failed) // mark.cardId is ON DELETE SET NULL
+        store.forgetFailed()
         return run(ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false), progress)
     }
 

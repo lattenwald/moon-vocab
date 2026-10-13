@@ -25,6 +25,7 @@ import org.lattenwald.moonvocab.data.backup.BackupFinder
 import org.lattenwald.moonvocab.data.books.FolderBookSource
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.work.ImportWork
 
@@ -61,6 +62,7 @@ class DebugViewModel(
     private val settings: Settings,
     private val finder: BackupFinder,
     private val sender: CardSender,
+    private val store: CardStore,
     workManager: WorkManager,
     private val io: CoroutineDispatcher,
     private val bookSource: suspend () -> FolderBookSource,
@@ -90,7 +92,7 @@ class DebugViewModel(
 
     fun deleteAllCreated() = run(DebugAction.DELETE_NOTES) { Outcome.Deleted(withContext(io) { sender.deleteAllCreated() }) }
 
-    fun forgetUnsent() = run(DebugAction.FORGET_UNSENT) { Outcome.Forgotten(withContext(io) { db.cards().deleteUnsent() }) }
+    fun forgetUnsent() = run(DebugAction.FORGET_UNSENT) { Outcome.Forgotten(withContext(io) { store.forgetUnsent() }) }
 
     fun exportCards(uri: Uri) = run(DebugAction.EXPORT_CARDS) {
         val count = withContext(io) {
@@ -147,7 +149,7 @@ class DebugViewModel(
                 val c = app.container
                 val info = app.packageManager.getPackageInfo(app.packageName, 0)
                 DebugViewModel(
-                    app.contentResolver, c.db, c.settings, c.backupFinder, c.sender, c.workManager, c.io,
+                    app.contentResolver, c.db, c.settings, c.backupFinder, c.sender, c.cards, c.workManager, c.io,
                     c::bookSource, "${info.versionName} (${info.longVersionCode})",
                 )
             }

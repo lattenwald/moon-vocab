@@ -81,12 +81,6 @@ interface MarkDao {
 
 @Dao
 interface CardDao {
-    @Insert
-    suspend fun insert(card: CardEntity): Long
-
-    @Update
-    suspend fun update(card: CardEntity)
-
     @Query("SELECT * FROM card WHERE status = :status ORDER BY id")
     suspend fun byStatus(status: CardStatus): List<CardEntity>
 
@@ -138,6 +132,20 @@ interface CardDao {
 
     @Query("SELECT * FROM card WHERE ankiNoteId IS NOT NULL ORDER BY id")
     suspend fun withNoteIds(): List<CardEntity>
+}
+
+@RequiresOptIn("Write cards through CardStore, which holds the AnkiDroid lock.", RequiresOptIn.Level.ERROR)
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.FUNCTION)
+annotation class CardWriteAccess
+
+@Dao
+interface CardWriteDao {
+    @Insert
+    suspend fun insert(card: CardEntity): Long
+
+    @Update
+    suspend fun update(card: CardEntity)
 
     @Query("DELETE FROM card WHERE id IN (:ids)")
     suspend fun delete(ids: List<Long>)

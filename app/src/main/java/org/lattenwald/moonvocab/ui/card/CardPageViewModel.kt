@@ -27,6 +27,7 @@ import org.lattenwald.moonvocab.data.db.BookEntity
 import org.lattenwald.moonvocab.domain.card.CardExtras
 import org.lattenwald.moonvocab.domain.card.CardField
 import org.lattenwald.moonvocab.domain.card.CardFields
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.card.with
 import org.lattenwald.moonvocab.domain.cardpage.CardEditState
 import org.lattenwald.moonvocab.domain.cardpage.CardEditor
@@ -38,7 +39,6 @@ import org.lattenwald.moonvocab.domain.cardpage.NO_FIELDS
 import org.lattenwald.moonvocab.domain.cardpage.reduce
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.domain.import.ImportRequest
-import org.lattenwald.moonvocab.domain.inbox.InboxActions
 import org.lattenwald.moonvocab.work.ImportWork
 
 class CardPageViewModel(
@@ -46,7 +46,7 @@ class CardPageViewModel(
     private val db: AppDatabase,
     private val editor: CardEditor,
     private val sender: CardSender,
-    private val actions: InboxActions,
+    private val store: CardStore,
     private val retranslator: CardRetranslator,
     private val workManager: WorkManager,
     private val io: CoroutineDispatcher,
@@ -111,14 +111,14 @@ class CardPageViewModel(
         is CardEffect.SaveLocal -> CardIntent.LocalSaved(editor.saveLocal(cardId, effect.fields, effect.extras), effect.then)
         is CardEffect.Save -> CardIntent.SaveDone(editor.save(cardId, effect.baseline, effect.fields, effect.extras))
         CardEffect.Send -> CardIntent.SendDone(sender.send(listOf(cardId)))
-        CardEffect.Discard -> CardIntent.DiscardDone(actions.discard(listOf(cardId)).isNotEmpty())
+        CardEffect.Discard -> CardIntent.DiscardDone(store.discard(listOf(cardId)).isNotEmpty())
         CardEffect.Restore -> {
-            actions.restore(listOf(cardId))
+            store.restore(listOf(cardId))
             CardIntent.RestoreDone
         }
         CardEffect.Delete -> CardIntent.DeleteDone(sender.deleteFromAnki(cardId))
         CardEffect.Retranslate -> CardIntent.Retranslated(retranslator.retranslate(cardId))
-        CardEffect.Forget -> CardIntent.Forgotten(actions.forgetForRetranslation(listOf(cardId)))
+        CardEffect.Forget -> CardIntent.Forgotten(store.forgetForRetranslation(listOf(cardId)))
         CardEffect.UndoSend -> {
             val r = sender.undoSend(listOf(cardId))
             r.error?.let { Log.w(TAG, "undo send stopped: $it") }
@@ -175,7 +175,7 @@ class CardPageViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                CardPageViewModel(cardId, c.db, c.cardEditor, c.sender, c.inboxActions, c.retranslator, c.workManager, c.io, createSavedStateHandle())
+                CardPageViewModel(cardId, c.db, c.cardEditor, c.sender, c.cards, c.retranslator, c.workManager, c.io, createSavedStateHandle())
             }
         }
     }

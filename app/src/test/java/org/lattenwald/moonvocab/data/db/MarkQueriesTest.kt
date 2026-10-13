@@ -10,6 +10,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.lattenwald.moonvocab.domain.card.CardStatus
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.mark.MarkStyle
 import org.robolectric.RobolectricTestRunner
 
@@ -32,6 +33,7 @@ private fun card(bookId: Long, uuid: String = "u-$bookId", status: CardStatus = 
 class MarkQueriesTest {
     private val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
         .allowMainThreadQueries().build()
+    private val store = CardStore(db)
 
     @After fun close() = db.close()
 
@@ -40,7 +42,7 @@ class MarkQueriesTest {
         val first = db.marks().insertIgnoringKnown(listOf(mark("k1", b), mark("k2", b)))
         val again = db.marks().insertIgnoringKnown(listOf(mark("k1", b), mark("k3", b)))
         assertEquals(-1L, again[0]); assertNotEquals(-1L, again[1])
-        db.writeBatch(listOf(card(b) to listOf(first[0])))
+        store.add(listOf(card(b) to listOf(first[0])))
         assertEquals(setOf("k2", "k3"), db.marks().withoutCard(null).map { it.key }.toSet())
     }
 
@@ -55,7 +57,7 @@ class MarkQueriesTest {
     @Test fun unlinkMakesMarksResumable() = runTest {
         val b = db.books().upsertByFileKey(book("diaspora.epub"))
         val ids = db.marks().insertIgnoringKnown(listOf(mark("k1", b), mark("k2", b)))
-        db.writeBatch(listOf(card(b) to ids))
+        store.add(listOf(card(b) to ids))
         val cardId = db.cards().byStatus(CardStatus.PENDING).single().id
         db.marks().unlink(listOf(cardId))
         assertEquals(setOf("k1", "k2"), db.marks().withoutCard(b).map { it.key }.toSet())
@@ -64,9 +66,9 @@ class MarkQueriesTest {
     @Test fun deletingCardMakesItsMarksResumable() = runTest {
         val b = db.books().upsertByFileKey(book("diaspora.epub"))
         val ids = db.marks().insertIgnoringKnown(listOf(mark("k1", b), mark("k2", b)))
-        val cardId = db.writeBatch(listOf(card(b) to ids)).single()
+        val cardId = store.add(listOf(card(b) to ids)).single()
         assertEquals(emptyList<MarkEntity>(), db.marks().withoutCard(b))
-        db.cards().delete(listOf(cardId))
+        store.forgetForRetranslation(listOf(cardId))
         assertEquals(setOf("k1", "k2"), db.marks().withoutCard(b).map { it.key }.toSet())
     }
 
@@ -75,7 +77,7 @@ class MarkQueriesTest {
         val ids = db.marks().insertIgnoringKnown(
             listOf(mark("pending", b), mark("failed", b), mark("sent", b), mark("discarded", b), mark("deleted", b)),
         )
-        db.writeBatch(
+        store.add(
             listOf(
                 card(b, "p", CardStatus.PENDING) to listOf(ids[0]),
                 card(b, "f", CardStatus.FAILED) to listOf(ids[1]),
@@ -84,7 +86,7 @@ class MarkQueriesTest {
                 card(b, "x", CardStatus.DELETED_IN_ANKI, ankiNoteId = 8) to listOf(ids[4]),
             ),
         )
-        db.cards().deleteUnsent()
+        store.forgetUnsent()
         assertEquals(setOf("s", "d"), db.cards().observeAll().first().map { it.uuid }.toSet())
         assertEquals(setOf("pending", "failed", "deleted"), db.marks().withoutCard(b).map { it.key }.toSet())
     }

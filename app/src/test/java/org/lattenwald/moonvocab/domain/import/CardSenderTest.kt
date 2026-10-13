@@ -4,7 +4,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -14,7 +13,6 @@ import org.lattenwald.moonvocab.domain.card.CardStatus.DELETED_IN_ANKI
 import org.lattenwald.moonvocab.domain.card.CardStatus.DISCARDED
 import org.lattenwald.moonvocab.domain.card.CardStatus.PENDING
 import org.lattenwald.moonvocab.domain.card.CardStatus.SENT
-import org.lattenwald.moonvocab.domain.inbox.InboxActions
 
 class CardSenderTest : ImportTestBase() {
     @Test fun undoSendDeletesNotesAndReturnsCardsToPending() = runTest {
@@ -142,7 +140,7 @@ class CardSenderTest : ImportTestBase() {
         pipeline().run(req(backup(1)), {})
         val id = db.cards().byStatus(PENDING).single().id
         sender.send(listOf(id))
-        assertEquals(DeleteResult(deleted = true, unavailable = null, error = null), sender.deleteFromAnki(id))
+        assertEquals(DeleteResult.Deleted, sender.deleteFromAnki(id))
         val card = db.cards().byIds(listOf(id)).single()
         assertEquals(DISCARDED, card.status)
         assertEquals(PENDING, card.previousStatus)
@@ -155,7 +153,7 @@ class CardSenderTest : ImportTestBase() {
         val id = db.cards().byStatus(PENDING).single().id
         sender.send(listOf(id))
         sender.deleteFromAnki(id)
-        InboxActions(db, ankiLock).restore(listOf(id))
+        store.restore(listOf(id))
         assertEquals(PENDING, db.cards().byIds(listOf(id)).single().status)
     }
 
@@ -165,7 +163,7 @@ class CardSenderTest : ImportTestBase() {
         sender.send(listOf(id))
         val before = db.cards().byIds(listOf(id)).single()
         fakeAnki.refuseDelete += before.ankiNoteId!!
-        assertFalse(sender.deleteFromAnki(id).deleted)
+        assertEquals(DeleteResult.Refused, sender.deleteFromAnki(id))
         assertEquals(before, db.cards().byIds(listOf(id)).single())
     }
 
@@ -174,7 +172,7 @@ class CardSenderTest : ImportTestBase() {
         val id = db.cards().byStatus(PENDING).single().id
         sender.send(listOf(id))
         fakeAnki.availability = AnkiAvailability.NO_PERMISSION
-        assertEquals(DeleteResult(false, AnkiAvailability.NO_PERMISSION, null), sender.deleteFromAnki(id))
+        assertEquals(DeleteResult.Unavailable(AnkiAvailability.NO_PERMISSION), sender.deleteFromAnki(id))
         assertEquals(SENT, db.cards().byIds(listOf(id)).single().status)
     }
 }

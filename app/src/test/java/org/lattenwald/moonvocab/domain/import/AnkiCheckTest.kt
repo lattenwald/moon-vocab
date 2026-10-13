@@ -16,7 +16,7 @@ class AnkiCheckTest : ImportTestBase() {
     @Test fun checkHoldsTheAnkiLock() = runTest {
         pipeline().run(req(backup(1), send = true), {})
         var locked = false
-        fakeAnki.onRead = { locked = ankiLock.isLocked }
+        fakeAnki.onRead = { locked = store.isLocked }
         check.check()
         assertTrue(locked)
     }
@@ -51,7 +51,7 @@ class AnkiCheckTest : ImportTestBase() {
     }
 
     private var now = T0
-    private val clocked by lazy { AnkiCheck(db, fakeAnki, ankiLock, settings) { now } }
+    private val clocked by lazy { AnkiCheck(db, fakeAnki, store, settings) { now } }
 
     private suspend fun TestScope.sendOne() = pipeline().run(req(backup(1), send = true), {})
 

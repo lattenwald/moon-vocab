@@ -1,23 +1,22 @@
 package org.lattenwald.moonvocab.domain.import
 
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.anki.NoteTypeChanged
 import org.lattenwald.moonvocab.data.anki.ankiFields
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.BookEntity
-import org.lattenwald.moonvocab.data.db.CardEntity
 import org.lattenwald.moonvocab.data.settings.Settings
-import org.lattenwald.moonvocab.domain.card.CardEvent
 import org.lattenwald.moonvocab.domain.card.CardStatus
+import org.lattenwald.moonvocab.domain.card.CardStore
+import org.lattenwald.moonvocab.domain.card.CardWrites
 import org.lattenwald.moonvocab.domain.card.bookTags
 import org.lattenwald.moonvocab.domain.card.deckName
-import org.lattenwald.moonvocab.domain.card.next
+import org.lattenwald.moonvocab.domain.card.deletedFromAnki
+import org.lattenwald.moonvocab.domain.card.sent
+import org.lattenwald.moonvocab.domain.card.unsent
+import org.lattenwald.moonvocab.domain.card.withoutNote
 
 data class SendResult(
     val sent: Int,
@@ -30,27 +29,32 @@ data class SendResult(
 
 data class UndoResult(val restored: Int, val kept: Int, val unavailable: AnkiAvailability?, val error: String?)
 
-data class DeleteResult(val deleted: Boolean, val unavailable: AnkiAvailability?, val error: String?)
+sealed interface DeleteResult {
+    data object Deleted : DeleteResult
+    data object NotSent : DeleteResult
+    data object Refused : DeleteResult
+    data class Unavailable(val availability: AnkiAvailability) : DeleteResult
+    data class Failed(val message: String) : DeleteResult
+}
 
 class CardSender(
     private val db: AppDatabase,
     private val anki: AnkiGateway,
     private val settings: Settings,
-    // Shared with AnkiCheck: the import worker, the check and the UI write the same cards.
-    private val lock: Mutex,
+    private val store: CardStore,
     private val clock: () -> Long,
 ) {
     private var noteType: Pair<Long, Int>? = null
 
-    suspend fun send(cardIds: List<Long>): SendResult = lock.withLock { sendLocked(cardIds) }
+    suspend fun send(cardIds: List<Long>): SendResult = store.locked { it.sendLocked(cardIds) }
 
-    suspend fun deleteAllCreated(): Int = lock.withLock { deleteAllCreatedLocked() }
+    suspend fun deleteAllCreated(): Int = store.locked { it.deleteAllCreatedLocked() }
 
-    suspend fun undoSend(cardIds: List<Long>): UndoResult = lock.withLock { undoSendLocked(cardIds) }
+    suspend fun undoSend(cardIds: List<Long>): UndoResult = store.locked { it.undoSendLocked(cardIds) }
 
-    suspend fun deleteFromAnki(cardId: Long): DeleteResult = lock.withLock { deleteFromAnkiLocked(cardId) }
+    suspend fun deleteFromAnki(cardId: Long): DeleteResult = store.locked { it.deleteFromAnkiLocked(cardId) }
 
-    private suspend fun sendLocked(cardIds: List<Long>): SendResult {
+    private suspend fun CardWrites.sendLocked(cardIds: List<Long>): SendResult {
         val availability = anki.availability()
         if (availability != AnkiAvailability.READY) return SendResult(0, cardIds.size, availability, null)
         val wanted = cardIds.toSet()
@@ -78,12 +82,7 @@ class CardSender(
                     val deckId = decks.getOrPut(deck) { anki.ensureDeck(deck) }
                     anki.add(mid, deckId, card.ankiFields(bookLine(book)), bookTags(s.tagPattern, book.title))
                 }
-                save(
-                    card.copy(
-                        status = next(card.status, SENDABLE.getValue(card.status)),
-                        ankiNoteId = noteId, sentAt = clock(), ankiMod = null, error = null,
-                    ),
-                )
+                save(card.sent(noteId, clock()))
                 sentIds += card.id
             }
         } catch (e: CancellationException) {
@@ -98,7 +97,7 @@ class CardSender(
         return SendResult(sentIds.size, skipped, null, null, sentIds)
     }
 
-    private suspend fun undoSendLocked(cardIds: List<Long>): UndoResult {
+    private suspend fun CardWrites.undoSendLocked(cardIds: List<Long>): UndoResult {
         val availability = anki.availability()
         if (availability != AnkiAvailability.READY) return UndoResult(0, cardIds.size, availability, null)
         val wanted = cardIds.toSet()
@@ -113,53 +112,43 @@ class CardSender(
                 return UndoResult(restored, sent.size - restored, null, e.message ?: e::class.simpleName)
             }
             if (!deleted) continue
-            save(card.copy(status = next(card.status, CardEvent.UNDO_SEND), ankiNoteId = null, sentAt = null, ankiMod = null))
+            save(card.unsent())
             restored++
         }
         return UndoResult(restored, sent.size - restored, null, null)
     }
 
-    private suspend fun deleteFromAnkiLocked(cardId: Long): DeleteResult {
+    private suspend fun CardWrites.deleteFromAnkiLocked(cardId: Long): DeleteResult {
         val availability = anki.availability()
-        if (availability != AnkiAvailability.READY) return DeleteResult(false, availability, null)
-        val card = db.cards().byIds(listOf(cardId)).singleOrNull()
-            ?.takeIf { it.status == CardStatus.SENT && it.ankiNoteId != null }
-            ?: return DeleteResult(false, null, null)
+        if (availability != AnkiAvailability.READY) return DeleteResult.Unavailable(availability)
+        val card = db.cards().byIds(listOf(cardId)).singleOrNull()?.takeIf { it.status == CardStatus.SENT }
+            ?: return DeleteResult.NotSent
+        val noteId = card.ankiNoteId ?: return DeleteResult.NotSent
         val deleted = try {
-            anki.delete(checkNotNull(card.ankiNoteId))
+            anki.delete(noteId)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            return DeleteResult(false, null, e.message ?: e::class.simpleName)
+            return DeleteResult.Failed(e.message ?: e::class.simpleName.orEmpty())
         }
-        if (deleted) {
-            save(
-                card.copy(
-                    status = next(card.status, CardEvent.DELETE_FROM_ANKI), previousStatus = CardStatus.PENDING,
-                    ankiNoteId = null, sentAt = null, ankiMod = null,
-                ),
-            )
-        }
-        return DeleteResult(deleted, null, null)
+        if (!deleted) return DeleteResult.Refused
+        save(card.deletedFromAnki())
+        return DeleteResult.Deleted
     }
 
-    private suspend fun deleteAllCreatedLocked(): Int {
+    private suspend fun CardWrites.deleteAllCreatedLocked(): Int {
         if (anki.availability() != AnkiAvailability.READY) return 0
         var deleted = 0
         for (card in db.cards().withNoteIds()) {
             if (!anki.delete(checkNotNull(card.ankiNoteId))) continue
             deleted++
-            val status = if (card.status == CardStatus.SENT) next(card.status, CardEvent.UNDO_SEND) else card.status
-            save(card.copy(status = status, ankiNoteId = null, sentAt = null, ankiMod = null))
+            save(if (card.status == CardStatus.SENT) card.unsent() else card.withoutNote())
         }
         return deleted
     }
 
-    // AnkiDroid already holds the note; a write lost to cancellation would send it again.
-    private suspend fun save(card: CardEntity) = withContext(NonCancellable) { db.cards().update(card) }
-
     private companion object {
-        val SENDABLE = mapOf(CardStatus.PENDING to CardEvent.SEND, CardStatus.DELETED_IN_ANKI to CardEvent.SEND_AS_NEW)
+        val SENDABLE = setOf(CardStatus.PENDING, CardStatus.DELETED_IN_ANKI)
     }
 }
 

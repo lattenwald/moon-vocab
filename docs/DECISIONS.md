@@ -149,7 +149,10 @@
 - After the loop, the pipeline runs `AnkiCheck.run()`, which never fails an import.
 - `AnkiCheck.check()` throws on failure and returns `Changed(n)` or `Unavailable`.
 - A check that reaches AnkiDroid and finishes records `lastCheckAt`. When `MainActivity` is created, the check runs if the last one is 10 minutes old or more.
-- `AppContainer` creates one `Mutex`, shared by `CardSender`, `AnkiCheck`, `InboxActions` and `CardEditor`. Sends, deletes, undo, the check, the Inbox's discard, restore and translate again, and the card page's open of a sent card, Save and local save run under it.
+- Only `CardStore` writes cards: the write DAO's getter needs `@OptIn(CardWriteAccess::class)`. Every card write runs under the store's one lock.
+- `CardStore.locked` holds the lock without a transaction, for `CardSender`, `AnkiCheck` and `CardEditor`, whose AnkiDroid calls and card saves run under it. Discard, restore, translate again's forget, retry's forget, Forget unsent cards and the import's batch write run under it in a transaction.
+- Status changes and the fields that go with them live in `CardStatus.kt` (`sent`, `unsent`, `deletedFromAnki`, `discarded`, `restored`, `noteMissing`).
+- An import batch leaves a mark unlinked when the card it merges into was deleted during the batch.
 - `CardSender`:
   - `send` sends PENDING cards and cards deleted in AnkiDroid. Other ids count as skipped;
   - a gateway error stops the send and is reported in `SendResult.error`;
@@ -161,7 +164,7 @@
 - `deleteFromAnki` discards a sent card only when AnkiDroid deleted its note. Its previous status becomes PENDING.
 - `undoSend` deletes each sent card's note and returns the card to PENDING. A card whose note AnkiDroid doesn't delete stays SENT and counts as kept.
 - A send stopped by a note type with missing fields reports them in `SendResult.missingFields`.
-- `retryFailed` deletes FAILED cards, then resumes.
+- `retryFailed` deletes the cards still FAILED when it gets the lock, then resumes.
 
 ## Inbox
 - The Inbox shows PENDING and FAILED cards.
@@ -204,7 +207,7 @@
 - Tapping a card outside selection opens its page.
 - Card page actions keep the page open and show their result there, with Undo for send and discard.
 - A pending card's edits are saved in the app on Done or Back. A sent card's edits wait for Save.
-- Delete from AnkiDroid asks first.
+- Delete from AnkiDroid asks first. A card that stopped being sent before the delete ran reloads without a message.
 - The preview fills the note type's front and back templates and CSS with the card's fields, in a WebView with JavaScript off. Its background is the Inbox row colour and its text colour the theme's `onSurface`. Dark mode adds `nightMode`.
 - Preview is off while the page has unsaved changes.
 

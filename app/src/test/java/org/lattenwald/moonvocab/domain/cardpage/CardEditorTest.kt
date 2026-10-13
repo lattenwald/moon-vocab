@@ -18,7 +18,7 @@ import org.lattenwald.moonvocab.domain.card.cardFields
 import org.lattenwald.moonvocab.domain.import.ImportTestBase
 
 class CardEditorTest : ImportTestBase() {
-    private val editor by lazy { CardEditor(db, fakeAnki, ankiLock) }
+    private val editor by lazy { CardEditor(db, fakeAnki, store) }
 
     private suspend fun TestScope.pendingCard(): CardEntity {
         pipeline().run(req(backup(1)), {})

@@ -9,7 +9,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.sync.Mutex
 import okhttp3.OkHttpClient
 import org.lattenwald.moonvocab.data.anki.AnkiDroidGateway
 import org.lattenwald.moonvocab.data.backup.BackupFinder
@@ -25,12 +24,12 @@ import org.lattenwald.moonvocab.data.llm.ModelCatalog
 import org.lattenwald.moonvocab.data.llm.TranslationService
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.settingsDataStore
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.cardpage.CardEditor
 import org.lattenwald.moonvocab.domain.cardpage.CardRetranslator
 import org.lattenwald.moonvocab.domain.import.AnkiCheck
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.domain.import.ImportPipeline
-import org.lattenwald.moonvocab.domain.inbox.InboxActions
 
 class AppContainer(context: Context) {
     private val app = context.applicationContext
@@ -42,11 +41,10 @@ class AppContainer(context: Context) {
     val anki = AnkiDroidGateway(app)
     val backupReader = BackupReader(app.cacheDir)
     val backupFinder = BackupFinder(app.contentResolver, app.cacheDir, backupReader, io)
-    private val ankiLock = Mutex()
-    val sender = CardSender(db, anki, settings, ankiLock, clock = System::currentTimeMillis)
-    val ankiCheck = AnkiCheck(db, anki, ankiLock, settings, clock = System::currentTimeMillis)
-    val inboxActions = InboxActions(db, ankiLock)
-    val cardEditor = CardEditor(db, anki, ankiLock)
+    val cards = CardStore(db)
+    val sender = CardSender(db, anki, settings, cards, clock = System::currentTimeMillis)
+    val ankiCheck = AnkiCheck(db, anki, cards, settings, clock = System::currentTimeMillis)
+    val cardEditor = CardEditor(db, anki, cards)
 
     // LlmClient does its own retries; OkHttp's silent retry would add attempts.
     private val http = OkHttpClient.Builder().callTimeout(60, TimeUnit.SECONDS).retryOnConnectionFailure(false).build()
@@ -61,6 +59,7 @@ class AppContainer(context: Context) {
 
     val pipeline = ImportPipeline(
         db = db,
+        store = cards,
         reader = backupReader,
         books = ::bookSource,
         translator = translator,

@@ -8,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import org.junit.After
@@ -22,6 +21,7 @@ import org.lattenwald.moonvocab.data.books.BookSource
 import org.lattenwald.moonvocab.data.books.BookText
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.card.DraftResult
 import org.lattenwald.moonvocab.domain.card.SenseJudge
 import org.lattenwald.moonvocab.domain.card.Translation
@@ -46,9 +46,9 @@ abstract class ImportTestBase {
     }
     protected val fakeAnki = FakeAnki()
     protected val fakeBooks = FakeBooks(mapOf(PATH to bookText(30)))
-    protected val ankiLock = Mutex()
-    protected val sender by lazy { CardSender(db, fakeAnki, settings, ankiLock) { NOW } }
-    protected val check by lazy { AnkiCheck(db, fakeAnki, ankiLock, settings) { NOW } }
+    protected val store = CardStore(db)
+    protected val sender by lazy { CardSender(db, fakeAnki, settings, store) { NOW } }
+    protected val check by lazy { AnkiCheck(db, fakeAnki, store, settings) { NOW } }
 
     @After fun closeAll() {
         db.close()
@@ -61,7 +61,7 @@ abstract class ImportTestBase {
         draft: (SentenceResult, Translation, Int) -> DraftResult = ::buildDraft,
         judge: SenseJudge = SenseJudge { emptyMap() },
     ) = ImportPipeline(
-        db, BackupReader(tmp), books, translate, judge, fakeAnki, sender, check, settings, StandardTestDispatcher(testScheduler), draft,
+        db, store, BackupReader(tmp), books, translate, judge, fakeAnki, sender, check, settings, StandardTestDispatcher(testScheduler), draft,
     )
 
     protected fun rows(n: Int, path: String = PATH, title: String = TITLE, from: Int = 0) = (from until from + n).map { i ->

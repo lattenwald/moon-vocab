@@ -28,10 +28,10 @@ import org.lattenwald.moonvocab.data.anki.AnkiAvailability
 import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.settings.Settings
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.import.CardSender
 import org.lattenwald.moonvocab.domain.import.ImportRequest
 import org.lattenwald.moonvocab.domain.import.SendResult
-import org.lattenwald.moonvocab.domain.inbox.InboxActions
 import org.lattenwald.moonvocab.domain.inbox.InboxList
 import org.lattenwald.moonvocab.domain.inbox.InboxFilter
 import org.lattenwald.moonvocab.domain.inbox.Selection
@@ -71,7 +71,7 @@ class InboxViewModel(
     private val settings: Settings,
     private val anki: AnkiGateway,
     private val workManager: WorkManager,
-    private val actions: InboxActions,
+    private val store: CardStore,
     private val sender: CardSender,
     private val io: CoroutineDispatcher,
 ) : ViewModel() {
@@ -202,7 +202,7 @@ class InboxViewModel(
         clearSelection()
         viewModelScope.launch {
             val changed = try {
-                withContext(io) { actions.discard(ids) }
+                withContext(io) { store.discard(ids) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -220,7 +220,7 @@ class InboxViewModel(
         clearSelection()
         viewModelScope.launch {
             val forgotten = try {
-                withContext(io) { actions.forgetForRetranslation(ids) }
+                withContext(io) { store.forgetForRetranslation(ids) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -240,7 +240,7 @@ class InboxViewModel(
             when (event) {
                 is InboxEvent.Sent -> undoSend(event.ids)?.let { eventChannel.send(it) }
                 is InboxEvent.Discarded -> try {
-                    withContext(io) { actions.restore(event.ids) }
+                    withContext(io) { store.restore(event.ids) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -276,7 +276,7 @@ class InboxViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                InboxViewModel(c.db, c.settings, c.anki, c.workManager, c.inboxActions, c.sender, c.io)
+                InboxViewModel(c.db, c.settings, c.anki, c.workManager, c.cards, c.sender, c.io)
             }
         }
     }

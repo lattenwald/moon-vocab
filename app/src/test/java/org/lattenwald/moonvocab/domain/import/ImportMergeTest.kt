@@ -35,9 +35,20 @@ class ImportMergeTest : ImportTestBase() {
         assertEquals(0, s.newCards)
     }
 
+    @Test fun aMarkWhoseCardIsForgottenDuringTheSenseCheckStaysUnlinked() = runTest {
+        pipeline().run(req(MrproFixture.build(tmp, rows(1))), {})
+        val known = cards().single().id
+        val forgetsTheCard = SenseJudge { questions ->
+            store.forgetForRetranslation(listOf(known))
+            firstCandidate.judge(questions)
+        }
+        pipeline(judge = forgetsTheCard).run(req(MrproFixture.build(tmp, rows(1) + again(0))), {})
+        assertEquals(listOf(null, null), markCardIds())
+    }
+
     @Test fun markMatchingDiscardedCardIsSkipped() = runTest {
         pipeline().run(req(MrproFixture.build(tmp, rows(1))), {})
-        db.cards().update(cards().single().copy(status = DISCARDED))
+        store.discard(listOf(cards().single().id))
         val s = pipeline(judge = firstCandidate).run(req(MrproFixture.build(tmp, rows(1) + again(0))), {})
         val card = cards().single()
         assertEquals(DISCARDED, card.status)
@@ -88,7 +99,7 @@ class ImportMergeTest : ImportTestBase() {
 
     @Test fun everyMarkIsAccountedFor() = runTest {
         pipeline().run(req(MrproFixture.build(tmp, rows(1))), {})
-        db.cards().update(cards().single().copy(status = DISCARDED))
+        store.discard(listOf(cards().single().id))
         // Repeats: of the discarded word, within batch 1 (w9), and across batches (w1).
         val backup = MrproFixture.build(tmp, rows(10) + again(0) + again(1) + again(9))
         val s = pipeline(

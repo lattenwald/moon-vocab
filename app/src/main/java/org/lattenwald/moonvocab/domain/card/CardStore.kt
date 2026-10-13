@@ -1,0 +1,70 @@
+package org.lattenwald.moonvocab.domain.card
+
+import androidx.annotation.VisibleForTesting
+import androidx.room.withTransaction
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.lattenwald.moonvocab.data.db.AppDatabase
+import org.lattenwald.moonvocab.data.db.CardEntity
+import org.lattenwald.moonvocab.data.db.CardWriteAccess
+import org.lattenwald.moonvocab.data.db.CardWriteDao
+
+@OptIn(CardWriteAccess::class)
+class CardStore(private val db: AppDatabase) {
+    private val lock = Mutex()
+    private val writes = CardWrites(db.cardWrites())
+
+    @get:VisibleForTesting
+    val isLocked: Boolean get() = lock.isLocked
+
+    suspend fun <T> locked(block: suspend (CardWrites) -> T): T = lock.withLock { block(writes) }
+
+    suspend fun add(batch: List<Pair<CardEntity, List<Long>>>, links: List<Pair<Long, Long>> = emptyList()): List<Long> =
+        transaction {
+            val live = db.cards().byIds(links.map { it.second }.distinct()).map { it.id }.toSet()
+            for ((markId, cardId) in links) if (cardId in live) db.marks().link(listOf(markId), cardId)
+            batch.map { (card, markIds) ->
+                val id = writes.dao.insert(card)
+                db.marks().link(markIds, id)
+                id
+            }
+        }
+
+    suspend fun discard(ids: List<Long>): List<Long> = transaction {
+        db.cards().byIds(ids).filter { it.status in UNSENT }.map { card ->
+            writes.dao.update(card.discarded())
+            card.id
+        }
+    }
+
+    suspend fun restore(ids: List<Long>): Int = transaction {
+        val discarded = db.cards().byIds(ids).filter { it.status == CardStatus.DISCARDED && it.previousStatus != null }
+        for (card in discarded) writes.dao.update(card.restored())
+        discarded.size
+    }
+
+    suspend fun forgetForRetranslation(ids: List<Long>): Int = transaction { forget(db.cards().byIds(ids)) }
+
+    suspend fun forgetFailed(): Int = transaction { forget(db.cards().byStatus(CardStatus.FAILED)) }
+
+    suspend fun forgetUnsent(): Int = transaction { writes.dao.deleteUnsent() }
+
+    private suspend fun forget(cards: List<CardEntity>): Int {
+        val forgotten = cards.filter { it.status in UNSENT && it.ankiNoteId == null }.map { it.id }
+        if (forgotten.isNotEmpty()) writes.dao.delete(forgotten) // mark.cardId is ON DELETE SET NULL
+        return forgotten.size
+    }
+
+    private suspend fun <T> transaction(block: suspend () -> T): T = lock.withLock { db.withTransaction(block) }
+
+    private companion object {
+        val UNSENT = setOf(CardStatus.PENDING, CardStatus.FAILED)
+    }
+}
+
+class CardWrites internal constructor(internal val dao: CardWriteDao) {
+    // AnkiDroid already holds the change; a write lost to cancellation would make it again.
+    suspend fun save(card: CardEntity) = withContext(NonCancellable) { dao.update(card) }
+}

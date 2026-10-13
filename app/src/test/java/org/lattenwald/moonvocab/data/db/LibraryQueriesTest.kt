@@ -9,6 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.lattenwald.moonvocab.domain.card.CardStatus
+import org.lattenwald.moonvocab.domain.card.CardStore
 import org.lattenwald.moonvocab.domain.mark.MarkStyle
 import org.robolectric.RobolectricTestRunner
 
@@ -31,6 +32,7 @@ private fun card(bookId: Long, uuid: String, status: CardStatus) = CardEntity(
 class LibraryQueriesTest {
     private val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
         .allowMainThreadQueries().build()
+    private val store = CardStore(db)
 
     @After fun close() = db.close()
 
@@ -39,7 +41,7 @@ class LibraryQueriesTest {
         val ids = db.marks().insertIgnoringKnown(
             listOf(mark("s1", b, 10), mark("s2", b, 40), mark("p", b, 20), mark("f", b, 30), mark("d", b, 5)),
         )
-        db.writeBatch(
+        store.add(
             listOf(
                 card(b, "s", CardStatus.SENT) to listOf(ids[0], ids[1]),
                 card(b, "p", CardStatus.PENDING) to listOf(ids[2]),
@@ -59,7 +61,7 @@ class LibraryQueriesTest {
         db.books().upsertByFileKey(book("c.epub"))
         val ids = db.marks().insertIgnoringKnown(listOf(mark("a1", withCard, 1)))
         db.marks().insertIgnoringKnown(listOf(mark("b1", marksOnly, 2)))
-        db.writeBatch(listOf(card(withCard, "a", CardStatus.PENDING) to ids))
+        store.add(listOf(card(withCard, "a", CardStatus.PENDING) to ids))
         assertEquals(listOf(withCard), db.cards().observeLibrary().first().map { it.bookId })
     }
 
@@ -69,7 +71,7 @@ class LibraryQueriesTest {
         val ids = db.marks().insertIgnoringKnown(
             listOf(mark("a1", a, 1), mark("a2", a, 7), mark("a3", a, 3), mark("b1", b, 9)),
         )
-        db.writeBatch(
+        store.add(
             listOf(
                 card(a, "p", CardStatus.PENDING) to listOf(ids[0], ids[1]),
                 card(a, "f", CardStatus.FAILED) to listOf(ids[2]),
