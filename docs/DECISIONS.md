@@ -250,7 +250,7 @@
 - Card design opens the preview (`PreviewKey(null)`) with the sample card, cut to the stored longest excerpt.
 
 ## Settings page
-- The Settings tab has a large title and the prototype's groups: Translation (service, Translate into), Look (Theme, App language), Moon+ Reader (Backups folder, Books folder, Review before sending), Cards (Cards, AnkiDroid), then Developer tools alone.
+- The Settings tab has a large title and the prototype's groups: Translation (service, Translate into), Look (Theme, App language), Moon+ Reader (Backups folder, Books folder, Review before sending), Cards (Cards, AnkiDroid), then Advanced alone.
 - Theme is a segmented button. Selecting writes `theme` and calls `setDefaultNightMode`.
 - A folder row shows the path after `:` in the tree's document id, "Not chosen", or, when `persistedUriPermissions` holds no read grant for it, "Can't read this folder. Choose it again." in the error colour.
 - Choosing a folder takes the persistable read permission, then saves the folder even if that failed.
@@ -280,11 +280,11 @@
 - If `setForeground` is refused, the worker continues without the notification.
 - App data is excluded from cloud backup and device transfer.
 - UI calls to AnkiDroid, the database or SAF run on `io` and report errors in the screen. The Inbox, Library, book page and preview queries and the Inbox's AnkiDroid availability check only log theirs; a failed query shows an empty screen.
-- The debug screen's service fields use `remember`, never `rememberSaveable`.
-- The debug screen can turn off the test deck, export cards as JSON (no settings or keys), and forget PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
-- The debug screen's Send all pending skips cards with an `elsewhereDeck`.
-- The debug screen's Export position report writes a zip: `report.json` (every note of the picked backup checked at its saved chapter and position, misses with the text there and its occurrences), the backup, and every book with a miss or unreadable text.
-- While it runs, the button is followed by a progress bar, "Book N of M" with the title, and a line saying the zip is incomplete until the result shows.
+- The Advanced page holds only what the rest of the app can't do, in Settings-style groups. Testing: Send to test deck, Delete every note this build created, Forget unsent cards. Reports: Export cards, Export position report.
+- Delete and Forget ask first and are drawn in the error colour. Each action shows its result, or its error, in its own row. Actions are off while one runs or an import runs.
+- Export cards writes JSON (no settings or keys). Forget unsent cards deletes PENDING and FAILED cards without a note id and all DELETED_IN_ANKI cards.
+- Export position report finds the newest complete backup itself, then writes a zip: `report.json` (every note of that backup checked at its saved chapter and position, misses with the text there and its occurrences), the backup, and every book with a miss or unreadable text. With no backups folder or no complete backup, it deletes the file the picker made.
+- While it runs, its row shows a progress bar, "Book N of M" with the title, and a line saying the zip is incomplete until the result shows.
 
 ## UI
 - Fonts are bundled variable TTFs from google/fonts: Roboto Flex for the UI and Literata for book text. The licences ship in `assets/licenses/`.
@@ -298,7 +298,7 @@
 - The bottom bar shows only on tabs.
 - Motion: tab switches, and setup's replacement by the Inbox, cross-fade. A pushed page slides in from the end edge, full width, on a spring with no bounce, while the page below slides a third of the way toward the start edge. Pop reverses it; predictive back runs the pop with the gesture. Each page keeps its own opaque background.
 - Predictive back is on (`android:enableOnBackInvokedCallback="true"`). Back closes, in order: the sheet, then selection mode, then the page.
-- The debug screen is the Developer tools page (`DeveloperKey`), pushed from the last row of Settings, with its own top bar. It keeps all its tools. `DebugViewModel` is scoped to its entry.
+- The Advanced page (`DeveloperKey`, `DebugScreen`) is pushed from the last row of Settings, with its own top bar. `DebugViewModel` is scoped to its entry.
 - A finished import's result stays on the Inbox until it is dismissed. Dismissing prunes finished work.
 - An import stopped by the translation service shows its reason in the result card, with a button that opens the Services page on top of the Settings tab.
 - Tapping a result card that reports failed cards, from an import the service didn't stop, translates every failed card again.

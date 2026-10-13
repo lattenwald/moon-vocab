@@ -15,7 +15,7 @@ The emulator already covered first-run setup, the Settings pages, the language p
 
 ## 1. Settings (quick)
 
-1. Settings tab. You should see Translation, Look, Moon+ Reader, Cards, and Developer tools last.
+1. Settings tab. You should see Translation, Look, Moon+ Reader, Cards, and Advanced last.
 2. Translation service → OpenRouter. Your key is still there, behind the eye icon. Tap Test connection. You should see "Connected. “Schnalle” came back as “…” in N s."
 3. Theme → Light, then Dark, then System. Each switch applies at once and stays on Settings.
 4. App language → Русский. The whole app is in Russian. Walk every tab and page and note any clipped or English text. Switch back if you like.
@@ -23,19 +23,17 @@ The emulator already covered first-run setup, the Settings pages, the language p
 
 ## 2. One book end to end (from milestone 1)
 
-Everything here is in Settings → Developer tools. Keep "Send to test deck" on, so cards go to `Moon+::Test`. Stay on the Developer tools page while one of its buttons is working: leaving the page forgets the found backup and the result line, though the work itself still finishes.
+Keep Settings → Advanced → "Send to test deck" on, so cards go to `Moon+::Test`. Put *Neuromancer* in your books folder first; a book outside it gets only model-written examples.
 
-1. Tap Find newest backup. It names your newest complete backup.
-2. Pick *Diaspora* in the book list. Turn "Send to Anki after translating" off, then tap Import.
-3. Both cards appear in the Inbox with a sentence and a translation.
-4. Developer tools → Send all pending. In AnkiDroid, open `Moon+::Test`. Look at both cards in light and in night mode: the word, the grammar, the excerpt with an orange wavy underline, and on the back the translation, meaning, sentence and book.
-5. In AnkiDroid, change one card's Translation. Back in the app, open that card from Library → Diaspora. It shows AnkiDroid's text.
-6. In AnkiDroid, delete the other note. Open its card in the app. It says the note was deleted in AnkiDroid and offers Send as new card.
-7. Repeat steps 2–4 with *The Great Book of Amber* (FB2) and *Neuromancer* (MOBI). Neuromancer's cards show the "example written by the model" label.
+1. Inbox → Import. Choose Review first and import. Note how long it takes. The cards appear in the Inbox with a sentence and a translation.
+2. In Library → *Diaspora*, send both cards. In AnkiDroid, open `Moon+::Test`. Look at both cards in light and in night mode: the word, the transcription, the grammar, the excerpt with an orange wavy underline, and on the back the translation, meaning, sentence and book.
+3. In AnkiDroid, change one card's Translation. Back in the app, open that card from Library → Diaspora. It shows AnkiDroid's text.
+4. In AnkiDroid, delete the other note. Open its card in the app. It says the note was deleted in AnkiDroid and offers Send as new card.
+5. Repeat step 2 with *The Great Book of Amber* (FB2) and *Neuromancer* (MOBI). Neuromancer's cards have sentences from the book. If some still show the "example written by the model" label, export a position report (Settings → Advanced) and send it to me.
 
 ## 3. Inbox (from milestone 3)
 
-For a full Inbox, import 3–4 of your biggest books with Send off: Developer tools, pick each book, Import. Include Fire & Blood, and note how long it takes. You need these pending cards for part 6 anyway.
+Part 2's import filled the Inbox. You need these pending cards for part 6 anyway.
 
 1. Cards are grouped by book, newest first, with the wavy underline under the focus. Check light and dark.
 2. Long-press a card and drag down across a book header. The range follows your finger, headers are never selected, and dragging near the bottom edge scrolls the list.
@@ -65,15 +63,15 @@ For a full Inbox, import 3–4 of your biggest books with Send off: Developer to
 
 ## 6. Tuning export (from milestone 2)
 
-1. With the books from part 3 imported, go to Developer tools → Export cards. Save the JSON to a folder that syncs to the laptop.
+1. With the books from part 2 imported, go to Settings → Advanced → Export cards. Save the JSON to a folder that syncs to the laptop.
 2. Send me the file path. I'll check same-word merges, lemma variants, "Already in Anki" labels, card languages and decks, and repeated words that picked the wrong sentence. Then I'll suggest fixes. We'll repeat for up to 3 rounds, until you're happy.
 
 ## 7. The real import (last, after tuning)
 
 Do this only when you're happy with part 6.
 
-1. Developer tools → Delete every note this build created. This empties `Moon+::Test`.
-2. Developer tools → Forget unsent cards. The card list at the bottom of Developer tools is now empty. If it isn't, export the cards and send them to me before going on.
+1. Settings → Advanced → Delete every note this build created. This empties `Moon+::Test`.
+2. Advanced → Forget unsent cards. The Inbox and Library are now empty. If they aren't, export the cards and send them to me before going on.
 3. Turn "Send to test deck" off.
 4. Inbox → Import. Select the wavy marks only, and choose Review first or Send to Anki as you like.
 5. Check:

@@ -264,64 +264,6 @@
     </plurals>
     <string name="sheet_nothing_new">Нового нет</string>
 
-    <string name="debug_folders">Папки</string>
-    <string name="debug_choose_backup_folder">Выбрать папку с бэкапами</string>
-    <string name="debug_choose_books_folder">Выбрать папку с книгами</string>
-    <string name="debug_folder_none">Не выбрана</string>
-
-    <string name="debug_service">Сервис перевода</string>
-    <string name="debug_service_add">Добавить сервис</string>
-    <string name="debug_service_custom">Свой</string>
-    <string name="debug_service_name">Название</string>
-    <string name="debug_service_base_url">Базовый URL</string>
-    <string name="debug_service_api_key">API-ключ</string>
-    <string name="debug_service_model">Модель</string>
-
-    <string name="debug_anki">AnkiDroid: %1$s</string>
-    <string name="debug_anki_checking">проверяю</string>
-    <string name="debug_anki_ready">готов</string>
-    <string name="debug_anki_not_installed">не установлен</string>
-    <string name="debug_anki_no_permission">нет доступа</string>
-    <string name="debug_anki_grant">Дать доступ</string>
-    <string name="debug_anki_check">Проверить AnkiDroid</string>
-    <plurals name="debug_anki_checked">
-        <item quantity="one">Проверка завершена, изменена %d карточка</item>
-        <item quantity="few">Проверка завершена, изменены %d карточки</item>
-        <item quantity="many">Проверка завершена, изменено %d карточек</item>
-        <item quantity="other">Проверка завершена, изменено %d карточки</item>
-    </plurals>
-
-    <string name="debug_backup_find">Найти последний бэкап</string>
-    <string name="debug_backup_searching">Читаю бэкапы…</string>
-    <string name="debug_backup_not_searched">Бэкап ещё не прочитан</string>
-    <string name="debug_backup_newest">Последний бэкап: %1$s</string>
-    <string name="debug_backup_none">Полный бэкап не найден</string>
-    <string name="debug_backup_skipped">неполный, пропущен: %1$s</string>
-
-    <string name="debug_styles">Стили пометок</string>
-    <string name="debug_style_combo">%1$s #%2$s: %3$s</string>
-    <plurals name="debug_marks">
-        <item quantity="one">%d пометка</item>
-        <item quantity="few">%d пометки</item>
-        <item quantity="many">%d пометок</item>
-        <item quantity="other">%d пометки</item>
-    </plurals>
-
-    <string name="debug_book_all">Все книги</string>
-    <string name="debug_book_option">%1$s (%2$s)</string>
-    <string name="debug_send_after">Отправлять в Anki после перевода</string>
-
-    <string name="debug_import">Импорт</string>
-    <string name="debug_import_waiting">Ожидает запуска</string>
-    <string name="debug_import_book">Книга: %1$s</string>
-    <string name="debug_import_last">Последний импорт</string>
-    <string name="debug_import_counts">%1$s, %2$s, %3$s, %4$s, %5$s</string>
-    <plurals name="debug_import_new">
-        <item quantity="one">%d новая карточка</item>
-        <item quantity="few">%d новые карточки</item>
-        <item quantity="many">%d новых карточек</item>
-        <item quantity="other">%d новой карточки</item>
-    </plurals>
     <plurals name="import_already_card">
         <item quantity="one">%d пометка уже стала карточкой</item>
         <item quantity="few">%d пометки уже стали карточками</item>
@@ -334,47 +276,13 @@
         <item quantity="many">%d пометок пропущено: убраны раньше</item>
         <item quantity="other">%d пометки пропущено: убраны раньше</item>
     </plurals>
-    <plurals name="debug_import_failed">
-        <item quantity="one">%d не переведена</item>
-        <item quantity="few">%d не переведены</item>
-        <item quantity="many">%d не переведено</item>
-        <item quantity="other">%d не переведено</item>
-    </plurals>
-    <plurals name="debug_import_sent">
-        <item quantity="one">%d отправлена</item>
-        <item quantity="few">%d отправлены</item>
-        <item quantity="many">%d отправлено</item>
-        <item quantity="other">%d отправлено</item>
-    </plurals>
-    <string name="debug_import_incomplete">Бэкап неполный: %1$s</string>
     <plurals name="import_sense_failed">
         <item quantity="one">Не удалось сверить значения повторов в %d пакете; повторы слов стали отдельными карточками</item>
         <item quantity="few">Не удалось сверить значения повторов в %d пакетах; повторы слов стали отдельными карточками</item>
         <item quantity="many">Не удалось сверить значения повторов в %d пакетах; повторы слов стали отдельными карточками</item>
         <item quantity="other">Не удалось сверить значения повторов в %d пакета; повторы слов стали отдельными карточками</item>
     </plurals>
-    <string name="debug_import_stopped_auth">Остановлено: API-ключ отклонён</string>
-    <string name="debug_import_stopped_credits">Остановлено: закончились кредиты</string>
-    <string name="debug_import_stopped_config">Остановлено: проверьте базовый URL и модель сервиса</string>
-    <string name="debug_import_send_error">Ошибка отправки: %1$s</string>
-    <string name="debug_import_failed_with">Импорт не удался: %1$s</string>
-    <string name="debug_import_cancelled">Импорт отменён</string>
-    <string name="debug_retry_failed">Повторить неудавшиеся</string>
 
-    <string name="debug_send_pending">Отправить все ожидающие</string>
-    <plurals name="debug_sent">
-        <item quantity="one">%d карточка отправлена</item>
-        <item quantity="few">%d карточки отправлены</item>
-        <item quantity="many">%d карточек отправлено</item>
-        <item quantity="other">%d карточки отправлено</item>
-    </plurals>
-    <plurals name="debug_skipped">
-        <item quantity="one">%d пропущена</item>
-        <item quantity="few">%d пропущены</item>
-        <item quantity="many">%d пропущено</item>
-        <item quantity="other">%d пропущено</item>
-    </plurals>
-    <string name="debug_send_unavailable">AnkiDroid недоступен: %1$s</string>
     <string name="debug_delete_all">Удалить все записи этой сборки</string>
     <string name="debug_delete_title">Удалить записи?</string>
     <string name="debug_delete_text">Будут удалены все записи AnkiDroid, созданные этой сборкой Moon+ Vocab. Отправленные карточки снова станут ожидающими.</string>
@@ -401,6 +309,16 @@
         <item quantity="many">%1$d из %2$d заметок на своих местах</item>
         <item quantity="other">%1$d из %2$d заметки на своих местах</item>
     </plurals>
+    <string name="debug_testing">Тестирование</string>
+    <string name="debug_reports">Отчёты</string>
+    <string name="debug_test_deck_help">Карточки идут в %1$s, а не в колоду своего языка.</string>
+    <string name="debug_delete_help">Удаляет записи из AnkiDroid. Их карточки снова ждут отправки.</string>
+    <string name="debug_forget_help">Неотправленные и неудавшиеся карточки из всех книг. Следующий импорт создаст их заново.</string>
+    <string name="debug_export_help">Все карточки с пометками, файлом JSON</string>
+    <string name="debug_position_report_help">Проверяет каждую заметку из последнего бэкапа по её книге. Сохраняет zip с бэкапом и книгами, где есть промахи.</string>
+    <string name="debug_report_finding">Ищется последний бэкап</string>
+    <string name="debug_report_no_folder">Сначала выберите папку бэкапов в настройках.</string>
+    <string name="debug_report_no_backup">В папке бэкапов нет полного бэкапа.</string>
     <string name="debug_report_backup">Копируется бэкап</string>
     <plurals name="debug_report_books">
         <item quantity="one">Книга %1$d из %2$d</item>
@@ -420,14 +338,6 @@
         <item quantity="other">%d карточки забыто</item>
     </plurals>
     <string name="debug_error">Ошибка: %1$s</string>
-    <string name="debug_elsewhere">Уже в Anki: %1$s</string>
-
-    <plurals name="debug_cards">
-        <item quantity="one">%d карточка</item>
-        <item quantity="few">%d карточки</item>
-        <item quantity="many">%d карточек</item>
-        <item quantity="other">%d карточки</item>
-    </plurals>
 
     <string name="picker_target">Язык перевода</string>
     <string name="picker_app">Язык приложения</string>
@@ -511,7 +421,7 @@
     <string name="settings_anki_ready">Подключён</string>
     <string name="settings_anki_allow">Разрешить доступ</string>
     <string name="settings_anki_missing">Не установлен</string>
-    <string name="settings_developer">Инструменты разработчика</string>
+    <string name="settings_developer">Дополнительно</string>
 
     <string name="setup_welcome_title">Пометки из Moon+ станут карточками Anki</string>
     <string name="setup_welcome_text">Слова, которые вы подчёркиваете при чтении, превращаются в карточки вместе с предложением из книги.</string>

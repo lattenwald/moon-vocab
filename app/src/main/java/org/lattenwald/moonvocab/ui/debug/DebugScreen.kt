@@ -1,44 +1,33 @@
 package org.lattenwald.moonvocab.ui.debug
 
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,29 +36,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDate
 import org.lattenwald.moonvocab.R
-import org.lattenwald.moonvocab.data.anki.AnkiAvailability
-import org.lattenwald.moonvocab.data.db.CardEntity
-import org.lattenwald.moonvocab.data.llm.LlmException
-import org.lattenwald.moonvocab.data.settings.LlmService
-import org.lattenwald.moonvocab.data.settings.SettingsSnapshot
-import org.lattenwald.moonvocab.domain.import.CheckResult
-import org.lattenwald.moonvocab.domain.mark.StyleCombo
-import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
-import org.lattenwald.moonvocab.work.ImportState
+import org.lattenwald.moonvocab.ui.inbox.forInboxList
+import org.lattenwald.moonvocab.ui.inbox.inboxColors
+import org.lattenwald.moonvocab.ui.inbox.segmentedRowShapes
+import org.lattenwald.moonvocab.ui.library.LibrarySubheader
+
+private val RowPadding = PaddingValues(start = 18.dp, top = 14.dp, end = 16.dp, bottom = 14.dp)
 
 @Composable
 fun DebugScreen(
@@ -77,8 +58,11 @@ fun DebugScreen(
     modifier: Modifier = Modifier,
     vm: DebugViewModel = viewModel(factory = DebugViewModel.Factory),
 ) {
+    val colors = inboxColors()
+    val state by vm.state.collectAsStateWithLifecycle()
     Scaffold(
         modifier = modifier,
+        containerColor = colors.screen,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_developer)) },
@@ -87,430 +71,183 @@ fun DebugScreen(
                         Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.card_navigate_back))
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screen),
             )
         },
-    ) { padding -> DebugContent(padding, vm) }
+    ) { padding ->
+        val themeShapes = MaterialTheme.shapes
+        MaterialTheme(shapes = remember(themeShapes) { themeShapes.forInboxList() }) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(bottom = 24.dp)) {
+                DebugGroups(state, vm, colors.row)
+            }
+        }
+    }
 }
 
 @Composable
-private fun DebugContent(contentPadding: PaddingValues, vm: DebugViewModel) {
-    val state by vm.state.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    LifecycleResumeEffect(vm) {
-        vm.refreshAvailability()
-        onPauseOrDispose {}
-    }
-
-    val pickBackupTree = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::setBackupTree) }
-    val pickBooksTree = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri -> uri?.let(vm::setBooksTree) }
-    val grantAnki = rememberAnkiPermissionRequest(onResult = vm::refreshAvailability)
-    val notifyThenImport = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.startImport() }
-    val notifyThenRetry = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { vm.retryFailed() }
+private fun DebugGroups(state: DebugState, vm: DebugViewModel, rowColor: Color) {
     val exportCards = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(vm::exportCards) }
     val exportPositions =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri -> uri?.let(vm::exportPositionReport) }
-    var confirmDelete by remember { mutableStateOf(false) }
-    var confirmForget by remember { mutableStateOf(false) }
-    val idle = !state.busy && !state.importState.running
+    var confirm by remember { mutableStateOf<DebugAction?>(null) }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(contentPadding).consumeWindowInsets(contentPadding).imePadding(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item {
-            Folders(
-                state.settings,
-                onBackup = { pickBackupTree.launch(null) },
-                onBooks = { pickBooksTree.launch(null) },
-            )
+    Group(stringResource(R.string.debug_testing)) {
+        TestDeckRow(state.testDeck, rowColor, onChange = vm::setTestDeck)
+        ActionRow(1, 3, R.drawable.ic_delete, R.string.debug_delete_all, R.string.debug_delete_help, DebugAction.DELETE_NOTES, state, rowColor, danger = true) {
+            confirm = DebugAction.DELETE_NOTES
         }
-        state.settings?.let { s ->
-            item {
-                Services(
-                    s,
-                    onSelect = vm::selectService,
-                    onEdit = vm::editService,
-                    onAdd = vm::addService,
-                )
-            }
+        ActionRow(2, 3, R.drawable.ic_close, R.string.debug_forget_unsent, R.string.debug_forget_help, DebugAction.FORGET_UNSENT, state, rowColor, danger = true) {
+            confirm = DebugAction.FORGET_UNSENT
         }
-        item {
-            AnkiRow(
-                state.availability,
-                enabled = idle,
-                onGrant = grantAnki,
-                onCheck = vm::checkAnki,
-            )
+    }
+    Group(stringResource(R.string.debug_reports)) {
+        ActionRow(0, 2, R.drawable.ic_download, R.string.debug_export, R.string.debug_export_help, DebugAction.EXPORT_CARDS, state, rowColor) {
+            exportCards.launch(cardsExportName(LocalDate.now()))
         }
-        if (state.notice is Notice.Checked || state.notice is Notice.Error) item { NoticeText(state.notice) }
-        item {
-            BackupRow(
-                state.backup,
-                enabled = state.settings?.backupTree != null && !state.backup.searching && !state.importState.running,
-                onFind = vm::findNewestBackup,
-            )
+        ActionRow(1, 2, R.drawable.ic_menu_book, R.string.debug_position_report, R.string.debug_position_report_help, DebugAction.POSITION_REPORT, state, rowColor) {
+            exportPositions.launch(positionReportName(LocalDate.now()))
         }
-        if (state.combos.isNotEmpty()) item { Styles(state, onToggle = vm::toggleStyle) }
-        item { BookChoice(state, onSelect = vm::selectBook, onSend = vm::setSendToAnki) }
-        item {
-            ImportSection(
-                state.importState,
-                enabled = !state.importState.running && !state.backup.searching,
-                onImport = {
-                    withNotifications(context, notifyThenImport, vm::startImport)
-                },
-            )
-        }
-        item {
-            OutlinedButton(
-                onClick = {
-                    withNotifications(context, notifyThenRetry, vm::retryFailed)
-                },
-                enabled = !state.importState.running,
-            ) { Text(stringResource(R.string.debug_retry_failed)) }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = vm::sendAllPending, enabled = idle) { Text(stringResource(R.string.debug_send_pending)) }
-                OutlinedButton(onClick = { confirmDelete = true }, enabled = idle) { Text(stringResource(R.string.debug_delete_all)) }
-            }
-        }
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.debug_test_deck), modifier = Modifier.weight(1f))
-                Switch(
-                    checked = state.settings?.deckOverride != null,
-                    onCheckedChange = vm::setTestDeck,
-                    enabled = idle && state.settings != null,
-                )
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { exportCards.launch(cardsExportName(LocalDate.now())) }, enabled = idle) {
-                    Text(stringResource(R.string.debug_export))
-                }
-                OutlinedButton(onClick = { confirmForget = true }, enabled = idle) { Text(stringResource(R.string.debug_forget_unsent)) }
-            }
-        }
-        item {
-            OutlinedButton(
-                onClick = { exportPositions.launch(positionReportName(LocalDate.now())) },
-                enabled = idle && state.backup.name != null,
-            ) {
-                Text(stringResource(R.string.debug_position_report))
-            }
-        }
-        state.reportProgress?.let { p -> item { ReportProgress(p) } }
-        if (state.notice !is Notice.Checked && state.notice != null) item { NoticeText(state.notice) }
-        item {
-            Text(
-                pluralStringResource(R.plurals.debug_cards, state.cards.size, state.cards.size),
-                style = MaterialTheme.typography.titleMedium,
-            )
-        }
-        items(state.cards, key = { it.id }) { CardRow(it) }
     }
 
-    if (confirmDelete) {
-        AlertDialog(
-            onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.debug_delete_title)) },
-            text = { Text(stringResource(R.string.debug_delete_text)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmDelete = false
-                    vm.deleteAllCreated()
-                }) { Text(stringResource(R.string.debug_delete)) }
-            },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.debug_cancel)) } },
-        )
-    }
-
-    if (confirmForget) {
-        AlertDialog(
-            onDismissRequest = { confirmForget = false },
-            title = { Text(stringResource(R.string.debug_forget_title)) },
-            text = { Text(stringResource(R.string.debug_forget_text)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmForget = false
-                    vm.forgetUnsent()
-                }) { Text(stringResource(R.string.debug_forget)) }
-            },
-            dismissButton = { TextButton(onClick = { confirmForget = false }) { Text(stringResource(R.string.debug_cancel)) } },
-        )
-    }
-}
-
-private fun withNotifications(context: Context, ask: ActivityResultLauncher<String>, start: () -> Unit) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-    ) {
-        ask.launch(Manifest.permission.POST_NOTIFICATIONS)
-    } else {
-        start()
+    when (confirm) {
+        DebugAction.DELETE_NOTES -> Confirm(R.string.debug_delete_title, R.string.debug_delete_text, R.string.debug_delete, onDismiss = { confirm = null }) {
+            vm.deleteAllCreated()
+        }
+        DebugAction.FORGET_UNSENT -> Confirm(R.string.debug_forget_title, R.string.debug_forget_text, R.string.debug_forget, onDismiss = { confirm = null }) {
+            vm.forgetUnsent()
+        }
+        else -> Unit
     }
 }
 
 @Composable
-private fun SectionTitle(text: String) = Text(text, style = MaterialTheme.typography.titleMedium)
-
-@Composable
-private fun Folders(settings: SettingsSnapshot?, onBackup: () -> Unit, onBooks: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SectionTitle(stringResource(R.string.debug_folders))
-        FolderRow(R.string.debug_choose_backup_folder, settings?.backupTree?.lastPathSegment, onBackup)
-        FolderRow(R.string.debug_choose_books_folder, settings?.booksTree?.lastPathSegment, onBooks)
+private fun Group(title: String, rows: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.padding(bottom = 6.dp)) {
+        LibrarySubheader(title)
+        rows()
     }
 }
 
+private fun Modifier.groupRow(index: Int) = padding(start = 12.dp, top = if (index > 0) ListItemDefaults.SegmentedGap else 0.dp, end = 12.dp)
+
 @Composable
-private fun FolderRow(label: Int, path: String?, onClick: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onClick) { Text(stringResource(label)) }
-        Text(path ?: stringResource(R.string.debug_folder_none))
-    }
+private fun TestDeckRow(deck: String?, rowColor: Color, onChange: (Boolean) -> Unit) {
+    val on = deck != null
+    SegmentedListItem(
+        checked = on,
+        onCheckedChange = onChange,
+        // A switch row, not a selection: on looks like off.
+        shapes = segmentedRowShapes(0, 3).let { it.copy(selectedShape = it.shape) },
+        modifier = Modifier.groupRow(0),
+        colors = ListItemDefaults.segmentedColors(containerColor = rowColor, selectedContainerColor = rowColor),
+        contentPadding = RowPadding,
+        leadingContent = { IconBadge(R.drawable.ic_send, danger = false) },
+        supportingContent = { HelpText(stringResource(R.string.debug_test_deck_help, deck ?: DebugViewModel.TEST_DECK)) },
+        trailingContent = { Switch(checked = on, onCheckedChange = null) },
+    ) { TitleText(stringResource(R.string.debug_test_deck)) }
 }
 
 @Composable
-private fun Services(
-    settings: SettingsSnapshot,
-    onSelect: (String) -> Unit,
-    onEdit: (String, (LlmService) -> LlmService) -> Unit,
-    onAdd: (String) -> Unit,
+private fun ActionRow(
+    index: Int,
+    count: Int,
+    icon: Int,
+    title: Int,
+    help: Int,
+    action: DebugAction,
+    state: DebugState,
+    rowColor: Color,
+    danger: Boolean = false,
+    onClick: () -> Unit,
 ) {
-    val active = settings.activeService
-    val customName = stringResource(R.string.debug_service_custom)
-    var expanded by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SectionTitle(stringResource(R.string.debug_service))
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box {
-                OutlinedButton(onClick = { expanded = true }) { Text(active.name) }
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    for (service in settings.services) {
-                        DropdownMenuItem(text = { Text(service.name) }, onClick = {
-                            expanded = false
-                            onSelect(service.id)
-                        })
-                    }
-                }
+    SegmentedListItem(
+        onClick = onClick,
+        enabled = state.idle,
+        shapes = segmentedRowShapes(index, count),
+        modifier = Modifier.groupRow(index),
+        colors = ListItemDefaults.segmentedColors(containerColor = rowColor),
+        contentPadding = RowPadding,
+        leadingContent = { IconBadge(icon, danger) },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                HelpText(stringResource(help))
+                if (action == DebugAction.POSITION_REPORT) state.reportStep?.let { ReportProgress(it) }
+                state.outcomes[action]?.let { OutcomeText(it) }
             }
-            TextButton(onClick = { onAdd(customName) }) { Text(stringResource(R.string.debug_service_add)) }
-        }
-        ServiceField(active, R.string.debug_service_name, active.name) { v -> onEdit(active.id) { it.copy(name = v) } }
-        ServiceField(active, R.string.debug_service_base_url, active.baseUrl, KeyboardType.Uri) { v -> onEdit(active.id) { it.copy(baseUrl = v) } }
-        ServiceField(active, R.string.debug_service_api_key, active.apiKey, KeyboardType.Password) { v -> onEdit(active.id) { it.copy(apiKey = v) } }
-        ServiceField(active, R.string.debug_service_model, active.model) { v -> onEdit(active.id) { it.copy(model = v) } }
-    }
-}
-
-@Composable
-private fun ServiceField(
-    service: LlmService,
-    label: Int,
-    initial: String,
-    keyboard: KeyboardType = KeyboardType.Text,
-    onChange: (String) -> Unit,
-) {
-    var value by remember(service.id) { mutableStateOf(initial) }
-    val password = keyboard == KeyboardType.Password
-    OutlinedTextField(
-        value = value,
-        onValueChange = {
-            value = it
-            onChange(it)
         },
-        label = { Text(stringResource(label)) },
-        singleLine = true,
-        visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
-        modifier = Modifier.fillMaxWidth(),
+    ) { TitleText(stringResource(title), if (danger) MaterialTheme.colorScheme.error else Color.Unspecified) }
+}
+
+@Composable
+private fun ReportProgress(step: ReportStep) {
+    Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        when (step) {
+            ReportStep.Finding -> {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+                HelpText(stringResource(R.string.debug_report_finding))
+            }
+            is ReportStep.Writing -> {
+                val p = step.progress
+                LinearProgressIndicator(progress = { if (p.total == 0) 0f else p.done.toFloat() / p.total }, modifier = Modifier.fillMaxWidth())
+                if (p.bookTitle == null) {
+                    HelpText(stringResource(R.string.debug_report_backup))
+                } else {
+                    HelpText(pluralStringResource(R.plurals.debug_report_books, p.total, p.done + 1, p.total))
+                    HelpText(p.bookTitle)
+                }
+            }
+        }
+        HelpText(stringResource(R.string.debug_report_keep_open))
+    }
+}
+
+@Composable
+private fun OutcomeText(outcome: Outcome) {
+    val text = when (outcome) {
+        is Outcome.Deleted -> pluralStringResource(R.plurals.debug_deleted, outcome.notes, outcome.notes)
+        is Outcome.Forgotten -> pluralStringResource(R.plurals.debug_forgotten, outcome.cards, outcome.cards)
+        is Outcome.Exported -> pluralStringResource(R.plurals.debug_exported, outcome.cards, outcome.cards)
+        is Outcome.Reported -> outcome.summary.let { pluralStringResource(R.plurals.debug_position_reported, it.notes, it.exact, it.notes) }
+        Outcome.NoBackupFolder -> stringResource(R.string.debug_report_no_folder)
+        Outcome.NoBackup -> stringResource(R.string.debug_report_no_backup)
+        is Outcome.Failed -> stringResource(R.string.debug_error, outcome.message)
+    }
+    val failed = outcome is Outcome.Failed || outcome is Outcome.NoBackupFolder || outcome is Outcome.NoBackup
+    Text(
+        text,
+        color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+        fontSize = 13.5.sp,
+        lineHeight = 19.sp,
     )
 }
 
 @Composable
-private fun AnkiRow(availability: AnkiAvailability?, enabled: Boolean, onGrant: () -> Unit, onCheck: () -> Unit) {
-    val status = when (availability) {
-        null -> R.string.debug_anki_checking
-        AnkiAvailability.READY -> R.string.debug_anki_ready
-        AnkiAvailability.NOT_INSTALLED -> R.string.debug_anki_not_installed
-        AnkiAvailability.NO_PERMISSION -> R.string.debug_anki_no_permission
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        SectionTitle(stringResource(R.string.debug_anki, stringResource(status)))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onGrant, enabled = availability == AnkiAvailability.NO_PERMISSION) {
-                Text(stringResource(R.string.debug_anki_grant))
-            }
-            Button(onClick = onCheck, enabled = enabled) { Text(stringResource(R.string.debug_anki_check)) }
-        }
+private fun Confirm(title: Int, text: Int, confirm: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(title)) },
+        text = { Text(stringResource(text)) },
+        confirmButton = {
+            TextButton(onClick = {
+                onDismiss()
+                onConfirm()
+            }) { Text(stringResource(confirm), color = MaterialTheme.colorScheme.error) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.debug_cancel)) } },
+    )
+}
+
+@Composable
+private fun IconBadge(icon: Int, danger: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    val (background, tint) = if (danger) colors.errorContainer to colors.onErrorContainer else colors.secondaryContainer to colors.onSecondaryContainer
+    Box(Modifier.size(40.dp).background(background, CircleShape), contentAlignment = Alignment.Center) {
+        Icon(painterResource(icon), contentDescription = null, Modifier.size(20.dp), tint = tint)
     }
 }
 
 @Composable
-private fun NoticeText(notice: Notice?) {
-    val text = when (notice) {
-        null -> return
-        is Notice.Checked -> when (val r = notice.result) {
-            is CheckResult.Changed -> pluralStringResource(R.plurals.debug_anki_checked, r.count, r.count)
-            is CheckResult.Unavailable -> stringResource(R.string.debug_send_unavailable, r.availability.name)
-        }
-        is Notice.Deleted -> pluralStringResource(R.plurals.debug_deleted, notice.notes, notice.notes)
-        is Notice.Exported -> pluralStringResource(R.plurals.debug_exported, notice.cards, notice.cards)
-        is Notice.PositionsReported -> notice.summary.let {
-            pluralStringResource(R.plurals.debug_position_reported, it.notes, it.exact, it.notes)
-        }
-        is Notice.Forgotten -> pluralStringResource(R.plurals.debug_forgotten, notice.cards, notice.cards)
-        is Notice.Error -> stringResource(R.string.debug_error, notice.message)
-        is Notice.Sent -> {
-            val r = notice.result
-            listOfNotNull(
-                pluralStringResource(R.plurals.debug_sent, r.sent, r.sent),
-                pluralStringResource(R.plurals.debug_skipped, r.skipped, r.skipped),
-                r.unavailable?.let { stringResource(R.string.debug_send_unavailable, it.name) },
-                r.error?.let { stringResource(R.string.debug_import_send_error, it) },
-            ).joinToString("\n")
-        }
-    }
-    Text(text, color = if (notice is Notice.Error) MaterialTheme.colorScheme.error else Color.Unspecified)
-}
+private fun TitleText(text: String, color: Color = Color.Unspecified) = Text(text, color = color, fontSize = 16.sp, lineHeight = 22.sp)
 
 @Composable
-private fun BackupRow(backup: BackupState, enabled: Boolean, onFind: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        OutlinedButton(onClick = onFind, enabled = enabled) { Text(stringResource(R.string.debug_backup_find)) }
-        Text(
-            when {
-                backup.searching -> stringResource(R.string.debug_backup_searching)
-                !backup.searched -> stringResource(R.string.debug_backup_not_searched)
-                backup.name != null -> stringResource(R.string.debug_backup_newest, backup.name)
-                else -> stringResource(R.string.debug_backup_none)
-            },
-        )
-        for (name in backup.skipped) Text(stringResource(R.string.debug_backup_skipped, name), color = MaterialTheme.colorScheme.error)
-    }
-}
-
-@Composable
-private fun Styles(state: DebugState, onToggle: (StyleCombo) -> Unit) {
-    val selected = state.settings?.styles.orEmpty()
-    Column {
-        SectionTitle(stringResource(R.string.debug_styles))
-        for ((combo, count) in state.combos) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Checkbox(checked = combo in selected, onCheckedChange = { onToggle(combo) })
-                Box(Modifier.size(16.dp).background(Color(combo.color)))
-                Text(
-                    stringResource(
-                        R.string.debug_style_combo,
-                        combo.style.name,
-                        combo.color.toUInt().toString(16).padStart(8, '0').uppercase(),
-                        pluralStringResource(R.plurals.debug_marks, count, count),
-                    ),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BookChoice(state: DebugState, onSelect: (String?) -> Unit, onSend: (Boolean) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    val all = stringResource(R.string.debug_book_all)
-    val chosen = state.book?.let { key -> state.books.firstOrNull { it.fileKey == key }?.title ?: key } ?: all
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box {
-            OutlinedButton(onClick = { expanded = true }) { Text(chosen) }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                DropdownMenuItem(text = { Text(all) }, onClick = {
-                    expanded = false
-                    onSelect(null)
-                })
-                for (book in state.books) {
-                    val marks = pluralStringResource(R.plurals.debug_marks, book.count, book.count)
-                    DropdownMenuItem(text = { Text(stringResource(R.string.debug_book_option, book.title, marks)) }, onClick = {
-                        expanded = false
-                        onSelect(book.fileKey)
-                    })
-                }
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.debug_send_after), modifier = Modifier.weight(1f))
-            Switch(checked = state.sendToAnki, onCheckedChange = onSend)
-        }
-    }
-}
-
-@Composable
-private fun ReportProgress(p: PositionReportProgress) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        LinearProgressIndicator(progress = { if (p.total == 0) 0f else p.done.toFloat() / p.total }, modifier = Modifier.fillMaxWidth())
-        if (p.bookTitle == null) {
-            Text(stringResource(R.string.debug_report_backup))
-        } else {
-            Text(pluralStringResource(R.plurals.debug_report_books, p.total, p.done + 1, p.total))
-            Text(stringResource(R.string.debug_import_book, p.bookTitle))
-        }
-        Text(stringResource(R.string.debug_report_keep_open), color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun ImportSection(run: ImportState, enabled: Boolean, onImport: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Button(onClick = onImport, enabled = enabled) { Text(stringResource(R.string.debug_import)) }
-        if (run.running) {
-            val p = run.progress
-            if (p == null || p.total == 0) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                Text(stringResource(R.string.debug_import_waiting))
-            } else {
-                LinearProgressIndicator(progress = { p.done.toFloat() / p.total }, modifier = Modifier.fillMaxWidth())
-                Text(pluralStringResource(R.plurals.import_progress, p.total, p.done, p.total))
-                p.bookTitle?.let { Text(stringResource(R.string.debug_import_book, it)) }
-            }
-        }
-        run.summary?.let { s ->
-            SectionTitle(stringResource(R.string.debug_import_last))
-            Text(
-                stringResource(
-                    R.string.debug_import_counts,
-                    pluralStringResource(R.plurals.debug_import_new, s.newCards, s.newCards),
-                    pluralStringResource(R.plurals.import_already_card, s.alreadyCard, s.alreadyCard),
-                    pluralStringResource(R.plurals.import_skipped_discarded, s.skippedDiscarded, s.skippedDiscarded),
-                    pluralStringResource(R.plurals.debug_import_failed, s.failed, s.failed),
-                    pluralStringResource(R.plurals.debug_import_sent, s.sent, s.sent),
-                ),
-            )
-            s.incompleteBackup?.let { Text(stringResource(R.string.debug_import_incomplete, it), color = MaterialTheme.colorScheme.error) }
-            if (s.senseFailed > 0) {
-                Text(pluralStringResource(R.plurals.import_sense_failed, s.senseFailed, s.senseFailed), color = MaterialTheme.colorScheme.error)
-            }
-            when (s.stopped) {
-                null -> Unit
-                LlmException.Stop.Kind.AUTH -> Text(stringResource(R.string.debug_import_stopped_auth), color = MaterialTheme.colorScheme.error)
-                LlmException.Stop.Kind.CREDITS -> Text(stringResource(R.string.debug_import_stopped_credits), color = MaterialTheme.colorScheme.error)
-                LlmException.Stop.Kind.CONFIG -> Text(stringResource(R.string.debug_import_stopped_config), color = MaterialTheme.colorScheme.error)
-            }
-            s.sendError?.let { Text(stringResource(R.string.debug_import_send_error, it), color = MaterialTheme.colorScheme.error) }
-        }
-        run.failure?.let { Text(stringResource(R.string.debug_import_failed_with, it), color = MaterialTheme.colorScheme.error) }
-        if (run.cancelled) Text(stringResource(R.string.debug_import_cancelled))
-    }
-}
-
-@Composable
-private fun CardRow(card: CardEntity) {
-    Column(Modifier.fillMaxWidth()) {
-        Text(card.word, style = MaterialTheme.typography.titleSmall)
-        if (card.translation.isNotEmpty()) Text(card.translation)
-        Text(card.status.name, style = MaterialTheme.typography.labelMedium)
-        card.elsewhereDeck?.let { Text(stringResource(R.string.debug_elsewhere, it)) }
-        card.error?.let { Text(stringResource(R.string.debug_error, it), color = MaterialTheme.colorScheme.error) }
-        HorizontalDivider(Modifier.padding(top = 4.dp))
-    }
-}
+private fun HelpText(text: String) = Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.5.sp, lineHeight = 19.sp)
