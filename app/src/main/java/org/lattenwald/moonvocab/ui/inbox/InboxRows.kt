@@ -219,7 +219,7 @@ internal fun InboxCardRow(
     val select = stringResource(R.string.inbox_select_card)
     SegmentedListItem(
         selected = selected,
-        // SelectGestures.guardTap swallows the lift after a long-press that starts selection.
+        // SelectGestures' drag consumes the lift after a long-press that starts selection.
         onClick = { if (selecting) onToggle() else onOpen() },
         shapes = segmentedRowShapes(index, count),
         modifier = if (selecting) modifier else modifier.selectAction(select, onToggle),
