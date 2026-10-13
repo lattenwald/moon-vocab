@@ -212,6 +212,12 @@
     <string name="book_subtitle">%1$s, %2$s</string>
     <string name="book_to_review">На проверку</string>
     <string name="book_in_anki">В AnkiDroid</string>
+    <string name="book_redo">Переделать неотправленные</string>
+    <string name="book_redo_title">Переделать неотправленные карточки этой книги?</string>
+    <string name="book_redo_text">Карточки на проверку, с неудавшимся переводом и удалённые в AnkiDroid будут удалены, а их пометки переведены заново. Правки в этих карточках пропадут. Карточки в AnkiDroid и убранные останутся.</string>
+    <string name="book_redo_confirm">Переделать</string>
+    <string name="book_redoing">Пометки этой книги переводятся заново. Ход виден во «Входящих».</string>
+    <string name="book_redo_import_running">Идёт импорт. Пометки этой книги будут переведены заново при следующем импорте.</string>
     <string name="book_latest">Показаны последние %1$d из %2$d.</string>
     <plurals name="book_discarded">
         <item quantity="one">Убранные (%d)</item>

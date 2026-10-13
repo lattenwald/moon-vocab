@@ -61,7 +61,8 @@ class ImportRuns(private val queue: RunQueue, private val store: DataStore<Prefe
     suspend fun start(request: ImportRequest): Start = launch(RunKind.Import(request))
 
     /** Imports the marks that have no card yet, from the backup already read. */
-    suspend fun resume(): Start = start(ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = null, sendToAnki = false))
+    suspend fun resume(bookFileKey: String? = null): Start =
+        start(ImportRequest(backup = null, styles = emptySet(), onlyBookFileKey = bookFileKey, sendToAnki = false))
 
     suspend fun retryFailed(): Start = launch(RunKind.RetryFailed)
 

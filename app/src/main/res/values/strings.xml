@@ -182,6 +182,12 @@
     <string name="book_subtitle">%1$s, %2$s</string>
     <string name="book_to_review">To review</string>
     <string name="book_in_anki">In AnkiDroid</string>
+    <string name="book_redo">Redo unsent cards</string>
+    <string name="book_redo_title">Redo this book’s unsent cards?</string>
+    <string name="book_redo_text">Its cards to review, failed cards and cards deleted in AnkiDroid are deleted, and their marks are translated again. Edits to those cards are lost. Cards in AnkiDroid and discarded cards stay.</string>
+    <string name="book_redo_confirm">Redo</string>
+    <string name="book_redoing">Translating this book’s marks again. Progress shows in the Inbox.</string>
+    <string name="book_redo_import_running">An import is running. The next import translates this book’s marks again.</string>
     <string name="book_latest">Showing the latest %1$d. All %2$d are in AnkiDroid.</string>
     <plurals name="book_discarded">
         <item quantity="one">Discarded (%d)</item>

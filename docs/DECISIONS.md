@@ -232,6 +232,7 @@
 - The Library lists every book with at least one card, grouped by the book's language: most books first, Other last. Within a group, newest mark first.
 - A book page shows To review (pending and failed), In AnkiDroid (the latest 50 by send time), and Discarded, which also holds cards deleted in AnkiDroid.
 - `LibraryViewModel` is activity-scoped, created in `AppShell`.
+- A book page's menu offers Redo unsent cards, off while an import runs. After a confirm it forgets the book's unsent cards, as Forget unsent cards does for every book, and resumes the import for that book only; it says so only when the run started.
 - The Library and the book page use the Inbox's row shapes and colours. A book page's Discarded section starts collapsed, and its open state is saveable.
 
 ## Import sheet

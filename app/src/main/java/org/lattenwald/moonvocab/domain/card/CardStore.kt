@@ -55,7 +55,7 @@ class CardStore(private val db: AppDatabase) {
 
     suspend fun forgetFailed(): Int = transaction { forget(db.cards().byStatus(CardStatus.FAILED)) }
 
-    suspend fun forgetUnsent(): Int = transaction { dao.deleteUnsent() }
+    suspend fun forgetUnsent(bookId: Long? = null): Int = transaction { dao.deleteUnsent(bookId) }
 
     private suspend fun forget(cards: List<CardEntity>): Int {
         val forgotten = cards.filter { it.status in UNSENT && it.ankiNoteId == null }.map { it.id }

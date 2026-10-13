@@ -49,6 +49,14 @@ class CardStoreTest : ImportTestBase() {
         assertEquals(TITLE, rows.first().bookTitle)
     }
 
+    @Test fun forgettingOneBooksUnsentCardsLeavesTheOtherBooks() = runTest {
+        val other = rows(1, path = "/sdcard/Books/Other.epub", title = "Other", from = 5)
+        pipeline().run(req(MrproFixture.build(tmp, rows(2) + other)), {})
+        val books = db.books().all().associate { it.title to it.id }
+        assertEquals(2, store.forgetUnsent(books.getValue(TITLE)))
+        assertEquals(listOf(books.getValue("Other")), db.cards().observeAll().first().map { it.bookId })
+    }
+
     @Test fun discardThenRestoreGivesBackEachStatus() = runTest {
         importPendingAAndFailedB()
         val allIds = allIds()

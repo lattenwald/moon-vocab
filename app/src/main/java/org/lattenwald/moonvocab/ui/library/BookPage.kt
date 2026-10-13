@@ -3,6 +3,7 @@ package org.lattenwald.moonvocab.ui.library
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,14 +15,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -42,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.domain.inbox.InboxCard
 import org.lattenwald.moonvocab.ui.common.WordNote
@@ -63,10 +74,24 @@ fun BookPage(
     val page = state.page
     val colors = inboxColors()
     var discardedOpen by rememberSaveable { mutableStateOf(false) }
+    var confirmRedo by rememberSaveable { mutableStateOf(false) }
+    val resources = LocalResources.current
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(vm, resources) {
+        vm.events.collectLatest { event ->
+            val text = when (event) {
+                BookEvent.Redoing -> resources.getString(R.string.book_redoing)
+                BookEvent.ImportRunning -> resources.getString(R.string.book_redo_import_running)
+                is BookEvent.Failed -> resources.getString(R.string.inbox_action_failed, event.message)
+            }
+            snackbar.showSnackbar(text, duration = SnackbarDuration.Long)
+        }
+    }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = colors.screen,
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(book?.title.orEmpty(), fontFamily = BookFontFamily, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -81,11 +106,26 @@ fun BookPage(
                         Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.card_navigate_back))
                     }
                 },
+                actions = { if (book != null) BookMenu(enabled = !state.importRunning, onRedo = { confirmRedo = true }) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.screen),
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { padding ->
+        if (confirmRedo) {
+            AlertDialog(
+                onDismissRequest = { confirmRedo = false },
+                title = { Text(stringResource(R.string.book_redo_title)) },
+                text = { Text(stringResource(R.string.book_redo_text)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmRedo = false
+                        vm.redo()
+                    }) { Text(stringResource(R.string.book_redo_confirm)) }
+                },
+                dismissButton = { TextButton(onClick = { confirmRedo = false }) { Text(stringResource(R.string.card_cancel)) } },
+            )
+        }
         if (book == null) return@Scaffold
         val themeShapes = MaterialTheme.shapes
         MaterialTheme(shapes = remember(themeShapes) { themeShapes.forInboxList() }) {
@@ -126,6 +166,27 @@ fun BookPage(
                 }
                 item(key = "bottom") { Spacer(Modifier.height(24.dp)) }
             }
+        }
+    }
+}
+
+@Composable
+private fun BookMenu(enabled: Boolean, onRedo: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(painterResource(R.drawable.ic_more_vert), contentDescription = stringResource(R.string.card_more))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.book_redo)) },
+                onClick = {
+                    open = false
+                    onRedo()
+                },
+                enabled = enabled,
+                leadingIcon = { Icon(painterResource(R.drawable.ic_refresh), contentDescription = null) },
+            )
         }
     }
 }
