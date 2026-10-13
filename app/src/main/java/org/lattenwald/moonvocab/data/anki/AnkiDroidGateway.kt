@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import com.ichi2.anki.FlashCardsContract
 import com.ichi2.anki.api.AddContentApi
 import kotlin.coroutines.cancellation.CancellationException
@@ -16,7 +17,16 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
     override fun availability(): AnkiAvailability = when {
         AddContentApi.getAnkiDroidPackageName(context) == null -> AnkiAvailability.NOT_INSTALLED
         context.checkSelfPermission(AddContentApi.READ_WRITE_PERMISSION) != PackageManager.PERMISSION_GRANTED -> AnkiAvailability.NO_PERMISSION
+        // AnkiDroid has no collection until its first launch, and its provider then gives no note types.
+        modelListOrNull() == null -> AnkiAvailability.NOT_SET_UP
         else -> AnkiAvailability.READY
+    }
+
+    private fun modelListOrNull(): Map<Long, String>? = try {
+        api.modelList
+    } catch (e: RuntimeException) {
+        Log.w(TAG, "AnkiDroid note types unreadable", e)
+        null
     }
 
     override fun ensureNoteType(knownId: Long?, knownVersion: Int): Pair<Long, Int> {
@@ -175,6 +185,7 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
     private fun noteUri(noteId: Long): Uri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, noteId.toString())
 
     private companion object {
+        const val TAG = "AnkiDroidGateway"
         const val READ_CHUNK = 200
         const val APP_ID_CHUNK = 50
         const val APP_ID_FIELD = "AppId"

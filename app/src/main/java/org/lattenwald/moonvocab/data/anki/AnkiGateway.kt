@@ -1,6 +1,6 @@
 package org.lattenwald.moonvocab.data.anki
 
-enum class AnkiAvailability { NOT_INSTALLED, NO_PERMISSION, READY }
+enum class AnkiAvailability { NOT_INSTALLED, NO_PERMISSION, NOT_SET_UP, READY }
 
 data class NoteSnapshot(val fields: Map<String, String>, val tags: Set<String>, val mod: Long) // mod: seconds
 

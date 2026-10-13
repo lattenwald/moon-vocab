@@ -295,6 +295,7 @@ private fun eventMessage(r: Resources, event: CardPageEvent): String? = when (ev
     is CardPageEvent.Unavailable -> when (event.availability) {
         AnkiAvailability.NOT_INSTALLED -> r.getString(R.string.inbox_banner_not_installed)
         AnkiAvailability.NO_PERMISSION -> r.getString(R.string.inbox_banner_no_permission)
+        AnkiAvailability.NOT_SET_UP -> r.getString(R.string.inbox_banner_not_set_up)
         AnkiAvailability.READY -> null
     }
     is CardPageEvent.SendFailed -> r.getString(R.string.inbox_send_failed, event.message)

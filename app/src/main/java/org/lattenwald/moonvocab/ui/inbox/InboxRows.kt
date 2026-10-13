@@ -480,10 +480,11 @@ private fun ResultLine(text: String, color: Color) {
 }
 
 @Composable
-internal fun AnkiBanner(availability: AnkiAvailability, onGet: () -> Unit, onAllow: () -> Unit, modifier: Modifier = Modifier) {
+internal fun AnkiBanner(availability: AnkiAvailability, onGet: () -> Unit, onAllow: () -> Unit, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val (text, action, onClick) = when (availability) {
         AnkiAvailability.NOT_INSTALLED -> Triple(R.string.inbox_banner_not_installed, R.string.inbox_banner_get, onGet)
         AnkiAvailability.NO_PERMISSION -> Triple(R.string.inbox_banner_no_permission, R.string.inbox_banner_allow, onAllow)
+        AnkiAvailability.NOT_SET_UP -> Triple(R.string.inbox_banner_not_set_up, R.string.anki_open, onOpen)
         AnkiAvailability.READY -> return
     }
     val colors = MaterialTheme.colorScheme

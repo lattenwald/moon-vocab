@@ -91,6 +91,7 @@ import org.lattenwald.moonvocab.ui.LanguageKind
 import org.lattenwald.moonvocab.ui.ServicesKey
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
 import org.lattenwald.moonvocab.ui.common.languageName
+import org.lattenwald.moonvocab.ui.common.openAnkiDroid
 import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
 import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
@@ -179,7 +180,7 @@ fun SetupFlow(
                     when (shown) {
                         WELCOME -> WelcomeStep()
                         FOLDERS -> if (s != null) FoldersStep(s, backups, onChooseBackup = { pickBackup.launch(null) }, onChooseBooks = { pickBooks.launch(null) })
-                        ANKI -> AnkiStep(anki, ankiAnswered, onAllow = requestAnki, onGet = { openAnkiDroidStore(context) })
+                        ANKI -> AnkiStep(anki, ankiAnswered, onAllow = requestAnki, onGet = { openAnkiDroidStore(context) }, onOpen = { openAnkiDroid(context) })
                         TRANSLATION -> if (s != null) TranslationStep(s, servicesVm, onOpen)
                         else -> ReadyStep(newMarks)
                     }
@@ -320,7 +321,7 @@ private fun foundLine(found: BackupScan.Found): String = when {
 }
 
 @Composable
-private fun AnkiStep(anki: AnkiAvailability?, answered: Boolean, onAllow: () -> Unit, onGet: () -> Unit) {
+private fun AnkiStep(anki: AnkiAvailability?, answered: Boolean, onAllow: () -> Unit, onGet: () -> Unit, onOpen: () -> Unit) {
     Title(R.string.setup_anki_title)
     Lede(stringResource(R.string.setup_anki_text))
     when (anki) {
@@ -332,6 +333,10 @@ private fun AnkiStep(anki: AnkiAvailability?, answered: Boolean, onAllow: () -> 
         AnkiAvailability.NOT_INSTALLED -> {
             Lede(stringResource(R.string.setup_anki_missing), small = true)
             FitButton(R.drawable.ic_download, R.string.setup_anki_get, filled = true, onClick = onGet)
+        }
+        AnkiAvailability.NOT_SET_UP -> {
+            Lede(stringResource(R.string.setup_anki_not_set_up), small = true)
+            FitButton(R.drawable.ic_school, R.string.anki_open, filled = true, onClick = onOpen)
         }
         null -> Unit
     }

@@ -61,6 +61,8 @@
     <string name="inbox_banner_get">Get AnkiDroid</string>
     <string name="inbox_banner_no_permission">Moon+ Vocab needs access to AnkiDroid to send cards.</string>
     <string name="inbox_banner_allow">Allow</string>
+    <string name="inbox_banner_not_set_up">AnkiDroid isn’t set up yet. Open it once, then come back.</string>
+    <string name="anki_open">Open AnkiDroid</string>
 
     <plurals name="inbox_selected">
         <item quantity="one">%1$d selected</item>
@@ -371,6 +373,7 @@
     <string name="settings_anki_ready">Connected</string>
     <string name="settings_anki_allow">Allow access</string>
     <string name="settings_anki_missing">Not installed</string>
+    <string name="settings_anki_not_set_up">Not set up yet. Open it once.</string>
     <string name="settings_developer">Advanced</string>
 
     <string name="setup_hero_excerpt" translatable="false">…whenever my hypos get such an upper hand of me…</string>
@@ -400,6 +403,7 @@
     <string name="setup_anki_denied">Without access the app can’t add cards. Tap Allow access to try again.</string>
     <string name="setup_anki_missing">AnkiDroid isn’t installed on this phone.</string>
     <string name="setup_anki_get">Get AnkiDroid</string>
+    <string name="setup_anki_not_set_up">AnkiDroid hasn’t been opened yet. Open it once so it can set itself up, then come back.</string>
     <string name="setup_translation_title">How should words be translated?</string>
     <string name="setup_translation_text">The app sends each word with its sentence to a language model through %1$s.</string>
     <string name="setup_openrouter_keys" translatable="false">openrouter.ai/keys</string>

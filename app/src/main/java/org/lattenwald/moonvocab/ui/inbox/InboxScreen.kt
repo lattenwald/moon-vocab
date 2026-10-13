@@ -68,6 +68,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
+import org.lattenwald.moonvocab.ui.common.openAnkiDroid
 import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
 import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
 
@@ -210,6 +211,7 @@ fun InboxScreen(
                                 anki,
                                 onGet = { openAnkiDroidStore(context) },
                                 onAllow = requestAnki,
+                                onOpen = { openAnkiDroid(context) },
                                 modifier = Modifier.padding(start = 12.dp, top = 6.dp, end = 12.dp, bottom = 10.dp),
                             )
                         }
@@ -322,6 +324,7 @@ private fun eventMessage(r: Resources, event: InboxEvent): String? = when (event
     is InboxEvent.Unavailable -> when (event.availability) {
         AnkiAvailability.NOT_INSTALLED -> r.getString(R.string.inbox_banner_not_installed)
         AnkiAvailability.NO_PERMISSION -> r.getString(R.string.inbox_banner_no_permission)
+        AnkiAvailability.NOT_SET_UP -> r.getString(R.string.inbox_banner_not_set_up)
         AnkiAvailability.READY -> null
     }
     is InboxEvent.SendFailed -> r.getString(R.string.inbox_send_failed, event.message)

@@ -71,6 +71,8 @@
     <string name="inbox_banner_get">Установить AnkiDroid</string>
     <string name="inbox_banner_no_permission">Moon+ Vocab нужен доступ к AnkiDroid, чтобы отправлять карточки.</string>
     <string name="inbox_banner_allow">Разрешить</string>
+    <string name="inbox_banner_not_set_up">AnkiDroid ещё не настроен. Откройте его один раз и вернитесь.</string>
+    <string name="anki_open">Открыть AnkiDroid</string>
 
     <plurals name="inbox_selected">
         <item quantity="one">Выбрано: %1$d</item>
@@ -425,6 +427,7 @@
     <string name="settings_anki_ready">Подключён</string>
     <string name="settings_anki_allow">Разрешить доступ</string>
     <string name="settings_anki_missing">Не установлен</string>
+    <string name="settings_anki_not_set_up">Ещё не настроен. Откройте его один раз.</string>
     <string name="settings_developer">Дополнительно</string>
 
     <string name="setup_welcome_title">Пометки из Moon+ станут карточками Anki</string>
@@ -454,6 +457,7 @@
     <string name="setup_anki_denied">Без доступа приложение не сможет добавлять карточки. Нажмите «Разрешить доступ», чтобы попробовать снова.</string>
     <string name="setup_anki_missing">AnkiDroid не установлен на этом телефоне.</string>
     <string name="setup_anki_get">Установить AnkiDroid</string>
+    <string name="setup_anki_not_set_up">AnkiDroid ещё ни разу не открывали. Откройте его один раз, чтобы он настроился, и вернитесь.</string>
     <string name="setup_translation_title">Как переводить слова?</string>
     <string name="setup_translation_text">Приложение отправляет слово вместе с предложением языковой модели через %1$s.</string>
     <string name="setup_openrouter_key_help">Ключ можно получить на %1$s. Он хранится только на телефоне.</string>

@@ -80,6 +80,16 @@ fun rememberAnkiPermissionRequest(onResult: () -> Unit): () -> Unit {
     }
 }
 
+fun openAnkiDroid(context: Context) {
+    val launch = AddContentApi.getAnkiDroidPackageName(context)?.let { context.packageManager.getLaunchIntentForPackage(it) }
+    if (launch == null) return openAnkiDroidStore(context)
+    try {
+        context.startActivity(launch)
+    } catch (e: ActivityNotFoundException) {
+        Log.w(TAG, "AnkiDroid won't open", e)
+    }
+}
+
 fun openAnkiDroidStore(context: Context) {
     for (uri in listOf(ANKIDROID_MARKET, ANKIDROID_WEB)) {
         try {

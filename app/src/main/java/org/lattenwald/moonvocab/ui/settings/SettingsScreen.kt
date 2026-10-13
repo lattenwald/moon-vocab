@@ -55,6 +55,7 @@ import org.lattenwald.moonvocab.ui.LanguageKey
 import org.lattenwald.moonvocab.ui.LanguageKind
 import org.lattenwald.moonvocab.ui.ServicesKey
 import org.lattenwald.moonvocab.ui.common.languageName
+import org.lattenwald.moonvocab.ui.common.openAnkiDroid
 import org.lattenwald.moonvocab.ui.common.openAnkiDroidStore
 import org.lattenwald.moonvocab.ui.common.rememberAnkiPermissionRequest
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
@@ -141,10 +142,12 @@ private fun SettingsGroups(s: SettingsSnapshot, vm: SettingsViewModel, rowColor:
             AnkiAvailability.READY -> stringResource(R.string.settings_anki_ready)
             AnkiAvailability.NO_PERMISSION -> stringResource(R.string.settings_anki_allow)
             AnkiAvailability.NOT_INSTALLED -> stringResource(R.string.settings_anki_missing)
+            AnkiAvailability.NOT_SET_UP -> stringResource(R.string.settings_anki_not_set_up)
         }
         val ankiClick: (() -> Unit)? = when (anki) {
             AnkiAvailability.NO_PERMISSION -> requestAnki
             AnkiAvailability.NOT_INSTALLED -> { { openAnkiDroidStore(context) } }
+            AnkiAvailability.NOT_SET_UP -> { { openAnkiDroid(context) } }
             else -> null
         }
         LinkRow(1, 2, R.drawable.ic_school, stringResource(R.string.settings_anki), ankiValue, rowColor, onClick = ankiClick)
