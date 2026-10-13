@@ -66,7 +66,7 @@ class MarkQueriesTest {
     @Test fun deletingCardMakesItsMarksResumable() = runTest {
         val b = db.books().upsertByFileKey(book("diaspora.epub"))
         val ids = db.marks().insertIgnoringKnown(listOf(mark("k1", b), mark("k2", b)))
-        val cardId = store.add(listOf(card(b) to ids)).single()
+        val cardId = store.add(listOf(card(b) to ids)).ids.single()
         assertEquals(emptyList<MarkEntity>(), db.marks().withoutCard(b))
         store.forgetForRetranslation(listOf(cardId))
         assertEquals(setOf("k1", "k2"), db.marks().withoutCard(b).map { it.key }.toSet())

@@ -22,15 +22,17 @@ class CardStore(private val db: AppDatabase) {
 
     suspend fun <T> locked(block: suspend (CardWrites) -> T): T = lock.withLock { block(writes) }
 
-    suspend fun add(batch: List<Pair<CardEntity, List<Long>>>, links: List<Pair<Long, Long>> = emptyList()): List<Long> =
+    suspend fun add(batch: List<Pair<CardEntity, List<Long>>>, links: List<Pair<Long, Long>> = emptyList()): Added =
         transaction {
             val live = db.cards().byIds(links.map { it.second }.distinct()).map { it.id }.toSet()
-            for ((markId, cardId) in links) if (cardId in live) db.marks().link(listOf(markId), cardId)
-            batch.map { (card, markIds) ->
+            val linked = links.filter { (_, cardId) -> cardId in live }
+            for ((markId, cardId) in linked) db.marks().link(listOf(markId), cardId)
+            val ids = batch.map { (card, markIds) ->
                 val id = dao.insert(card)
                 db.marks().link(markIds, id)
                 id
             }
+            Added(ids, linked.mapTo(HashSet()) { it.first })
         }
 
     suspend fun discard(ids: List<Long>): List<Long> = transaction {
@@ -69,6 +71,8 @@ class CardStore(private val db: AppDatabase) {
         val UNSENT = setOf(CardStatus.PENDING, CardStatus.FAILED)
     }
 }
+
+class Added(val ids: List<Long>, val linkedMarks: Set<Long>)
 
 class CardWrites internal constructor(private val dao: CardWriteDao) {
     // A save recording an AnkiDroid write must survive cancellation, or the write is made again.

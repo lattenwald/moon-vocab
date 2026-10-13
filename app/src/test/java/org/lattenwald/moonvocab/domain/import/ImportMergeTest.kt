@@ -35,15 +35,16 @@ class ImportMergeTest : ImportTestBase() {
         assertEquals(0, s.newCards)
     }
 
-    @Test fun aMarkWhoseCardIsForgottenDuringTheSenseCheckStaysUnlinked() = runTest {
+    @Test fun aMarkWhoseCardIsForgottenDuringTheSenseCheckStaysUnlinkedAndUncounted() = runTest {
         pipeline().run(req(MrproFixture.build(tmp, rows(1))), {})
         val known = cards().single().id
         val forgetsTheCard = SenseJudge { questions ->
             store.forgetForRetranslation(listOf(known))
             firstCandidate.judge(questions)
         }
-        pipeline(judge = forgetsTheCard).run(req(MrproFixture.build(tmp, rows(1) + again(0))), {})
+        val s = pipeline(judge = forgetsTheCard).run(req(MrproFixture.build(tmp, rows(1) + again(0))), {})
         assertEquals(listOf(null, null), markCardIds())
+        assertEquals(0, s.alreadyCard)
     }
 
     @Test fun markMatchingDiscardedCardIsSkipped() = runTest {

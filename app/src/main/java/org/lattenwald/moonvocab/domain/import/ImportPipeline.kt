@@ -137,11 +137,13 @@ class ImportPipeline(
                 break
             }
             val cards = search(merged.cards, run)
-            val ids = store.add(cards, merged.links)
+            val added = store.add(cards, merged.intoKnown.map { (markId, into) -> markId to into.cardId })
+            val ids = added.ids
+            val known = merged.intoKnown.filter { (markId, _) -> markId in added.linkedMarks }.map { it.second.status }
             newCards += cards.count { it.first.status == CardStatus.PENDING }
             failed += cards.count { it.first.status == CardStatus.FAILED }
-            alreadyCard += merged.alreadyCard
-            skippedDiscarded += merged.skippedDiscarded
+            alreadyCard += merged.intoBatch + known.count { it == CardStatus.PENDING || it == CardStatus.SENT }
+            skippedDiscarded += known.count { it == CardStatus.DISCARDED || it == CardStatus.DELETED_IN_ANKI }
             if (merged.senseFailed) senseFailed++
 
             if (request.sendToAnki && sendError == null) {
@@ -206,29 +208,21 @@ class ImportPipeline(
         val merges = resolveMerges(batch, answers, known)
 
         val markIds = built.map { mutableListOf(it.prepared.mark.id) }
-        val links = mutableListOf<Pair<Long, Long>>()
-        var alreadyCard = 0
-        var skippedDiscarded = 0
+        val intoKnown = mutableListOf<Pair<Long, Merge.IntoKnown>>()
+        var intoBatch = 0
         for ((i, merge) in merges) {
             val markId = built[i].prepared.mark.id
             when (merge) {
                 Merge.New -> Unit
                 is Merge.IntoBatch -> {
                     markIds[merge.index] += markId
-                    alreadyCard++
+                    intoBatch++
                 }
-                is Merge.IntoKnown -> {
-                    links += markId to merge.cardId
-                    when (merge.status) {
-                        CardStatus.PENDING, CardStatus.SENT -> alreadyCard++
-                        CardStatus.DISCARDED, CardStatus.DELETED_IN_ANKI -> skippedDiscarded++
-                        CardStatus.FAILED -> Unit
-                    }
-                }
+                is Merge.IntoKnown -> intoKnown += markId to merge
             }
         }
         val kept = built.indices.filter { (merges[it] ?: Merge.New) == Merge.New }.map { built[it] to markIds[it].toList() }
-        return Merged(kept, links, alreadyCard, skippedDiscarded, senseFailed)
+        return Merged(kept, intoKnown, intoBatch, senseFailed)
     }
 
     private suspend fun search(cards: List<Pair<Built, List<Long>>>, run: Run): List<Pair<CardEntity, List<Long>>> {
@@ -289,9 +283,8 @@ class ImportPipeline(
 
     private class Merged(
         val cards: List<Pair<Built, List<Long>>>,
-        val links: List<Pair<Long, Long>>,
-        val alreadyCard: Int,
-        val skippedDiscarded: Int,
+        val intoKnown: List<Pair<Long, Merge.IntoKnown>>,
+        val intoBatch: Int,
         val senseFailed: Boolean,
     )
 
