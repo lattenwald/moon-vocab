@@ -1,7 +1,5 @@
 package org.lattenwald.moonvocab.ui.inbox
 
-import android.content.ContentResolver
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -27,6 +25,7 @@ import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.data.backup.BackupFinder
 import org.lattenwald.moonvocab.data.backup.FoundBackup
 import org.lattenwald.moonvocab.data.db.AppDatabase
+import org.lattenwald.moonvocab.data.settings.FolderGrants
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.domain.import.ImportRequest
 import org.lattenwald.moonvocab.domain.mark.SheetCounts
@@ -54,8 +53,8 @@ sealed interface SheetState {
 }
 
 class ImportSheetViewModel(
-    private val resolver: ContentResolver,
     private val settings: Settings,
+    private val folders: FolderGrants,
     private val db: AppDatabase,
     private val finder: BackupFinder,
     private val runs: ImportRuns,
@@ -79,8 +78,7 @@ class ImportSheetViewModel(
     }
 
     fun chooseFolder(uri: Uri) = search {
-        withContext(io) { resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-        settings.update { it.copy(backupTree = uri) }
+        folders.choose(uri) { settings.update { it.copy(backupTree = uri) } }
         find(uri)
     }
 
@@ -188,7 +186,7 @@ class ImportSheetViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                ImportSheetViewModel(app.contentResolver, c.settings, c.db, c.backupFinder, c.importRuns, c.io)
+                ImportSheetViewModel(c.settings, c.folders, c.db, c.backupFinder, c.importRuns, c.io)
             }
         }
     }

@@ -1,7 +1,6 @@
 package org.lattenwald.moonvocab.ui.settings
 
 import android.content.ContentResolver
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
@@ -26,6 +25,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.lattenwald.moonvocab.App
 import org.lattenwald.moonvocab.data.anki.AnkiAvailability
+import org.lattenwald.moonvocab.data.settings.FolderGrants
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.SettingsSnapshot
 import org.lattenwald.moonvocab.data.settings.ThemeMode
@@ -39,6 +39,7 @@ fun ThemeMode.nightMode(): Int = when (this) {
 class SettingsViewModel(
     private val resolver: ContentResolver,
     private val settings: Settings,
+    private val folders: FolderGrants,
     val ankiAvailability: StateFlow<AnkiAvailability?>,
     private val io: CoroutineDispatcher,
     private val appScope: CoroutineScope,
@@ -70,12 +71,7 @@ class SettingsViewModel(
     // Saved even without a persisted permission, so its row says it can't be read.
     private fun setTree(uri: Uri, onSaved: () -> Unit, transform: (SettingsSnapshot) -> SettingsSnapshot) {
         appScope.launch {
-            try {
-                resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } catch (e: SecurityException) {
-                Log.e(TAG, "no persistable permission for $uri", e)
-            }
-            write(transform).join()
+            folders.choose(uri) { write(transform).join() }
             refreshReadable()
             onSaved()
         }
@@ -101,7 +97,7 @@ class SettingsViewModel(
             initializer {
                 val app = checkNotNull(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]) as App
                 val c = app.container
-                SettingsViewModel(app.contentResolver, c.settings, c.anki.state, c.io, c.appScope)
+                SettingsViewModel(app.contentResolver, c.settings, c.folders, c.anki.state, c.io, c.appScope)
             }
         }
     }

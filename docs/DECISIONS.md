@@ -281,7 +281,7 @@
 - The Settings tab has a large title and the prototype's groups: Translation (service, Translate into), Look (Theme, App language), Moon+ Reader (Backups folder, Books folder, Review before sending), Cards (Cards, AnkiDroid), then Advanced alone.
 - Theme is a segmented button. Selecting writes `theme` and calls `setDefaultNightMode`.
 - A folder row shows the path after `:` in the tree's document id, "Not chosen", or, when `persistedUriPermissions` holds no read grant for it, "Can't read this folder. Choose it again." in the error colour.
-- Choosing a folder takes the persistable read permission, then saves the folder even if that failed.
+- Choosing a folder anywhere goes through `FolderGrants.choose`, one choice at a time: it takes the persistable read permission, saves the folder even if that failed, then releases every persisted grant that is neither the backup nor the books folder.
 - The AnkiDroid row reads Connected, Allow access (asks), Not installed (opens the Play Store), or Not set up yet (opens AnkiDroid). The folder grants are refreshed on resume.
 - AnkiDroid is NOT_SET_UP when it is installed and permitted but its provider returns no note type list (no collection before its first launch) or throws. The Inbox banner, the setup step and the Settings row then offer Open AnkiDroid; setup's Continue needs READY.
 - Settings page writes run in `appScope` under one lock. Theme and Review before sending writes queue in tap order; a folder's write queues only after its permission is taken.

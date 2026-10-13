@@ -23,6 +23,7 @@ import org.lattenwald.moonvocab.data.llm.LlmConfig
 import org.lattenwald.moonvocab.data.llm.LlmSenseJudge
 import org.lattenwald.moonvocab.data.llm.ModelCatalog
 import org.lattenwald.moonvocab.data.llm.TranslationService
+import org.lattenwald.moonvocab.data.settings.FolderGrants
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.settingsDataStore
 import org.lattenwald.moonvocab.domain.card.CardStore
@@ -42,6 +43,7 @@ class AppContainer(context: Context) {
     val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + io)
     val db: AppDatabase = Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).build()
     val settings = Settings(app.settingsDataStore)
+    val folders = FolderGrants(app.contentResolver, settings, io)
     val anki = AnkiStatus(AnkiDroidGateway(app), io)
     val backupReader = BackupReader(app.cacheDir)
     val backupFinder = BackupFinder(app.contentResolver, app.cacheDir, backupReader, io)
