@@ -237,7 +237,7 @@
 - Service edits are saved as typed, in keystroke order, on `appScope`, so leaving the page never drops one. The fields keep local `remember` state keyed by the service id.
 - Delete asks first and is disabled for the last service. A service page whose service is gone pops.
 - Duplicate replaces the page with the copy's page. A service's title is its name, else its address, else `service_unnamed`.
-- Model suggestions are fetched when the service page opens and again 600 ms after the address or key stops changing; a change clears them at once. The model field shows at most 50 that contain the typed text, ignoring case.
+- Model suggestions are fetched only when the model field gains focus, with the address and key stored at that moment, never while the address or key is edited. A focus with the same address and key as a non-empty earlier fetch reuses it. The model field shows at most 50 that contain the typed text, ignoring case.
 - Changing the address, key or model clears the test result and cancels a running test.
 - Test seconds show one decimal, formatted in the UI locale.
 

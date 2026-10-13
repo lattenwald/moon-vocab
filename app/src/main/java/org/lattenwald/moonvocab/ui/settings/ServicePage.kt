@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
@@ -180,9 +181,10 @@ fun ServiceForm(
         }
         if (ServiceField.KEY in fields) KeyField(id, service.apiKey, keyHelp) { vm.edit(id, ServiceField.KEY, it) }
         if (ServiceField.MODEL in fields) {
-            LaunchedEffect(id) { vm.watch(id) }
             val models by vm.models.collectAsStateWithLifecycle()
-            ModelField(id, service.model, models) { vm.edit(id, ServiceField.MODEL, it) }
+            ModelField(id, service.model, models.models.takeIf { models.serviceId == id }.orEmpty(), onFocus = { vm.loadModels(id) }) {
+                vm.edit(id, ServiceField.MODEL, it)
+            }
         }
         val test by vm.test.collectAsStateWithLifecycle()
         val running = test is ServiceTest.Running
@@ -251,11 +253,13 @@ private fun KeyField(id: String, initial: String, help: AnnotatedString?, onChan
 }
 
 @Composable
-private fun ModelField(id: String, initial: String, models: List<String>, onChange: (String) -> Unit) {
+private fun ModelField(id: String, initial: String, models: List<String>, onFocus: () -> Unit, onChange: (String) -> Unit) {
     var value by remember(id) { mutableStateOf(initial) }
     var expanded by remember(id) { mutableStateOf(false) }
+    var focused by remember(id) { mutableStateOf(false) }
     val matches = remember(models, value) { suggestions(models, value) }
     LaunchedEffect(matches.isEmpty()) { if (matches.isEmpty()) expanded = false }
+    LaunchedEffect(models) { if (focused && matches.isNotEmpty()) expanded = true }
     val set: (String) -> Unit = {
         value = it
         onChange(it)
@@ -267,7 +271,12 @@ private fun ModelField(id: String, initial: String, models: List<String>, onChan
                 set(it)
                 expanded = suggestions(models, it).isNotEmpty()
             },
-            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+            modifier = Modifier.fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                .onFocusChanged {
+                    focused = it.isFocused
+                    if (it.isFocused) onFocus()
+                },
             label = { Text(stringResource(R.string.service_model)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(autoCorrectEnabled = false, keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),

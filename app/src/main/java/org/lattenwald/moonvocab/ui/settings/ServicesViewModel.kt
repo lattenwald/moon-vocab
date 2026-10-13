@@ -11,23 +11,14 @@ import java.util.UUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,6 +38,8 @@ import org.lattenwald.moonvocab.domain.settings.duplicate
 import org.lattenwald.moonvocab.domain.settings.select
 
 enum class ServiceField { NAME, ADDRESS, KEY, MODEL }
+
+data class ModelList(val serviceId: String, val models: List<String>)
 
 sealed interface ServiceTest {
     data object Idle : ServiceTest
@@ -68,34 +61,26 @@ class ServicesViewModel(
     // A fair lock reached undispatched from the main thread: writes land in keystroke order, and a test sees them all.
     private val writes = Mutex()
 
-    private val watched = MutableStateFlow<String?>(null)
+    private val _models = MutableStateFlow(ModelList("", emptyList()))
+    val models: StateFlow<ModelList> = _models.asStateFlow()
+    private var modelsFrom: Pair<String, String>? = null
+    private var modelsJob: Job? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val models: StateFlow<List<String>> = watched.flatMapLatest { id ->
-        if (id == null) return@flatMapLatest flowOf(emptyList())
-        var first = true
-        settings.snapshot
-            .map { s -> s.services.firstOrNull { it.id == id }?.let { it.baseUrl to it.apiKey } }
-            .filterNotNull()
-            .distinctUntilChanged()
-            .transformLatest { (baseUrl, apiKey) ->
-                if (!first) {
-                    emit(emptyList())
-                    delay(MODELS_DEBOUNCE_MS)
-                }
-                first = false
-                emit(catalog.models(baseUrl, apiKey))
-            }
-            .onStart { emit(emptyList()) }
-    }.flowOn(io).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun loadModels(id: String) {
+        modelsJob?.cancel()
+        modelsJob = viewModelScope.launch {
+            val service = writes.withLock { withContext(io) { settings.current() } }.services.firstOrNull { it.id == id } ?: return@launch
+            val from = service.baseUrl to service.apiKey
+            if (_models.value.serviceId == id && from == modelsFrom && _models.value.models.isNotEmpty()) return@launch
+            modelsFrom = from
+            _models.value = ModelList(id, emptyList())
+            _models.value = ModelList(id, withContext(io) { catalog.models(service.baseUrl, service.apiKey) })
+        }
+    }
 
     private val _test = MutableStateFlow<ServiceTest>(ServiceTest.Idle)
     val test: StateFlow<ServiceTest> = _test.asStateFlow()
     private var testJob: Job? = null
-
-    fun watch(id: String) {
-        watched.value = id
-    }
 
     fun select(id: String) = write { s -> s.withList(s.list().select(id)) }
 
@@ -169,7 +154,6 @@ class ServicesViewModel(
 
     companion object {
         private const val TAG = "ServicesViewModel"
-        private const val MODELS_DEBOUNCE_MS = 600L
         const val MAX_SUGGESTIONS = 50
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
