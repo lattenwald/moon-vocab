@@ -37,12 +37,12 @@ class MarkLocator(
         }
     }
 
-    fun locate(chapter: Int, position: Int, marked: String): Spot? {
+    fun locate(chapter: Int?, position: Int, marked: String): Spot? {
         val needle = needle(marked) ?: return null
         val found = occurrences(needle)
-        val offset = when (found.size) {
-            0 -> null
-            1 -> found[0]
+        val offset = when {
+            found.size == 1 -> found[0]
+            found.isEmpty() || chapter == null -> null
             else -> betweenNotes(found, chapter, position) ?: nearSameChapterNote(found, chapter, position)
                 ?: inSavedChapter(found, chapter, position)
         } ?: return null

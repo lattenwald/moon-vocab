@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.lattenwald.moonvocab.data.books.BookCopy
 import org.lattenwald.moonvocab.data.books.BookText
+import org.lattenwald.moonvocab.data.books.MoonChapters
 import org.lattenwald.moonvocab.domain.mark.MarkStyle
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
@@ -36,12 +37,12 @@ class PositionReportTest {
         val out = ByteArrayOutputStream()
         val progress = mutableListOf<PositionReportProgress>()
         val summary = writePositionReport(
-            out, "0.1.0 (68)", backup, marks, mapOf("bad.epub-0" to "<b>sentence</b>"),
+            out, "0.1.0 (68)", backup, marks,
             copy = { path ->
                 val name = path.substringAfterLast('/')
                 if (name == "lost.epub") null else BookCopy("Books/$name", tmp.newFile(name).apply { writeText(name) })
             },
-            read = { copy -> texts.getValue(copy.file.name)?.let { BookText(null, null, null, it) } },
+            read = { copy -> texts.getValue(copy.file.name)?.let { BookText(null, null, null, it, MoonChapters(it.map(::listOf))) } },
             onProgress = { progress += it },
         )
 
@@ -62,7 +63,8 @@ class PositionReportTest {
         val miss = bad.getValue("misses").jsonArray.single().jsonObject
         assertEquals("day", miss.getValue("text").jsonPrimitive.content)
         assertEquals(listOf(0, 0, 7), miss.getValue("occurrences").jsonArray.single().jsonArray.map { it.jsonPrimitive.int })
-        assertEquals("<b>sentence</b>", miss.getValue("cardSentence").jsonPrimitive.content)
+        assertEquals("MOVED", miss.getValue("via").jsonPrimitive.content)
+        assertEquals("A grim day.", miss.getValue("sentence").jsonPrimitive.content)
     }
 
     private fun unzip(bytes: ByteArray): Map<String, String> = buildMap {

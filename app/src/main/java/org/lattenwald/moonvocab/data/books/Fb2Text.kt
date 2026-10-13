@@ -23,7 +23,6 @@ internal object Fb2Text {
         }
         // FB2 spec: the first body is the main text and may be named; later named bodies hold notes and comments.
         val bodies = doc.select("FictionBook > body")
-        // Moon+ Reader counts every section, nested ones too, in reading order, each with only its own text.
         val chapters = bodies.filterIndexed { i, body -> i == 0 || !body.hasAttr("name") }
             .flatMap { body -> body.select("section") }
             .map { section -> section.select("p, v, subtitle").filter { it.closest("section") === section }.joinToString("\n") { it.text() } }
@@ -32,7 +31,6 @@ internal object Fb2Text {
             author = author,
             language = isoLanguage(info?.childText("lang")),
             chapters = chapters,
-            chaptersMatchMoonReader = true,
         )
     }
 

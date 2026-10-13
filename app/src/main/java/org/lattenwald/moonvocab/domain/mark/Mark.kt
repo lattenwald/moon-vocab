@@ -1,6 +1,7 @@
 package org.lattenwald.moonvocab.domain.mark
 
 import java.security.MessageDigest
+import org.lattenwald.moonvocab.domain.text.MarkPlace
 
 enum class MarkStyle { HIGHLIGHT, UNDERLINE, STRIKETHROUGH, WAVY }
 
@@ -29,6 +30,8 @@ data class RawMark(
 fun fileKeyOf(bookPath: String): String = bookPath.substringAfterLast('/').lowercase()
 
 val RawMark.fileKey: String get() = fileKeyOf(bookPath)
+
+val RawMark.place: MarkPlace get() = MarkPlace(chapter, split, position, markedAt, text)
 
 data class KeyInput(val bookPath: String, val time: Long, val text: String)
 

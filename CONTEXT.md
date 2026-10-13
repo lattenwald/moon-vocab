@@ -24,6 +24,10 @@ _Avoid_: reconcile, refresh on its own
 
 ## Import
 
+**Sentence lookup**:
+Finding the book sentence a mark was made in: first where Moon+ shows the mark, otherwise where its text occurs among the other marks of the book, otherwise none.
+_Avoid_: sentence finding, locating, on their own
+
 **Card draft**:
 A card the import builds from one translation, before it is stored.
 _Avoid_: draft on its own, which reads as unsaved edits

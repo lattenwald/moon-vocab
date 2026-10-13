@@ -2,6 +2,12 @@
 
 Departures from the spec or a plan: what the plan said, what was done instead, and why. Newest on top. An entry is deleted when it stops being true.
 
+## 2026-10-13: The anchor search runs over the Moon+ parts, and FB2 chapter numbers aren't taken as proven
+
+- Spec said (§5.2): `SentenceFinder.find(book, mark)` searches every chapter of `EpubText`/`Fb2Text`; FB2 chapter numbers are proven unless an anchor contradicts them.
+- Actual: `BookSentences.find(mark, locale)` searches the Moon+ parts in reading order, one per chapter and split, and takes their numbers as proven. Only a book without Moon+ text is searched by `EpubText`/`Fb2Text` chapters, and then no chapter numbers are proven without anchors, FB2 included.
+- Reason: Moon+ positions count within a split, which whole chapters don't have. `Fb2Text` makes every section a chapter, while Moon+ merges a section without a `<title>` into the one before, so its numbers can be shifted.
+
 ## 2026-10-12: Setup names the active service, and its folder step shows no book count
 
 - Plan said: copy the prototype's `su*` strings. `su3p` says "through OpenRouter", `su3help` always gives the openrouter.ai/keys hint, and `su1booksFound` shows the book count ("46 books").

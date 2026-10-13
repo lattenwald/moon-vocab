@@ -10,7 +10,6 @@ data class BookText(
     val author: String?,
     val language: String?,
     val chapters: List<String>,
-    val chaptersMatchMoonReader: Boolean = false,
     val moon: MoonChapters? = null,
 )
 

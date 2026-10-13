@@ -3,6 +3,7 @@ package org.lattenwald.moonvocab.ui.debug
 import java.io.File
 import java.io.OutputStream
 import java.time.LocalDate
+import java.util.Locale
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import kotlinx.serialization.json.Json
@@ -18,7 +19,12 @@ import org.lattenwald.moonvocab.data.books.BookCopy
 import org.lattenwald.moonvocab.data.books.BookText
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.fileKey
+import org.lattenwald.moonvocab.domain.mark.place
+import org.lattenwald.moonvocab.domain.text.BookSentences
+import org.lattenwald.moonvocab.domain.text.Lookup
 import org.lattenwald.moonvocab.domain.text.PositionCheck
+import org.lattenwald.moonvocab.domain.text.SentenceResult
+import org.lattenwald.moonvocab.domain.text.Via
 import org.lattenwald.moonvocab.domain.text.checkPosition
 
 private val reportJson = Json { prettyPrint = true }
@@ -34,7 +40,6 @@ fun writePositionReport(
     appVersion: String,
     backup: File,
     marks: List<RawMark>,
-    cardSentences: Map<String, String>,
     copy: (String) -> BookCopy?,
     read: (BookCopy) -> BookText?,
     onProgress: (PositionReportProgress) -> Unit = {},
@@ -54,16 +59,16 @@ fun writePositionReport(
             val bookCopy = copy(bookPath)
             try {
                 val text = bookCopy?.let(read)
-                val checks = text?.let { t -> bookMarks.map { it to check(t, it) } }
+                val checks = text?.let { checks(it, bookMarks) }
                 notes += bookMarks.size
-                exact += checks.orEmpty().count { it.second.exact }
-                val missed = checks == null || checks.any { !it.second.exact }
+                exact += checks.orEmpty().count { it.position.exact }
+                val missed = checks == null || checks.any { !it.position.exact }
                 if (missed && bookCopy != null) {
                     zip.putNextEntry(ZipEntry("books/${bookCopy.relativePath}"))
                     bookCopy.file.inputStream().use { it.copyTo(zip) }
                     zip.closeEntry()
                 }
-                books += bookJson(bookPath, bookCopy, text, bookMarks, checks, cardSentences)
+                books += bookJson(bookPath, bookCopy, text, bookMarks, checks)
             } finally {
                 bookCopy?.file?.delete()
             }
@@ -84,9 +89,15 @@ fun writePositionReport(
 
 private fun parts(text: BookText): List<List<String>> = text.moon?.parts ?: text.chapters.map { listOf(it) }
 
-private fun check(text: BookText, mark: RawMark): PositionCheck {
-    val part = text.moon?.part(mark.chapter, mark.split, mark.markedAt) ?: text.chapters.getOrNull(mark.chapter).takeIf { text.moon == null && mark.split == 0 }
-    return checkPosition(parts(text), part, mark.position, mark.text)
+private data class Check(val mark: RawMark, val position: PositionCheck, val lookup: Lookup)
+
+private fun checks(text: BookText, marks: List<RawMark>): List<Check> {
+    val sentences = BookSentences(text, marks.map { it.place })
+    val locale = text.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
+    return marks.map { mark ->
+        val position = checkPosition(parts(text), sentences.part(mark.place), mark.position, mark.text)
+        Check(mark, position, sentences.find(mark.place, locale))
+    }
 }
 
 private fun bookJson(
@@ -94,8 +105,7 @@ private fun bookJson(
     bookCopy: BookCopy?,
     text: BookText?,
     marks: List<RawMark>,
-    checks: List<Pair<RawMark, PositionCheck>>?,
-    cardSentences: Map<String, String>,
+    checks: List<Check>?,
 ) = buildJsonObject {
     put("bookPath", bookPath)
     put("title", marks.first().bookTitle)
@@ -103,8 +113,9 @@ private fun bookJson(
     put("readable", text != null)
     put("notes", marks.size)
     if (text == null || checks == null) return@buildJsonObject
-    put("exact", checks.count { it.second.exact })
-    put("reanchored", checks.count { !it.second.exact && it.second.shownAt != null })
+    put("exact", checks.count { it.position.exact })
+    put("reanchored", checks.count { !it.position.exact && it.position.shownAt != null })
+    put("byAnchors", checks.count { it.lookup.via == Via.ANCHORS })
     put("moonText", text.moon != null)
     putJsonArray("chapters") {
         for (splits in parts(text)) addJsonArray {
@@ -115,7 +126,7 @@ private fun bookJson(
         }
     }
     putJsonArray("misses") {
-        for ((mark, check) in checks) if (!check.exact) addJsonObject {
+        for ((mark, check, lookup) in checks) if (!check.exact) addJsonObject {
             put("chapter", mark.chapter)
             put("split", mark.split)
             put("position", mark.position)
@@ -132,7 +143,8 @@ private fun bookJson(
                     add(o.position)
                 }
             }
-            put("cardSentence", cardSentences[mark.key])
+            put("via", lookup.via?.name)
+            put("sentence", (lookup.sentence as? SentenceResult.Found)?.sentence)
         }
     }
 }

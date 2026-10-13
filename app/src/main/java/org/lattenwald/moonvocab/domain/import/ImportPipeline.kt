@@ -12,7 +12,6 @@ import org.lattenwald.moonvocab.data.anki.AnkiGateway
 import org.lattenwald.moonvocab.data.backup.BackupContents
 import org.lattenwald.moonvocab.data.backup.BackupReader
 import org.lattenwald.moonvocab.data.books.BookSource
-import org.lattenwald.moonvocab.data.books.BookText
 import org.lattenwald.moonvocab.data.books.isoLanguage
 import org.lattenwald.moonvocab.data.db.AppDatabase
 import org.lattenwald.moonvocab.data.db.BookEntity
@@ -40,12 +39,11 @@ import org.lattenwald.moonvocab.domain.card.senseQuestions
 import org.lattenwald.moonvocab.domain.mark.RawMark
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.lattenwald.moonvocab.domain.mark.fileKey
-import org.lattenwald.moonvocab.domain.text.MarkLocator
-import org.lattenwald.moonvocab.domain.text.NoteRef
+import org.lattenwald.moonvocab.domain.mark.place
+import org.lattenwald.moonvocab.domain.text.BookSentences
+import org.lattenwald.moonvocab.domain.text.MarkPlace
 import org.lattenwald.moonvocab.domain.text.SentenceResult
-import org.lattenwald.moonvocab.domain.text.moonNoteStart
 import org.lattenwald.moonvocab.domain.text.normalize
-import org.lattenwald.moonvocab.domain.text.sentenceAt
 
 data class ImportRequest(val backup: File?, val styles: Set<StyleCombo>, val onlyBookFileKey: String?, val sendToAnki: Boolean)
 
@@ -79,13 +77,13 @@ class ImportPipeline(
 ) {
     suspend fun run(request: ImportRequest, progress: (ImportProgress) -> Unit): ImportSummary {
         var incomplete: String? = null
-        var notes = emptyMap<String, List<NoteRef>>()
+        var notes = emptyMap<String, List<MarkPlace>>()
         if (request.backup != null) {
             when (val contents = withContext(io) { reader.read(request.backup) }) {
                 is BackupContents.Incomplete -> incomplete = contents.reason
                 is BackupContents.Complete -> {
                     store(contents.marks, request)
-                    notes = contents.marks.groupBy({ it.fileKey }, { NoteRef(it.chapter, it.position, it.text) })
+                    notes = contents.marks.groupBy({ it.fileKey }, { it.place })
                 }
             }
         }
@@ -294,14 +292,12 @@ class ImportPipeline(
         val senseFailed: Boolean,
     )
 
-    private class LoadedBook(val text: BookText?, var locator: MarkLocator? = null)
-
     private fun internalError(e: Exception) = "internal error: " + (e.message ?: e::class.simpleName)
 
-    private inner class Run(private val source: BookSource, private val notes: Map<String, List<NoteRef>>) {
+    private inner class Run(private val source: BookSource, private val notes: Map<String, List<MarkPlace>>) {
         private val books = HashMap<Long, BookEntity>()
-        private val loaded = object : LinkedHashMap<Long, LoadedBook>(16, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, LoadedBook>) = size > BOOKS_IN_MEMORY
+        private val loaded = object : LinkedHashMap<Long, BookSentences?>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, BookSentences?>) = size > BOOKS_IN_MEMORY
         }
         private var availability: AnkiAvailability? = null
 
@@ -311,29 +307,13 @@ class ImportPipeline(
         suspend fun book(id: Long): BookEntity = books.getOrPut(id) { checkNotNull(db.books().byId(id)) { "no book $id" } }
 
         suspend fun prepare(mark: MarkEntity): Prepared {
-            val loadedBook = load(mark.bookId) // outside the guard: an unlistable books folder must fail the import
-            val text = loadedBook.text
+            val sentences = load(mark.bookId) // outside the guard: an unlistable books folder must fail the import
             val book = book(mark.bookId)
             fun item(sentence: String?) = TranslationItem(mark.id.toString(), mark.text, sentence, book.title, book.language)
             return try {
-                val sentence = if (text == null) {
-                    SentenceResult.NotFound
-                } else {
-                    val locale = book.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
-                    val part = text.moon?.part(mark.chapter, mark.split, mark.markedAt)
-                    val start = part?.let { moonNoteStart(it, mark.position, mark.text) }
-                    if (part != null && start != null) {
-                        sentenceAt(part, start, start + mark.text.length, locale)
-                    } else {
-                        val locator = loadedBook.locator ?: withContext(io) {
-                            MarkLocator(text.chapters.map(::normalize), notes[book.fileKey].orEmpty(), text.chaptersMatchMoonReader)
-                        }.also { loadedBook.locator = it }
-                        withContext(io) {
-                            locator.locate(mark.chapter, mark.position, mark.text)
-                                ?.let { sentenceAt(text.chapters, locator.chapters, it, locale) } ?: SentenceResult.NotFound
-                        }
-                    }
-                }
+                val locale = book.language?.let(Locale::forLanguageTag) ?: Locale.ROOT
+                val place = MarkPlace(mark.chapter, mark.split, mark.position, mark.markedAt, mark.text)
+                val sentence = sentences?.let { withContext(io) { it.find(place, locale) }.sentence } ?: SentenceResult.NotFound
                 Prepared(mark, sentence, item((sentence as? SentenceResult.Found)?.let { normalize(it.sentence).text }))
             } catch (e: CancellationException) {
                 throw e
@@ -346,14 +326,14 @@ class ImportPipeline(
             if (book(bookId).language == null) isoLanguage(t.sourceLanguage)?.let { setLanguage(bookId, it) }
         }
 
-        private suspend fun load(bookId: Long): LoadedBook {
-            loaded[bookId]?.let { return it }
+        private suspend fun load(bookId: Long): BookSentences? {
+            if (bookId in loaded) return loaded[bookId]
             val book = book(bookId)
             val text = withContext(io) { source.text(book.relativePath ?: book.fileKey) }
-            val loadedBook = LoadedBook(text).also { loaded[bookId] = it }
+            val sentences = text?.let { BookSentences(it, notes[book.fileKey].orEmpty()) }.also { loaded[bookId] = it }
             if (book.language == null) isoLanguage(text?.language)?.let { setLanguage(bookId, it) }
             if (book.author == null) text?.author?.takeIf { it.isNotBlank() }?.let { setAuthor(bookId, it) }
-            return loadedBook
+            return sentences
         }
 
         private suspend fun setAuthor(bookId: Long, author: String) {

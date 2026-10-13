@@ -114,10 +114,8 @@ class DebugViewModel(
         }
         val source = bookSource()
         val summary = withContext(io) {
-            val sentences = db.cards().observeAll().first().associate { it.id to it.sentenceHtml }
-            val cardSentences = db.marks().all().mapNotNull { m -> m.cardId?.let(sentences::get)?.let { m.key to it } }.toMap()
             checkNotNull(resolver.openOutputStream(uri)) { "cannot open $uri" }.use { out ->
-                writePositionReport(out, appVersion, backup.file, backup.marks, cardSentences, source::copy, source::read) { p ->
+                writePositionReport(out, appVersion, backup.file, backup.marks, source::copy, source::read) { p ->
                     local.update { it.copy(reportStep = ReportStep.Writing(p)) }
                 }
             }
