@@ -1,7 +1,6 @@
 package org.lattenwald.moonvocab.domain.inbox
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -50,12 +49,28 @@ class SelectionTest {
         assertEquals(Selection(), Selection(setOf(3L), active = true).retain(setOf(1, 2)))
     }
 
-    @Test fun rowAtSkipsHeadersAndGaps() {
-        val rows = listOf(RowSpan(null, 0, 40), RowSpan(1, 40, 100), RowSpan(2, 102, 160))
-        assertNull(rowAt(10, rows))
-        assertEquals(1L, rowAt(40, rows))
-        assertNull(rowAt(101, rows))
-        assertEquals(2L, rowAt(159, rows))
+    private val rows = listOf(
+        RowSpan(Hit.None, -60, 0),
+        RowSpan(Hit.Header(7), 0, 40),
+        RowSpan(Hit.Card(1), 40, 100),
+        RowSpan(Hit.Card(2), 102, 160),
+    )
+
+    @Test fun aPressHitsTheRowUnderItAndNothingInAGap() {
+        assertEquals(Hit.Header(7), hitAt(10, rows, top = 0, bottom = 160, clamp = false))
+        assertEquals(Hit.Card(1), hitAt(40, rows, top = 0, bottom = 160, clamp = false))
+        assertEquals(Hit.None, hitAt(101, rows, top = 0, bottom = 160, clamp = false))
+        assertEquals(Hit.Card(2), hitAt(159, rows, top = 0, bottom = 160, clamp = false))
+    }
+
+    @Test fun aPressOutsideTheVisibleBandHitsNothing() {
+        assertEquals(Hit.None, hitAt(50, rows, top = 60, bottom = 160, clamp = false))
+        assertEquals(Hit.None, hitAt(-30, rows, top = 0, bottom = 160, clamp = false))
+    }
+
+    @Test fun aDragPastTheBandHitsTheEdgeRow() {
+        assertEquals(Hit.Card(1), hitAt(10, rows, top = 60, bottom = 160, clamp = true))
+        assertEquals(Hit.Card(2), hitAt(400, rows, top = 0, bottom = 160, clamp = true))
     }
 
     @Test fun autoScrollOnlyNearTheEdges() {

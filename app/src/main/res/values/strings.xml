@@ -69,6 +69,8 @@
         <item quantity="other">%1$d selected</item>
     </plurals>
     <string name="inbox_select_all">Select all</string>
+    <string name="inbox_select_card">Select</string>
+    <string name="inbox_select_book">Select this book\'s cards</string>
     <string name="inbox_clear_selection">Clear selection</string>
     <string name="inbox_stop_selecting">Stop selecting</string>
     <string name="inbox_send_n">Send %1$d</string>

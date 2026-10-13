@@ -49,9 +49,19 @@ private fun Selection.flipAll(group: List<Long>): Set<Long> = if (ids.containsAl
 
 private fun Selection.withIds(next: Set<Long>): Selection = if (next.isEmpty()) Selection() else copy(ids = next, active = true)
 
-data class RowSpan(val id: Long?, val top: Int, val bottom: Int) // id null for headers and other non-card items
+sealed interface Hit {
+    data class Card(val id: Long) : Hit
+    data class Header(val bookId: Long) : Hit
+    data object None : Hit
+}
 
-fun rowAt(y: Int, rows: List<RowSpan>): Long? = rows.firstOrNull { y >= it.top && y < it.bottom }?.id
+data class RowSpan(val target: Hit, val top: Int, val bottom: Int)
+
+// Rows outside top until bottom are drawn under the bars.
+fun hitAt(y: Int, rows: List<RowSpan>, top: Int, bottom: Int, clamp: Boolean): Hit {
+    val at = if (clamp) y.coerceIn(top, bottom - 1) else y.takeIf { it in top until bottom } ?: return Hit.None
+    return rows.firstOrNull { at >= it.top && at < it.bottom }?.target ?: Hit.None
+}
 
 fun autoScrollStep(y: Float, top: Float, bottom: Float, zone: Float, maxStep: Float): Float = when {
     y < top + zone -> -minOf(maxStep, (top + zone - y) / 5)

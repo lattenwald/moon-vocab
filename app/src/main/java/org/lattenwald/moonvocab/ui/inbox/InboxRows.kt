@@ -216,12 +216,13 @@ internal fun InboxCardRow(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val select = stringResource(R.string.inbox_select_card)
     SegmentedListItem(
         selected = selected,
         // DragSelect.guardTap swallows the lift after a long-press that starts selection.
         onClick = { if (selecting) onToggle() else onOpen() },
         shapes = segmentedRowShapes(index, count),
-        modifier = modifier,
+        modifier = if (selecting) modifier else modifier.selectAction(select, onToggle),
         colors = ListItemDefaults.segmentedColors(containerColor = containerColor, selectedContainerColor = colors.secondaryContainer),
         contentPadding = RowPadding,
     ) {
@@ -292,10 +293,11 @@ internal fun RowFlag(icon: Int, text: String) {
 @Composable
 internal fun GroupHeader(group: InboxGroup, selecting: Boolean, checked: ToggleableState, onToggle: () -> Unit, modifier: Modifier = Modifier) {
     val variant = MaterialTheme.colorScheme.onSurfaceVariant
+    val selectBook = stringResource(R.string.inbox_select_book)
     Row(
         modifier.fillMaxWidth()
             .clip(PanelShape)
-            .then(if (selecting) Modifier.triStateToggleable(checked, role = Role.Checkbox, onClick = onToggle) else Modifier)
+            .then(if (selecting) Modifier.triStateToggleable(checked, role = Role.Checkbox, onClick = onToggle) else Modifier.selectAction(selectBook, onToggle))
             .heightIn(min = 44.dp)
             .padding(start = 8.dp, top = 6.dp, end = 6.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,

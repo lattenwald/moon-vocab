@@ -81,6 +81,8 @@
         <item quantity="other">Выбрано: %1$d</item>
     </plurals>
     <string name="inbox_select_all">Выбрать все</string>
+    <string name="inbox_select_card">Выбрать</string>
+    <string name="inbox_select_book">Выбрать карточки этой книги</string>
     <string name="inbox_clear_selection">Снять выбор</string>
     <string name="inbox_stop_selecting">Закончить выбор</string>
     <string name="inbox_send_n">Отправить %1$d</string>

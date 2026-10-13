@@ -116,7 +116,14 @@ fun InboxScreen(
     BackHandler(enabled = selecting, onBack = vm::clearSelection)
 
     val listState = rememberLazyListState()
-    val drag = rememberDragSelect(listState, onStart = vm::startDrag, onOver = vm::dragOver, onEnd = vm::endDrag)
+    val drag = rememberDragSelect(
+        listState,
+        selecting,
+        onStart = vm::startDrag,
+        onOver = vm::dragOver,
+        onEnd = vm::endDrag,
+        onGroup = vm::toggleGroup,
+    )
     val fabExpanded by remember { derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward } }
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
     if (sheetOpen) ImportSheet(sheetVm, onDismiss = { sheetOpen = false })
@@ -240,7 +247,7 @@ fun InboxScreen(
                         item(key = "chips") { FilterChips(list, onFilter = vm::setFilter, modifier = Modifier.padding(bottom = 6.dp)) }
                     }
                     for (group in list.groups) {
-                        item(key = "h${group.bookId}", contentType = "header") {
+                        item(key = groupKey(group.bookId), contentType = "header") {
                             val inGroup = group.cards.count { it.id in selection.ids }
                             val checked = when (inGroup) {
                                 0 -> ToggleableState.Off

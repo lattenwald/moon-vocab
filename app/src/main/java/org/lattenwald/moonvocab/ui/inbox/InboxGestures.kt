@@ -2,7 +2,7 @@ package org.lattenwald.moonvocab.ui.inbox
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
@@ -22,17 +22,20 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ViewConfiguration
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.lattenwald.moonvocab.domain.inbox.Hit
 import org.lattenwald.moonvocab.domain.inbox.RowSpan
 import org.lattenwald.moonvocab.domain.inbox.autoScrollStep
-import org.lattenwald.moonvocab.domain.inbox.rowAt
+import org.lattenwald.moonvocab.domain.inbox.hitAt
 
 private const val LONG_PRESS_MILLIS = 360L
 private val AutoScrollZone = 72.dp
 private val AutoScrollMaxStep = 18.dp
+private const val GROUP_KEY = "group:"
 
 private class InboxViewConfiguration(base: ViewConfiguration) : ViewConfiguration by base {
     override val longPressTimeoutMillis: Long get() = LONG_PRESS_MILLIS
@@ -45,19 +48,33 @@ internal fun InboxLongPress(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalViewConfiguration provides config, content = content)
 }
 
+internal fun groupKey(bookId: Long): String = GROUP_KEY + bookId
+
+private fun targetOf(key: Any): Hit = when {
+    key is Long -> Hit.Card(key)
+    key is String && key.startsWith(GROUP_KEY) -> key.removePrefix(GROUP_KEY).toLongOrNull()?.let(Hit::Header) ?: Hit.None
+    else -> Hit.None
+}
+
 internal class DragSelect(
     private val listState: LazyListState,
     private val haptics: HapticFeedback,
     private val zone: Float,
     private val maxStep: Float,
+    private val selecting: () -> Boolean,
     private val onStart: (Long) -> Unit,
     private val onOver: (Long) -> Unit,
     private val onEnd: () -> Unit,
+    private val onGroup: (Long) -> Unit,
 ) {
-    private fun spans(): List<RowSpan> {
+    private val top get() = listState.layoutInfo.beforeContentPadding
+    private val bottom get() = listState.layoutInfo.let { it.viewportSize.height - it.afterContentPadding }
+
+    private fun hit(y: Float, clamp: Boolean): Hit {
         val info = listState.layoutInfo
         val shift = -info.viewportStartOffset
-        return info.visibleItemsInfo.map { RowSpan(it.key as? Long, it.offset + shift, it.offset + shift + it.size) }
+        val rows = info.visibleItemsInfo.map { RowSpan(targetOf(it.key), it.offset + shift, it.offset + shift + it.size) }
+        return hitAt(y.toInt(), rows, top, bottom, clamp)
     }
 
     private var swallowUp = false
@@ -74,75 +91,91 @@ internal class DragSelect(
     }
 
     suspend fun detect(scope: PointerInputScope) = coroutineScope {
-        var dragging = false
-        var lastId: Long? = null
-        var lastY = 0f
-        var scroller: Job? = null
-
-        fun over(y: Float) {
-            val id = rowAt(y.toInt(), spans()) ?: return
-            if (id == lastId) return
-            lastId = id
-            onOver(id)
-            haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-        }
-
-        fun stop() {
-            scroller?.cancel()
-            scroller = null
-            if (dragging) onEnd()
-            dragging = false
-            lastId = null
-        }
-
-        scope.detectDragGesturesAfterLongPress(
-            onDragStart = { offset ->
-                val id = rowAt(offset.y.toInt(), spans()) ?: return@detectDragGesturesAfterLongPress
-                swallowUp = true
-                dragging = true
-                lastId = id
-                lastY = offset.y
-                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                onStart(id)
-                scroller = launch {
-                    while (true) {
-                        withFrameNanos {}
-                        val info = listState.layoutInfo
-                        val top = info.beforeContentPadding.toFloat()
-                        val bottom = (info.viewportSize.height - info.afterContentPadding).toFloat()
-                        val step = autoScrollStep(lastY, top, bottom, zone, maxStep)
-                        if (step != 0f) {
-                            listState.scrollBy(step)
-                            over(lastY)
+        scope.awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false)
+            val press = awaitLongPressOrCancellation(down.id) ?: return@awaitEachGesture
+            when (val hit = hit(press.position.y, clamp = false)) {
+                is Hit.Card -> {
+                    swallowUp = true
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onStart(hit.id)
+                    var lastId = hit.id
+                    var lastY = press.position.y
+                    fun over() {
+                        val id = (hit(lastY, clamp = true) as? Hit.Card)?.id ?: return
+                        if (id == lastId) return
+                        lastId = id
+                        onOver(id)
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                    }
+                    val scroller = launch {
+                        while (true) {
+                            withFrameNanos {}
+                            val step = autoScrollStep(lastY, top.toFloat(), bottom.toFloat(), zone, maxStep)
+                            if (step != 0f) {
+                                listState.scrollBy(step)
+                                over()
+                            }
                         }
                     }
+                    try {
+                        // In the main pass the list's scroll sees a move first and takes one past touch slop.
+                        while (true) {
+                            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == press.id } ?: break
+                            change.consume()
+                            if (!change.pressed) break
+                            lastY = change.position.y
+                            over()
+                        }
+                    } finally {
+                        scroller.cancel()
+                        onEnd()
+                    }
                 }
-            },
-            onDragEnd = { stop() },
-            onDragCancel = { stop() },
-            onDrag = { change, _ ->
-                if (dragging) {
-                    lastY = change.position.y
-                    over(lastY)
+                is Hit.Header -> if (!selecting()) {
+                    swallowUp = true
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onGroup(hit.bookId)
                 }
-            },
-        )
+                Hit.None -> Unit
+            }
+        }
     }
 }
 
 @Composable
-internal fun rememberDragSelect(listState: LazyListState, onStart: (Long) -> Unit, onOver: (Long) -> Unit, onEnd: () -> Unit): DragSelect {
+internal fun rememberDragSelect(
+    listState: LazyListState,
+    selecting: Boolean,
+    onStart: (Long) -> Unit,
+    onOver: (Long) -> Unit,
+    onEnd: () -> Unit,
+    onGroup: (Long) -> Unit,
+): DragSelect {
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current
+    val isSelecting by rememberUpdatedState(selecting)
     val start by rememberUpdatedState(onStart)
     val over by rememberUpdatedState(onOver)
     val end by rememberUpdatedState(onEnd)
+    val group by rememberUpdatedState(onGroup)
     return remember(listState, haptics, density) {
         with(density) {
-            DragSelect(listState, haptics, AutoScrollZone.toPx(), AutoScrollMaxStep.toPx(), { start(it) }, { over(it) }, { end() })
+            DragSelect(
+                listState, haptics, AutoScrollZone.toPx(), AutoScrollMaxStep.toPx(),
+                { isSelecting }, { start(it) }, { over(it) }, { end() }, { group(it) },
+            )
         }
     }
 }
 
 internal fun Modifier.dragSelect(drag: DragSelect): Modifier =
     pointerInput(drag) { drag.guardTap(this) }.pointerInput(drag) { drag.detect(this) }
+
+internal fun Modifier.selectAction(label: String, onSelect: () -> Unit): Modifier =
+    semantics(mergeDescendants = true) {
+        onLongClick(label) {
+            onSelect()
+            true
+        }
+    }
