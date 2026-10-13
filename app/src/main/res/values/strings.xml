@@ -124,6 +124,7 @@
     <string name="card_deleted_note">This card was deleted in AnkiDroid. Send it again to make a new card.</string>
     <string name="card_discarded_note">You discarded this card.</string>
     <string name="card_field_word">Word</string>
+    <string name="card_field_transcription">Transcription</string>
     <string name="card_field_grammar">Grammar</string>
     <string name="card_field_excerpt">Excerpt</string>
     <string name="card_field_translation">Translation</string>
@@ -397,6 +398,10 @@
         <item quantity="other">Longest excerpt: %d words</item>
     </plurals>
     <string name="cards_longest_help">Longer sentences are cut around the word.</string>
+    <string name="cards_accent">English pronunciation</string>
+    <string name="cards_accent_american">American</string>
+    <string name="cards_accent_british">British</string>
+    <string name="cards_accent_help">Transcriptions of English words follow it. Words in other languages get their language\'s standard pronunciation.</string>
     <string name="cards_example">Example front</string>
     <string name="cards_deck">Deck</string>
     <string name="cards_deck_help">{language} becomes English, German and so on: one deck per language.</string>
@@ -424,7 +429,7 @@
     <string name="settings_review">Review before sending</string>
     <string name="settings_review_help">You can change this for each import.</string>
     <string name="settings_cards">Cards</string>
-    <string name="settings_cards_help">Excerpt, deck, tags and design</string>
+    <string name="settings_cards_help">Excerpt, pronunciation, deck, tags and design</string>
     <string name="settings_anki">AnkiDroid</string>
     <string name="settings_anki_ready">Connected</string>
     <string name="settings_anki_allow">Allow access</string>

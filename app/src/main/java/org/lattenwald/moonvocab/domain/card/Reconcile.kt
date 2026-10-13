@@ -21,6 +21,7 @@ fun reconcile(cards: List<SentCard>, snapshots: Map<Long, NoteSnapshot>): List<R
 
 fun CardEntity.refreshed(fields: Map<String, String>, mod: Long): CardEntity = copy(
     word = fields["Word"]?.let(::ankiToPlain) ?: word,
+    transcription = fields["Transcription"]?.let(::ankiToPlain) ?: transcription,
     grammar = fields["Grammar"]?.let(::ankiToPlain) ?: grammar,
     excerptHtml = fields["Excerpt"] ?: excerptHtml,
     translation = fields["Translation"]?.let(::ankiToPlain) ?: translation,

@@ -19,7 +19,7 @@ private fun t(
     inventedExample: String? = null,
     sourceNote: String? = null,
 ) = Translation(
-    id = "1", sourceLanguage = "de", focus = focus, headword = focus, lemma = focus, widened = false,
+    id = "1", sourceLanguage = "de", focus = focus, headword = focus, transcription = "", lemma = focus, widened = false,
     grammar = "", translation = "", meaning = "", excerpt = excerpt, inventedExample = inventedExample, sourceNote = sourceNote,
 )
 

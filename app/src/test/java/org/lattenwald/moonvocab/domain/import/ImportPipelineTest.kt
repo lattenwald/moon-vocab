@@ -23,7 +23,7 @@ class ImportPipelineTest : ImportTestBase() {
     @Test fun interruptedImportResumesWithoutLossOrDuplicates() = runTest {
         val backup = MrproFixture.build(tmp, rows(25))
         var calls = 0
-        val p = pipeline(translate = { items, _, _ ->
+        val p = pipeline(translate = { items, _, _, _ ->
             if (++calls == 2) throw CancellationException("killed") else items.associate { it.id to tr(it) }
         })
         assertFailsWith<CancellationException> { p.run(req(backup), {}) }
@@ -36,7 +36,7 @@ class ImportPipelineTest : ImportTestBase() {
 
     @Test fun keyRejectedStopsAndLeavesMarksResumable() = runTest {
         var calls = 0
-        val s = pipeline(translate = { _, _, _ -> calls++; throw LlmException.Stop(LlmException.Stop.Kind.AUTH, "401") })
+        val s = pipeline(translate = { _, _, _, _ -> calls++; throw LlmException.Stop(LlmException.Stop.Kind.AUTH, "401") })
             .run(req(backup(12)), {})
         assertEquals(LlmException.Stop.Kind.AUTH, s.stopped)
         assertEquals(1, calls)
@@ -45,14 +45,14 @@ class ImportPipelineTest : ImportTestBase() {
     }
 
     @Test fun resumeLocatesTheBookByItsStoredMoonPath() = runTest {
-        pipeline(translate = { _, _, _ -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, "402") }).run(req(backup(2)), {})
+        pipeline(translate = { _, _, _, _ -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, "402") }).run(req(backup(2)), {})
         pipeline().run(req(null), {})
         assertEquals(setOf(PATH), fakeBooks.reads.keys)
         assertTrue(db.cards().byStatus(PENDING).none { it.invented })
     }
 
     @Test fun incompleteBackupStillResumesPendingMarks() = runTest {
-        pipeline(translate = { _, _, _ -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, "402") }).run(req(backup(2)), {})
+        pipeline(translate = { _, _, _, _ -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, "402") }).run(req(backup(2)), {})
         val s = pipeline().run(req(MrproFixture.build(tmp, rows(3), Cut.BEFORE_DB)), {})
         assertEquals("no database in backup", s.incompleteBackup)
         assertEquals(2, s.newCards)
@@ -60,7 +60,7 @@ class ImportPipelineTest : ImportTestBase() {
     }
 
     @Test fun failedBatchMakesFailedCards() = runTest {
-        val s = pipeline(translate = { _, _, _ -> throw LlmException.Failed("503") }).run(req(backup(3)), {})
+        val s = pipeline(translate = { _, _, _, _ -> throw LlmException.Failed("503") }).run(req(backup(3)), {})
         val failed = db.cards().byStatus(FAILED)
         assertEquals(3, s.failed)
         assertEquals(listOf("503"), failed.map { it.error }.distinct())
@@ -69,7 +69,7 @@ class ImportPipelineTest : ImportTestBase() {
     }
 
     @Test fun missingTranslationMakesFailedCard() = runTest {
-        pipeline(translate = { items, _, _ -> items.drop(1).associate { it.id to tr(it) } }).run(req(backup(3)), {})
+        pipeline(translate = { items, _, _, _ -> items.drop(1).associate { it.id to tr(it) } }).run(req(backup(3)), {})
         assertEquals(listOf("no translation returned"), db.cards().byStatus(FAILED).map { it.error })
         assertEquals(2, db.cards().byStatus(PENDING).size)
     }
@@ -85,7 +85,7 @@ class ImportPipelineTest : ImportTestBase() {
     }
 
     @Test fun retryFailedTranslatesFailedMarksAgain() = runTest {
-        pipeline(translate = { _, _, _ -> throw LlmException.Failed("503") }).run(req(backup(3)), {})
+        pipeline(translate = { _, _, _, _ -> throw LlmException.Failed("503") }).run(req(backup(3)), {})
         val s = pipeline().retryFailed()
         assertEquals(3, s.newCards)
         assertTrue(db.cards().byStatus(FAILED).isEmpty())
@@ -119,7 +119,7 @@ class ImportPipelineTest : ImportTestBase() {
 
     @Test fun bookTextGivesSentenceAndBookLanguage() = runTest {
         val seen = mutableListOf<TranslationItem>()
-        pipeline(translate = { items, _, _ -> seen += items; items.associate { it.id to tr(it) } }).run(req(backup(2)), {})
+        pipeline(translate = { items, _, _, _ -> seen += items; items.associate { it.id to tr(it) } }).run(req(backup(2)), {})
         assertEquals("On the page the reader found ${word(1)} and smiled at it.", seen.first().sentence)
         assertEquals("en", seen.first().sourceLanguage)
         val card = db.cards().byStatus(PENDING).first()
@@ -128,13 +128,13 @@ class ImportPipelineTest : ImportTestBase() {
     }
 
     @Test fun modelSourceLanguageIsNormalizedOnTheCard() = runTest {
-        pipeline(translate = { items, _, _ -> items.associate { it.id to tr(it).copy(sourceLanguage = "ger") } }).run(req(backup(1)), {})
+        pipeline(translate = { items, _, _, _ -> items.associate { it.id to tr(it).copy(sourceLanguage = "ger") } }).run(req(backup(1)), {})
         assertEquals("de", db.cards().byStatus(PENDING).single().sourceLanguage)
     }
 
     @Test fun bookWithoutTextGetsInventedExamples() = runTest {
         val seen = mutableListOf<TranslationItem>()
-        pipeline(translate = { items, _, _ -> seen += items; items.associate { it.id to tr(it) } }, books = { FakeBooks(emptyMap()) })
+        pipeline(translate = { items, _, _, _ -> seen += items; items.associate { it.id to tr(it) } }, books = { FakeBooks(emptyMap()) })
             .run(req(backup(3)), {})
         assertTrue(seen.all { it.sentence == null })
         val cards = db.cards().byStatus(PENDING)
@@ -181,7 +181,7 @@ class ImportPipelineTest : ImportTestBase() {
 
     @Test fun onlySelectedBookIsProcessed() = runTest {
         val backup = MrproFixture.build(tmp, rows(2) + rows(3, path = "/sdcard/Books/Other.fb2", title = "Other", from = 10))
-        pipeline(translate = { _, _, _ -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, "402") }).run(req(backup), {})
+        pipeline(translate = { _, _, _, _ -> throw LlmException.Stop(LlmException.Stop.Kind.CREDITS, "402") }).run(req(backup), {})
         val s = pipeline().run(req(null, only = "other.fb2"), {})
         assertEquals(3, s.newCards)
         assertEquals(listOf(word(10), word(11), word(12)), db.cards().byStatus(PENDING).map { it.word }.sorted())

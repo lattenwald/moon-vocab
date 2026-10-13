@@ -7,14 +7,22 @@ import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
+import org.lattenwald.moonvocab.domain.card.EnglishAccent
 import org.lattenwald.moonvocab.domain.card.Translation
 import org.lattenwald.moonvocab.domain.card.TranslationItem
 import org.lattenwald.moonvocab.domain.card.Translator
+import org.lattenwald.moonvocab.domain.card.cleanTranscription
 
 class TranslationService(private val llm: LlmClient) : Translator {
-    override suspend fun translate(items: List<TranslationItem>, targetLanguage: String, maxExcerptWords: Int): Map<String, Translation> {
+    override suspend fun translate(
+        items: List<TranslationItem>,
+        targetLanguage: String,
+        maxExcerptWords: Int,
+        accent: EnglishAccent,
+    ): Map<String, Translation> {
         val target = Locale.forLanguageTag(targetLanguage).getDisplayLanguage(Locale.ENGLISH)
-        val content = llm.complete(Prompt.system(target, maxExcerptWords), userMessage(items), Prompt.schema, TOKENS_PER_ITEM * items.size)
+        val system = Prompt.system(target, maxExcerptWords, accent)
+        val content = llm.complete(system, userMessage(items), Prompt.schema, TOKENS_PER_ITEM * items.size)
         val results = replyItems(content) ?: return emptyMap()
         val wanted = items.mapTo(HashSet()) { it.id }
         val translations = LinkedHashMap<String, Translation>()
@@ -45,6 +53,7 @@ class TranslationService(private val llm: LlmClient) : Translator {
             sourceLanguage = o.text("sourceLanguage")?.ifEmpty { null },
             focus = focus,
             headword = headword,
+            transcription = cleanTranscription(o.text("transcription").orEmpty()),
             lemma = o.text("lemma")?.ifEmpty { null } ?: headword,
             widened = (o["widened"] as? JsonPrimitive)?.booleanOrNull ?: false,
             grammar = o.text("grammar").orEmpty(),

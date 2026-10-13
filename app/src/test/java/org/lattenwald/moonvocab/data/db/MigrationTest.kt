@@ -19,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 class MigrationTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
-    private fun createVersion(version: Int, file: File) {
+    private fun createVersion(version: Int, file: File, vararg rows: String) {
         val schema = File("schemas/${AppDatabase::class.qualifiedName}/$version.json")
         val database = Json.parseToJsonElement(schema.readText()).jsonObject.getValue("database").jsonObject
         val statements = database.getValue("setupQueries").jsonArray.map { it.jsonPrimitive.content } +
@@ -35,18 +35,41 @@ class MigrationTest {
                 "INSERT INTO mark (key, bookId, chapter, position, text, style, color, markedAt) " +
                     "VALUES ('k', 1, 4, 120, 'kanly', 'WAVY', -28160, 1)",
             )
+            rows.forEach(db::execSQL)
             db.version = version
         }
     }
 
+    private fun freshFile(): File = context.getDatabasePath("migration-test.db").apply { parentFile!!.mkdirs(); delete() }
+
+    private fun migrated(file: File): AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, file.path)
+        .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).allowMainThreadQueries().build()
+
     @Test fun marksKeepTheirDataAndGetSplitZero() = runTest {
-        val file = context.getDatabasePath("migration-test.db").apply { parentFile!!.mkdirs(); delete() }
+        val file = freshFile()
         createVersion(1, file)
-        val db = Room.databaseBuilder(context, AppDatabase::class.java, file.path).addMigrations(AppDatabase.MIGRATION_1_2)
-            .allowMainThreadQueries().build()
+        val db = migrated(file)
         try {
             val mark = db.marks().all().single()
             assertEquals(listOf("kanly", "4", "120", "0"), listOf(mark.text, "${mark.chapter}", "${mark.position}", "${mark.split}"))
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun cardsKeepTheirDataAndGetAnEmptyTranscription() = runTest {
+        val file = freshFile()
+        createVersion(
+            2,
+            file,
+            "INSERT INTO card (id, uuid, bookId, targetLanguage, word, lemma, grammar, excerptHtml, translation, meaning, " +
+                "sentenceHtml, sourceNote, widened, invented, status) " +
+                "VALUES (1, 'u1', 1, 'ru', 'kanly', 'kanly', 'n.', '', 'кровная месть', '', '', '', 0, 0, 'SENT')",
+        )
+        val db = migrated(file)
+        try {
+            val card = db.cards().byIds(listOf(1L)).single()
+            assertEquals(listOf("kanly", "кровная месть", ""), listOf(card.word, card.translation, card.transcription))
         } finally {
             db.close()
         }

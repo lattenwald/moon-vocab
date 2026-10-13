@@ -146,6 +146,7 @@
     <string name="card_deleted_note">Эта карточка удалена в AnkiDroid. Отправьте её снова, чтобы создать новую.</string>
     <string name="card_discarded_note">Вы убрали эту карточку.</string>
     <string name="card_field_word">Слово</string>
+    <string name="card_field_transcription">Транскрипция</string>
     <string name="card_field_grammar">Грамматика</string>
     <string name="card_field_excerpt">Отрывок</string>
     <string name="card_field_translation">Перевод</string>
@@ -466,6 +467,10 @@
         <item quantity="other">Самый длинный отрывок: %d слова</item>
     </plurals>
     <string name="cards_longest_help">Длинные предложения обрезаются вокруг слова.</string>
+    <string name="cards_accent">Английское произношение</string>
+    <string name="cards_accent_american">Американское</string>
+    <string name="cards_accent_british">Британское</string>
+    <string name="cards_accent_help">По нему пишется транскрипция английских слов. Слова других языков получают стандартное произношение своего языка.</string>
     <string name="cards_example">Пример лицевой стороны</string>
     <string name="cards_deck">Колода</string>
     <string name="cards_deck_help">Вместо {language} будет English, German и так далее: колода на каждый язык.</string>
@@ -493,7 +498,7 @@
     <string name="settings_review">Проверять перед отправкой</string>
     <string name="settings_review_help">Можно поменять при каждом импорте.</string>
     <string name="settings_cards">Карточки</string>
-    <string name="settings_cards_help">Отрывок, колода, теги и оформление</string>
+    <string name="settings_cards_help">Отрывок, произношение, колода, теги и оформление</string>
     <string name="settings_anki">AnkiDroid</string>
     <string name="settings_anki_ready">Подключён</string>
     <string name="settings_anki_allow">Разрешить доступ</string>

@@ -6,12 +6,16 @@ private const val SENTENCE = "…and especially whenever my hypos get such an up
 private const val FOCUS = "upper hand"
 private const val BOOK = "Moby-Dick, Herman Melville"
 
-fun sampleCard(maxExcerptWords: Int): CardFields {
+fun sampleCard(maxExcerptWords: Int, accent: EnglishAccent): CardFields {
     val start = SENTENCE.indexOf(FOCUS)
     val end = start + FOCUS.length
     val excerpt = cutExcerpt(SENTENCE, start, end, maxExcerptWords)
     return CardFields(
         word = "get the upper hand",
+        transcription = when (accent) {
+            EnglishAccent.AMERICAN -> "ɡɛt ði ˈʌpɚ ˈhænd"
+            EnglishAccent.BRITISH -> "ɡɛt ði ˈʌpə ˈhænd"
+        },
         grammar = "phr.",
         excerptHtml = markHtml(excerpt.text, excerpt.focusStart, excerpt.focusEnd),
         translation = "взять верх, одолеть",
@@ -20,10 +24,11 @@ fun sampleCard(maxExcerptWords: Int): CardFields {
     )
 }
 
-fun sampleCardFields(maxExcerptWords: Int): Map<String, String> {
-    val card = sampleCard(maxExcerptWords)
+fun sampleCardFields(maxExcerptWords: Int, accent: EnglishAccent): Map<String, String> {
+    val card = sampleCard(maxExcerptWords, accent)
     return mapOf(
         "Word" to escapeHtml(card.word),
+        "Transcription" to escapeHtml(card.transcription),
         "Grammar" to escapeHtml(card.grammar),
         "Excerpt" to card.excerptHtml,
         "Translation" to escapeHtml(card.translation),

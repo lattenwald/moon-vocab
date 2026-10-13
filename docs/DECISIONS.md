@@ -111,19 +111,24 @@
 - Settings store only values that differ from their defaults. Writing a default removes its key.
 - `reviewFirst` defaults to `true`, and `deckOverride` defaults to `Moon+::Test`.
 - `theme` is `SYSTEM`, `LIGHT` or `DARK`, stored by name, default `SYSTEM`. `ankiAsked` defaults to `false`.
+- `englishAccent` is `AMERICAN` or `BRITISH`, stored by name, default `AMERICAN`.
+- `card.transcription` is `TEXT NOT NULL DEFAULT ''`, added by `MIGRATION_2_3`.
 - `setupDone` defaults to `true` when `backupTree` is set, else `false`. Its key is stored only when the value differs from that default.
 
 ## AnkiDroid
-- `ankiFields` HTML-escapes Word, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid.
+- `ankiFields` HTML-escapes Word, Transcription, Grammar, Translation, Meaning, Book and Source. Excerpt and Sentence are already HTML. AppId is the card's uuid.
 - Book is `Title, Author`, or just `Title` when there is no author.
 - A field changed in Anki is read back into the card as plain text with `ankiToPlain`. Excerpt and Sentence are kept as raw HTML.
-- `reconcile` compares the fields the card stores (Word, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note: plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML.
+- `reconcile` compares the fields the card stores (Word, Transcription, Grammar, Excerpt, Translation, Meaning, Sentence, Source) that are present in the note: plain fields as `ankiToPlain` text, Excerpt and Sentence as raw HTML.
 - `update` merges with the note's current note type in AnkiDroid, and writes the union of the note's tags and ours.
 - `ensureNoteType`:
   - uses the stored id while it is in AnkiDroid's model list;
   - otherwise uses the smallest id named "Moon+ Vocab";
   - otherwise creates the note type.
 - Templates and CSS are rewritten when the stored version is older. The new version is stored only when the rewrite succeeds.
+- Before that rewrite, `NoteTypeSpec.OPTIONAL_FIELDS` (Transcription) missing from the note type are appended through the provider's `models/<mid>/fields` insert. A refused insert leaves the templates and the stored version as they were.
+- `mergeFields` leaves out an optional field the note type lacks; any other missing field throws `NoteTypeChanged`.
+- New note types put Transcription right after Word; older ones get it appended at the end.
 - `ensureDeck` matches an exact name, otherwise creates the deck.
 - Notes are read with a null projection, and columns are looked up by name. A note whose field list can't be read is an error.
 - `findElsewhere` returns the first hit's deck name, `""` when the deck can't be read, null for no hit. It searches `-note:"Moon+ Vocab"` with a quoted `w:` term for the lemma and for the focus when it differs, ignoring case.
@@ -181,12 +186,13 @@
 ## Card page
 - In the edit form, the excerpt's and the sentence's focus is written in square brackets. A field left unchanged keeps its stored HTML.
 - Word and translation can't be blank. A changed excerpt needs one bracket pair, and a changed sentence needs none or one.
-- Changed form values are trimmed. A blank sentence is saved empty.
+- Changed form values are trimmed. A blank sentence is saved empty. A changed transcription goes through `cleanTranscription`.
+- The transcription shows between slashes: under the word on the card front, and before the grammar note in Inbox and book page rows.
 - Save sends AnkiDroid only the fields the user changed, and no tags. When any changed field also changed in AnkiDroid since the page read it, nothing is written to AnkiDroid. When the note is gone, the edits are kept in the app and the card becomes DELETED_IN_ANKI.
 - On a conflict, the page shows AnkiDroid's text for the conflicting fields and for fields the user didn't change. The user's other edits stay.
 - A sent card's page reads its note when it opens, under the AnkiDroid lock. A missing note makes the card DELETED_IN_ANKI.
 - A pending card's edits are saved in the app only while it is still PENDING. Otherwise the page keeps them: as unsaved edits when the card is now SENT, else with `card_snack_not_pending`, and Back stays on the page.
-- Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
+- Translate again on a pending or sent card asks for one translation of the card's first mark, in its stored sentence, into the card's own target language. Word, transcription, grammar, translation, meaning, lemma and the phrase flag come back as unsaved edits. Excerpt and sentence stay.
 - Translate again on a failed card forgets it and starts a resume import, as in the Inbox.
 - Tapping a card outside selection opens its page.
 - Card page actions keep the page open and show their result there, with Undo for send and discard.
@@ -240,6 +246,7 @@
 - The example front is the sample card, cut with `cutExcerpt` and drawn by the card page's `FrontFace`. It follows the slider while dragging; `maxExcerptWords` is saved when the drag ends.
 - The deck and book tag patterns are saved as typed. A blank field saves its default and shows it once the field loses focus.
 - When the test deck is on, the deck field's help line names it.
+- English pronunciation (American, British) is a segmented button under Longest excerpt. The example front's transcription follows it.
 - Card design opens the preview (`PreviewKey(null)`) with the sample card, cut to the stored longest excerpt.
 
 ## Settings page
@@ -280,6 +287,7 @@
 
 ## UI
 - Fonts are bundled variable TTFs from google/fonts: Roboto Flex for the UI and Literata for book text. The licences ship in `assets/licenses/`.
+- Transcriptions use the system sans (`IpaFontFamily`): Literata and Roboto Flex have no IPA letters.
 - Icons are Material Symbols Rounded vector drawables from google/material-design-icons, in `res/drawable/ic_*.xml`.
 - The launcher icon is an open cream book on #1F1915 with one #E8590C wave (stroke 5.5) across both pages and a slim #6E5C50 page edge; its monochrome layer is the pages with the wave and fold cut out.
 - The theme is System, Light or Dark. It is applied with `AppCompatDelegate.setDefaultNightMode` in `App.onCreate`, from a blocking read kept as `App.startSettings`, and again on every change. `isSystemInDarkTheme()` follows it.

@@ -27,7 +27,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -50,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -78,6 +82,7 @@ import org.lattenwald.moonvocab.data.settings.DEFAULT_DECK_PATTERN
 import org.lattenwald.moonvocab.data.settings.DEFAULT_TAG_PATTERN
 import org.lattenwald.moonvocab.data.settings.Settings
 import org.lattenwald.moonvocab.data.settings.SettingsSnapshot
+import org.lattenwald.moonvocab.domain.card.EnglishAccent
 import org.lattenwald.moonvocab.domain.card.sampleCard
 import org.lattenwald.moonvocab.ui.card.FrontFace
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
@@ -98,6 +103,8 @@ class CardsViewModel(
     private val writes = Mutex()
 
     fun setMaxWords(words: Int) = write { it.copy(maxExcerptWords = words) }
+
+    fun setAccent(accent: EnglishAccent) = write { it.copy(englishAccent = accent) }
 
     fun setDeckPattern(pattern: String) = write { it.copy(deckPattern = pattern.ifBlank { DEFAULT_DECK_PATTERN }) }
 
@@ -158,10 +165,11 @@ fun CardsPage(
         val s = snapshot ?: return@Scaffold
         // Only this page writes it, so the store is never read back.
         var words by remember { mutableIntStateOf(s.maxExcerptWords) }
-        val sample = remember(words) { sampleCard(words) }
+        val sample = remember(words, s.englishAccent) { sampleCard(words, s.englishAccent) }
         // Padding outside the scroll, so a focused field is brought into view above the keyboard.
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(top = 4.dp, bottom = 24.dp)) {
             LongestExcerpt(words, colors.row, onChange = { words = it }, onDone = { vm.setMaxWords(words) })
+            Pronunciation(s.englishAccent, colors.row, onSelect = vm::setAccent)
             LibrarySubheader(stringResource(R.string.cards_example))
             Box(Modifier.padding(horizontal = 12.dp)) { FrontFace(sample, colors.row) }
             Column(Modifier.padding(start = 16.dp, top = 20.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -217,6 +225,34 @@ private fun LongestExcerpt(words: Int, rowColor: Color, onChange: (Int) -> Unit,
         )
         Text(
             stringResource(R.string.cards_longest_help),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.5.sp,
+            lineHeight = 19.sp,
+        )
+    }
+}
+
+private val ACCENT_LABELS = listOf(
+    EnglishAccent.AMERICAN to R.string.cards_accent_american,
+    EnglishAccent.BRITISH to R.string.cards_accent_british,
+)
+
+@Composable
+private fun Pronunciation(accent: EnglishAccent, rowColor: Color, onSelect: (EnglishAccent) -> Unit) {
+    Column(Modifier.padding(start = 12.dp, top = 12.dp, end = 12.dp).fillMaxWidth().background(rowColor, GroupShape).padding(RowPadding)) {
+        Text(stringResource(R.string.cards_accent), fontSize = 16.sp, lineHeight = 22.sp)
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+            ACCENT_LABELS.forEachIndexed { i, (option, label) ->
+                SegmentedButton(
+                    selected = accent == option,
+                    onClick = { if (accent != option) onSelect(option) },
+                    shape = SegmentedButtonDefaults.itemShape(index = i, count = ACCENT_LABELS.size),
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            }
+        }
+        Text(
+            stringResource(R.string.cards_accent_help),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 13.5.sp,
             lineHeight = 19.sp,

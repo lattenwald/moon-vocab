@@ -16,6 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
+import org.lattenwald.moonvocab.domain.card.EnglishAccent
 import org.lattenwald.moonvocab.domain.mark.MarkStyle
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.robolectric.RobolectricTestRunner
@@ -38,7 +39,7 @@ class SettingsTest {
         assertEquals(
             SettingsSnapshot(
                 backupTree = null, booksTree = null, services = listOf(openRouter), activeServiceId = "openrouter",
-                targetLanguage = "ru", maxExcerptWords = 15, deckPattern = "Moon+::{language}", tagPattern = "book::{title}",
+                targetLanguage = "ru", maxExcerptWords = 15, englishAccent = EnglishAccent.AMERICAN, deckPattern = "Moon+::{language}", tagPattern = "book::{title}",
                 reviewFirst = true, styles = emptySet(), noteTypeId = null, noteTypeVersion = 0, deckOverride = "Moon+::Test",
                 lastCheckAt = 0, theme = ThemeMode.SYSTEM, setupDone = false, ankiAsked = false,
             ),

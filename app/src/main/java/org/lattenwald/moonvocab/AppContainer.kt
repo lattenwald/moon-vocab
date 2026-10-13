@@ -37,7 +37,7 @@ class AppContainer(context: Context) {
 
     val io: CoroutineDispatcher = Dispatchers.IO
     val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + io)
-    val db: AppDatabase = Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).addMigrations(AppDatabase.MIGRATION_1_2).build()
+    val db: AppDatabase = Room.databaseBuilder(app, AppDatabase::class.java, AppDatabase.NAME).addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3).build()
     val settings = Settings(app.settingsDataStore)
     val anki = AnkiDroidGateway(app)
     val backupReader = BackupReader(app.cacheDir)

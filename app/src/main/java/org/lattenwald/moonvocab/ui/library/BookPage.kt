@@ -36,7 +36,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.lattenwald.moonvocab.R
 import org.lattenwald.moonvocab.domain.inbox.InboxCard
+import org.lattenwald.moonvocab.ui.common.WordNote
 import org.lattenwald.moonvocab.ui.common.languageName
 import org.lattenwald.moonvocab.ui.inbox.RowFlag
 import org.lattenwald.moonvocab.ui.inbox.forInboxList
@@ -149,18 +149,7 @@ private fun CardText(card: InboxCard, deletedInAnki: Boolean) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (card.grammar.isNotBlank()) {
-            Text(
-                card.grammar,
-                modifier = Modifier.alignByBaseline(),
-                color = colors.onSurfaceVariant,
-                fontSize = 14.sp,
-                fontFamily = BookFontFamily,
-                fontStyle = FontStyle.Italic,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        WordNote(card.transcription, card.grammar, Modifier.alignByBaseline())
     }
     if (card.translation.isBlank()) {
         Text(stringResource(R.string.card_no_translation), color = colors.error, fontSize = 13.5.sp, lineHeight = 19.sp)

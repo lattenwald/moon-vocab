@@ -27,14 +27,17 @@ import org.lattenwald.moonvocab.domain.card.CardField
 import org.lattenwald.moonvocab.domain.card.CardFields
 import org.lattenwald.moonvocab.domain.card.markedText
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
+import org.lattenwald.moonvocab.ui.common.slashed
 import org.lattenwald.moonvocab.ui.inbox.RowFlag
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
+import org.lattenwald.moonvocab.ui.theme.IpaFontFamily
 
 private val FaceShape = RoundedCornerShape(28.dp)
 
 internal val CardField.label: Int
     get() = when (this) {
         CardField.WORD -> R.string.card_field_word
+        CardField.TRANSCRIPTION -> R.string.card_field_transcription
         CardField.GRAMMAR -> R.string.card_field_grammar
         CardField.EXCERPT -> R.string.card_field_excerpt
         CardField.TRANSLATION -> R.string.card_field_translation
@@ -56,6 +59,9 @@ internal fun FrontFace(fields: CardFields, color: Color) {
     val colors = MaterialTheme.colorScheme
     Face(color) {
         Text(fields.word, color = colors.onSurface, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Medium, letterSpacing = (-0.4).sp)
+        if (fields.transcription.isNotBlank()) {
+            Text(slashed(fields.transcription), color = colors.onSurfaceVariant, fontSize = 16.sp, fontFamily = IpaFontFamily)
+        }
         if (fields.grammar.isNotBlank()) {
             Text(fields.grammar, color = colors.onSurfaceVariant, fontSize = 15.sp, fontFamily = BookFontFamily, fontStyle = FontStyle.Italic)
         }
@@ -94,6 +100,7 @@ internal fun BackFace(fields: CardFields, bookLine: String?, color: Color) {
 internal fun FrontForm(form: CardFields, invalid: Set<CardField>, color: Color, onEdit: (CardField, String) -> Unit) {
     Face(color) {
         FormField(CardField.WORD, form, invalid, onEdit, singleLine = true)
+        FormField(CardField.TRANSCRIPTION, form, invalid, onEdit, singleLine = true)
         FormField(CardField.GRAMMAR, form, invalid, onEdit, singleLine = true)
         FormField(CardField.EXCERPT, form, invalid, onEdit)
     }
@@ -117,7 +124,11 @@ private fun FormField(field: CardField, form: CardFields, invalid: Set<CardField
         value = form[field],
         onValueChange = { onEdit(field, it) },
         modifier = Modifier.fillMaxWidth(),
-        textStyle = if (bracketed) LocalTextStyle.current.copy(fontFamily = BookFontFamily) else LocalTextStyle.current,
+        textStyle = when {
+            bracketed -> LocalTextStyle.current.copy(fontFamily = BookFontFamily)
+            field == CardField.TRANSCRIPTION -> LocalTextStyle.current.copy(fontFamily = IpaFontFamily)
+            else -> LocalTextStyle.current
+        },
         label = { Text(stringResource(field.label)) },
         supportingText = when {
             bracketed -> {

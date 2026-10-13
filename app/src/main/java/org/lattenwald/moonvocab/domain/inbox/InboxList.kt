@@ -15,6 +15,7 @@ sealed interface RowLabel {
 data class InboxCard(
     val id: Long,
     val word: String,
+    val transcription: String,
     val grammar: String,
     val translation: String,
     val excerpt: MarkedText?,
@@ -93,6 +94,7 @@ internal fun inboxCard(row: InboxRow): InboxCard {
     return InboxCard(
         id = card.id,
         word = card.word,
+        transcription = card.transcription,
         grammar = card.grammar,
         translation = card.translation,
         excerpt = card.excerptHtml.takeUnless { it.isBlank() }?.let(::markedText),

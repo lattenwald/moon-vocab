@@ -25,6 +25,7 @@ fun cardsExportJson(cards: List<CardEntity>, marks: List<MarkEntity>, books: Lis
             put("book", titles[card.bookId])
             put("sourceLanguage", card.sourceLanguage)
             put("word", card.word)
+            put("transcription", card.transcription)
             put("lemma", card.lemma)
             put("grammar", card.grammar)
             put("translation", card.translation)

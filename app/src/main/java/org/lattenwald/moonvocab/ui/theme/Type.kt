@@ -28,4 +28,7 @@ val BookFontFamily: FontFamily = FontFamily(
     variableFont(R.font.literata_italic, 600, FontStyle.Italic),
 )
 
+// Literata and Roboto Flex have no IPA letters (ɪ, ʊ, ʃ).
+val IpaFontFamily: FontFamily = FontFamily.SansSerif
+
 val AppTypography: Typography = Typography(fontFamily = RobotoFlexFamily)

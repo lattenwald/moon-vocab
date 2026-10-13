@@ -52,7 +52,7 @@ sealed interface CardSource {
 
 enum class CardDialog { None, ConfirmDelete, ConfirmLeave }
 
-private val NO_FIELDS = CardFields("", "", "", "", "", "")
+private val NO_FIELDS = CardFields("", "", "", "", "", "", "")
 
 data class CardPageState(
     val card: CardEntity? = null,
@@ -347,7 +347,15 @@ class CardPageViewModel(
             is RetranslateResult.Ok -> {
                 val t = r.retranslation
                 state = state.copy(extras = t.extras, editing = true)
-                setForm(state.form.copy(word = t.word, grammar = t.grammar, translation = t.translation, meaning = t.meaning))
+                setForm(
+                    state.form.copy(
+                        word = t.word,
+                        transcription = t.transcription,
+                        grammar = t.grammar,
+                        translation = t.translation,
+                        meaning = t.meaning,
+                    ),
+                )
                 CardPageEvent.Retranslated
             }
             is RetranslateResult.Stopped -> CardPageEvent.Stopped(r.kind)
@@ -404,6 +412,7 @@ class CardPageViewModel(
 
 private fun CardFields.with(f: CardField, value: String): CardFields = when (f) {
     CardField.WORD -> copy(word = value)
+    CardField.TRANSCRIPTION -> copy(transcription = value)
     CardField.GRAMMAR -> copy(grammar = value)
     CardField.EXCERPT -> copy(excerptHtml = value)
     CardField.TRANSLATION -> copy(translation = value)

@@ -18,6 +18,11 @@ class FieldMergeTest {
         mergeFields(listOf("Word", "Extra", "Translation"), null, ours),
     )
 
+    @Test fun aNoteTypeWithoutTranscriptionTakesTheRest() = assertArrayEquals(
+        arrayOf("spleen", "хандра"),
+        mergeFields(listOf("Word", "Translation"), null, ours + ("Transcription" to "spliːn")),
+    )
+
     @Test fun missingFieldThrows() {
         assertEquals(listOf("Translation"), assertFailsWith<NoteTypeChanged> { mergeFields(listOf("Word"), null, ours) }.missing)
     }

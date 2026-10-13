@@ -24,6 +24,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.lattenwald.moonvocab.domain.card.EnglishAccent.AMERICAN
+import org.lattenwald.moonvocab.domain.card.EnglishAccent.BRITISH
 import org.lattenwald.moonvocab.domain.card.Translation
 import org.lattenwald.moonvocab.domain.card.TranslationItem
 import org.robolectric.RobolectricTestRunner
@@ -56,21 +58,22 @@ class TranslationServiceTest {
     @Test fun parsesItemsAndIgnoresUnknownAndDuplicateIds() = runTest {
         reply("""{"items":[${item("a","hypos")},${item("zz","x")},${item("a","second")}]}""")
         val r = service().translate(listOf(TranslationItem("a","hypos","…whenever my hypos get…","Moby-Dick",null),
-                                           TranslationItem("b","spleen",null,"Moby-Dick",null)), "ru", 15)
+                                           TranslationItem("b","spleen",null,"Moby-Dick",null)), "ru", 15, AMERICAN)
         assertEquals(setOf("a"), r.keys); assertEquals("hypos", r["a"]!!.focus)
     }
 
-    @Test fun extractsJsonFromProse() = runTest { reply("Sure! {\"items\":[${item("a","w")}]} Hope this helps"); assertEquals(1, service().translate(listOf(ti("a")), "ru", 15).size) }
+    @Test fun extractsJsonFromProse() = runTest { reply("Sure! {\"items\":[${item("a","w")}]} Hope this helps"); assertEquals(1, service().translate(listOf(ti("a")), "ru", 15, AMERICAN).size) }
 
-    @Test fun malformedJsonIsEmpty() = runTest { reply("{\"items\":[{\"id\":\"a\""); assertTrue(service().translate(listOf(ti("a")), "ru", 15).isEmpty()) }
+    @Test fun malformedJsonIsEmpty() = runTest { reply("{\"items\":[{\"id\":\"a\""); assertTrue(service().translate(listOf(ti("a")), "ru", 15, AMERICAN).isEmpty()) }
 
-    @Test fun promptCarriesTargetAndLimit() = runTest { reply("""{"items":[]}"""); service().translate(listOf(ti("a")), "ru", 12)
-        val body = server.takeRequest().body!!.utf8(); assertTrue("into Russian" in body); assertTrue("more than 12 words" in body) }
+    @Test fun promptCarriesTargetLimitAndAccent() = runTest { reply("""{"items":[]}"""); service().translate(listOf(ti("a")), "ru", 12, BRITISH)
+        val body = server.takeRequest().body!!.utf8(); assertTrue("into Russian" in body); assertTrue("more than 12 words" in body)
+        assertTrue("the British (Received Pronunciation) pronunciation" in body) }
 
     @Test fun fillsOnlyTheBatchsOwnValidIds() = runTest {
         val malformed = """{"id":"b","focus":["w"],"headword":"w","translation":"t"}"""
         reply("""{"items":[${item("a","first")},${item("zz","stranger")},${item("a","again")},42,$malformed,${item("c","  ")},${item("d","fine")}]}""")
-        val r = service().translate(listOf(ti("a"), ti("b"), ti("c"), ti("d"), ti("e")), "ru", 15)
+        val r = service().translate(listOf(ti("a"), ti("b"), ti("c"), ti("d"), ti("e")), "ru", 15, AMERICAN)
         assertEquals(setOf("a", "d"), r.keys)
         assertEquals("first", r["a"]!!.focus)
         assertEquals("fine", r["d"]!!.focus)
@@ -78,18 +81,18 @@ class TranslationServiceTest {
 
     @Test fun bracesInsideStringsDoNotEndTheObject() = runTest {
         reply("""Here you go: {"items":[{"id":"a","focus":"w","headword":"w","translation":"t","meaning":"a \" } here"}]} Done :}""")
-        assertEquals("a \" } here",service().translate(listOf(ti("a")), "ru", 15)["a"]?.meaning)
+        assertEquals("a \" } here",service().translate(listOf(ti("a")), "ru", 15, AMERICAN)["a"]?.meaning)
     }
 
     @Test fun trimsFieldsAndFillsDefaults() = runTest {
-        reply("""{"items":[{"id":"a","focus":" Schnallen ","headword":"die Schnalle\n","lemma":"  ","grammar":" f., -n ","translation":" пряжка ","excerpt":null,"sourceNote":"  "}]}""")
-        val expected = Translation("a", null, "Schnallen", "die Schnalle", "die Schnalle", false, "f., -n", "пряжка", "", null, null, null)
-        assertEquals(expected, service().translate(listOf(ti("a")), "ru", 15)["a"])
+        reply("""{"items":[{"id":"a","focus":" Schnallen ","headword":"die Schnalle\n","transcription":" /di 'ʃnalə/ ","lemma":"  ","grammar":" f., -n ","translation":" пряжка ","excerpt":null,"sourceNote":"  "}]}""")
+        val expected = Translation("a", null, "Schnallen", "die Schnalle", "di ˈʃnalə", "die Schnalle", false, "f., -n", "пряжка", "", null, null, null)
+        assertEquals(expected, service().translate(listOf(ti("a")), "ru", 15, AMERICAN)["a"])
     }
 
     @Test fun sendsItemsWithExplicitNullsAndTokenBudget() = runTest {
         reply("""{"items":[]}""")
-        service().translate(listOf(TranslationItem("a", "hypos", "my hypos", "Moby-Dick", "en"), TranslationItem("b", "spleen", null, "Moby-Dick", null)), "ru", 15)
+        service().translate(listOf(TranslationItem("a", "hypos", "my hypos", "Moby-Dick", "en"), TranslationItem("b", "spleen", null, "Moby-Dick", null)), "ru", 15, AMERICAN)
         val body = Json.parseToJsonElement(server.takeRequest().body!!.utf8()).jsonObject
         assertEquals(2800, body["max_tokens"]!!.jsonPrimitive.int)
         val expected = Json.parseToJsonElement("""[
@@ -109,11 +112,11 @@ class TranslationServiceTest {
         }
         check(Prompt.schema)
         val item = Prompt.schema["properties"]!!.jsonObject["items"]!!.jsonObject["items"]!!.jsonObject
-        assertEquals(12, item["properties"]!!.jsonObject.size)
+        assertEquals(13, item["properties"]!!.jsonObject.size)
     }
 
     @Test fun llmStopPropagates() = runTest {
         server.enqueue(MockResponse(code = 402))
-        assertFailsWith<LlmException.Stop> { service().translate(listOf(ti("a")), "ru", 15) }
+        assertFailsWith<LlmException.Stop> { service().translate(listOf(ti("a")), "ru", 15, AMERICAN) }
     }
 }

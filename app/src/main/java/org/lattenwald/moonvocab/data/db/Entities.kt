@@ -46,6 +46,7 @@ data class CardEntity(
     val sourceLanguage: String?,
     val targetLanguage: String,
     val word: String,
+    @ColumnInfo(defaultValue = "''") val transcription: String = "",
     val lemma: String,
     val grammar: String,
     val excerptHtml: String,

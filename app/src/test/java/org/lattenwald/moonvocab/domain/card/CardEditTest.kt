@@ -5,7 +5,7 @@ import org.junit.Test
 
 class CardEditTest {
     private val stored = CardFields(
-        word = "get the upper hand", grammar = "phr.",
+        word = "get the upper hand", transcription = "ɡɛt ði ˈʌpɚ ˈhænd", grammar = "phr.",
         excerptHtml = """such an <span class="mark">upper hand</span> of me""",
         translation = "взять верх", meaning = "",
         sentenceHtml = """whenever my hypos get such an <span class="mark">upper hand</span> of me [sic]""",
@@ -22,6 +22,10 @@ class CardEditTest {
     @Test fun bracketsBecomeTheMarkAndTypedHtmlIsEscaped() {
         val r = parseForm(stored.toForm().copy(excerptHtml = "a < b [upper hand]"), stored) as FormResult.Ok
         assertEquals("""a &lt; b <span class="mark">upper hand</span>""", r.fields.excerptHtml)
+    }
+    @Test fun aTypedTranscriptionLosesSlashesAndGetsAStressMark() {
+        val r = parseForm(stored.toForm().copy(transcription = " [ɡɛt ði  'ʌpə 'hænd] "), stored) as FormResult.Ok
+        assertEquals("ɡɛt ði ˈʌpə ˈhænd", r.fields.transcription)
     }
     @Test fun anExcerptWithoutOneBracketPairIsInvalid() {
         for (bad in listOf("no focus", "[a] and [b]", "[ ] x", "a ]b[")) {

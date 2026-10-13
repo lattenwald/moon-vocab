@@ -67,7 +67,7 @@ import org.lattenwald.moonvocab.ui.inbox.inboxColors
 
 class PreviewViewModel(cardId: Long?, db: AppDatabase, settings: Settings, io: CoroutineDispatcher) : ViewModel() {
     private val source: Flow<Map<String, String>?> = if (cardId == null) {
-        settings.snapshot.map { sampleCardFields(it.maxExcerptWords) }
+        settings.snapshot.map { sampleCardFields(it.maxExcerptWords, it.englishAccent) }
     } else {
         flow {
             val card = db.cards().byIds(listOf(cardId)).firstOrNull()

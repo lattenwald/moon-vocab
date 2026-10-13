@@ -154,12 +154,22 @@ class AnkiDroidGateway(context: Context) : AnkiGateway {
             put(FlashCardsContract.CardTemplate.ANSWER_FORMAT, NoteTypeSpec.BACK)
         }
         val updated = try {
-            resolver.update(modelUri, css, null, null) > 0 &&
+            addMissingFields(mid, modelUri) &&
+                resolver.update(modelUri, css, null, null) > 0 &&
                 resolver.update(Uri.withAppendedPath(modelUri, "templates/0"), template, null, null) > 0
         } catch (_: IllegalArgumentException) { // provider's error for a malformed note type
             false
         }
         return if (updated) NoteTypeSpec.VERSION else knownVersion
+    }
+
+    // A schema change: AnkiDroid asks for a one-way full sync afterwards.
+    private fun addMissingFields(mid: Long, modelUri: Uri): Boolean {
+        val have = fieldList(mid).toSet()
+        return NoteTypeSpec.OPTIONAL_FIELDS.filter { it !in have }.all { name ->
+            val field = ContentValues().apply { put(FlashCardsContract.Model.FIELD_NAME, name) }
+            resolver.insert(Uri.withAppendedPath(modelUri, "fields"), field) != null
+        }
     }
 
     private fun noteUri(noteId: Long): Uri = Uri.withAppendedPath(FlashCardsContract.Note.CONTENT_URI, noteId.toString())

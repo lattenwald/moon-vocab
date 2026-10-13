@@ -77,7 +77,7 @@ Cards waiting for review, grouped by book (newest marks first), with a language 
 
 ### 3.4 Card page
 
-Shows the card's front and back as fields that can be edited in place: word, grammar, excerpt, translation, meaning, full sentence. Actions: Send to Anki and Discard (pending card), Save changes to Anki and Delete from AnkiDroid (sent card), Preview in AnkiDroid, Translate again, Restore (discarded card).
+Shows the card's front and back as fields that can be edited in place: word, transcription, grammar, excerpt, translation, meaning, full sentence. Actions: Send to Anki and Discard (pending card), Save changes to Anki and Delete from AnkiDroid (sent card), Preview in AnkiDroid, Translate again, Restore (discarded card).
 
 A sent card's page reads the note fresh from AnkiDroid when it opens, so it shows edits made in AnkiDroid or synced from desktop, and saving never overwrites them with older text. Saving updates that note's fields, which keeps its review history. If the note turns out to be gone, the page says it was deleted in AnkiDroid and offers to send it as a new card.
 
@@ -106,6 +106,7 @@ The app creates its own note type "Moon+ Vocab" once and stores its id (`mid`) i
 | Field | Content |
 |---|---|
 | Word | Dictionary form, or the phrase if widened, e.g. `die Schnalle`, `get the upper hand` |
+| Transcription | The Word's pronunciation in IPA, without slashes, e.g. `di ˈʃnalə`; may be empty |
 | Grammar | Short grammar note in the source language's dictionary style, e.g. `f., -n`, `v.`, `phr.` |
 | Excerpt | 6 to N words from the book around the focus, with the focus wrapped in `<span class="mark">` |
 | Translation | Translation into the target language, comma-separated senses, the one used here first |
@@ -115,13 +116,13 @@ The app creates its own note type "Moon+ Vocab" once and stores its id (`mid`) i
 | Source | Empty, or a short note in the target language when the example was written by the model |
 | AppId | The card's UUID, so a note can always be traced back |
 
-The app always addresses fields by name. Before every write it reads the note type's current field list and the note's current values, replaces only the fields above, and passes any other fields through unchanged. This keeps working if the user adds or reorders fields on desktop. If one of the fields above has been removed or renamed, the write stops with "the Moon+ Vocab note type was changed" (section 8).
+The app always addresses fields by name. Before every write it reads the note type's current field list and the note's current values, replaces only the fields above, and passes any other fields through unchanged. This keeps working if the user adds or reorders fields on desktop. If one of the fields above has been removed or renamed, the write stops with "the Moon+ Vocab note type was changed" (section 8). Transcription is the exception: it was added after the first release, so a note type without it gets the rest of the fields.
 
 Word is the first field, so two notes with the same lemma and different meanings will carry AnkiDroid's duplicate marker in its editor. That is expected and harmless.
 
-Front template: Word, Grammar, Excerpt. Back: front, then Translation, Meaning, Sentence, Book, Source. Styling follows the prototype's AnkiDroid preview, except the font: book text uses the system serif, because AnkiDroid's media API accepts only images and audio. The focus gets the orange wavy underline (`#D9480F` light, `#FF8A50` in AnkiDroid's night mode). The layout is centered.
+Front template: Word, Transcription between slashes (left out when empty), Grammar, Excerpt. Back: front, then Translation, Meaning, Sentence, Book, Source. Styling follows the prototype's AnkiDroid preview, except the font: book text uses the system serif, because AnkiDroid's media API accepts only images and audio. The focus gets the orange wavy underline (`#D9480F` light, `#FF8A50` in AnkiDroid's night mode). The layout is centered.
 
-The templates and CSS carry a version number. When the app ships a newer version, it updates the note type's templates and CSS through the provider; notes are not touched.
+The templates and CSS carry a version number. When the app ships a newer version, it updates the note type's templates and CSS through the provider; notes are not touched. Version 2 first appends the Transcription field to a note type that lacks it. Anki counts that as a schema change, so AnkiDroid then asks for a one-way full sync with AnkiWeb. If AnkiDroid refuses the field, the templates stay at the old version and the upgrade is tried again on the next send.
 
 ### 4.2 Deck and tags
 
@@ -206,7 +207,7 @@ The user can add, edit, duplicate, delete and switch services. The list is never
 
 Two saved services may share a base URL with different models, for example a cheap model and a stronger one. Where the service lists models at `GET {baseUrl}/models`, the model field offers them as suggestions; free text is always allowed. The connection test sends one tiny request with the service's own settings. Switching the active service affects only translations made after the switch. Providers without structured outputs still work, through the fallback described below.
 
-`TranslationService.translate(batch, targetLanguage, maxExcerptWords)` sends up to 10 items per request. Each item is `{id, marked, sentence?, bookTitle, sourceLanguage?}`. The request asks for JSON matching a schema (`response_format: json_schema`, with a fallback to extracting the first JSON object from the reply when the provider doesn't support it):
+`TranslationService.translate(batch, targetLanguage, maxExcerptWords, englishAccent)` sends up to 10 items per request. Each item is `{id, marked, sentence?, bookTitle, sourceLanguage?}`. The request asks for JSON matching a schema (`response_format: json_schema`, with a fallback to extracting the first JSON object from the reply when the provider doesn't support it):
 
 ```json
 {"items": [{
@@ -214,6 +215,7 @@ Two saved services may share a base URL with different models, for example a che
   "sourceLanguage": "de",
   "focus": "Schnallen",
   "headword": "die Schnalle",
+  "transcription": "di ˈʃnalə",
   "lemma": "Schnalle",
   "widened": false,
   "grammar": "f., -n",
@@ -228,6 +230,7 @@ Rules the prompt states and the app checks:
 
 - `focus` is the word or phrase to learn, exactly as it appears in the sentence. Usually that is the marked text. When the user marked a long phrase or a whole sentence, the model picks the word or phrase inside it that is worth learning. The app accepts `focus` only if it occurs in the sentence; the occurrence nearest the mark is used.
 - `headword` is the dictionary form shown on the card, with an article where the language uses one. `lemma` is the same without article or particle; it is used for searching (5.4, 5.6).
+- `transcription` is the headword's IPA in the source language's standard pronunciation. For English it follows the English pronunciation setting, American (the default) or British. A word borrowed into the source language is pronounced as in that language. The app strips slashes and brackets, turns `'` into `ˈ`, and collapses spaces; the same cleaning applies when the user edits the field.
 - The model may widen the focus into the phrase it belongs to (`upper hand` → `get the upper hand`); then `widened` is true and `focus` covers the phrase as it appears in the text.
 - `excerpt` is needed only when the sentence is longer than `maxExcerptWords`; a shorter sentence is the excerpt as is. The brackets in `excerpt` mark the focus. The app accepts it only if, after removing brackets and ellipses, it is a contiguous part of the sentence, contains the focus, and is within the word limit. Otherwise the app cuts the excerpt itself: a window of words centered on the focus, with ellipses. If the focus alone is longer than the limit, the excerpt is the focus.
 - When there is no sentence, the model writes a short example as `inventedExample`; the card gets the Source note and the "example written by the model" label.
@@ -310,7 +313,7 @@ Room tables:
 
 - `book`: id, file name key, title, author, language, document URI.
 - `mark`: id, key (unique), book id, chapter, position, text, style, color, marked at, card id (nullable: no card yet).
-- `card`: id, uuid, book id, source language, target language, word, lemma, grammar, excerpt, translation, meaning, sentence, source note, flags (widened, invented), elsewhere deck (nullable, the "Already in Anki" label), status, anki note id, anki modification time, sent at, error.
+- `card`: id, uuid, book id, source language, target language, word, transcription, lemma, grammar, excerpt, translation, meaning, sentence, source note, flags (widened, invented), elsewhere deck (nullable, the "Already in Anki" label), status, anki note id, anki modification time, sent at, error.
 
 Card status:
 

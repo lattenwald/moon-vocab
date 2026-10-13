@@ -5,6 +5,7 @@ data class Translation(
     val sourceLanguage: String?,
     val focus: String,
     val headword: String,
+    val transcription: String,
     val lemma: String,
     val widened: Boolean,
     val grammar: String,
@@ -23,6 +24,19 @@ data class TranslationItem(
     val sourceLanguage: String?,
 )
 
+enum class EnglishAccent { AMERICAN, BRITISH }
+
+// Models sometimes wrap IPA in /slashes/ or [brackets] and mark stress with an apostrophe.
+fun cleanTranscription(raw: String): String =
+    raw.trim().removeSurrounding("/").removeSurrounding("[", "]").trim().replace('\'', 'ˈ').replace(WHITESPACE, " ")
+
+private val WHITESPACE = Regex("\\s+")
+
 fun interface Translator {
-    suspend fun translate(items: List<TranslationItem>, targetLanguage: String, maxExcerptWords: Int): Map<String, Translation>
+    suspend fun translate(
+        items: List<TranslationItem>,
+        targetLanguage: String,
+        maxExcerptWords: Int,
+        accent: EnglishAccent,
+    ): Map<String, Translation>
 }

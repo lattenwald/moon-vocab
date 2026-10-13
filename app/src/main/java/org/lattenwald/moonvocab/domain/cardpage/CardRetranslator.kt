@@ -8,7 +8,14 @@ import org.lattenwald.moonvocab.domain.card.TranslationItem
 import org.lattenwald.moonvocab.domain.card.Translator
 import org.lattenwald.moonvocab.domain.card.markedText
 
-data class Retranslation(val word: String, val grammar: String, val translation: String, val meaning: String, val extras: CardExtras)
+data class Retranslation(
+    val word: String,
+    val transcription: String,
+    val grammar: String,
+    val translation: String,
+    val meaning: String,
+    val extras: CardExtras,
+)
 
 sealed interface RetranslateResult {
     data class Ok(val retranslation: Retranslation) : RetranslateResult
@@ -32,13 +39,14 @@ class CardRetranslator(
             bookTitle = db.books().byId(card.bookId)?.title.orEmpty(),
             sourceLanguage = card.sourceLanguage,
         )
+        val s = settings.current()
         val t = try {
-            translator.translate(listOf(item), card.targetLanguage, settings.current().maxExcerptWords)[item.id]
+            translator.translate(listOf(item), card.targetLanguage, s.maxExcerptWords, s.englishAccent)[item.id]
         } catch (e: LlmException.Stop) {
             return RetranslateResult.Stopped(e.kind)
         } catch (e: LlmException.Failed) {
             return RetranslateResult.Failed(e.message ?: e::class.java.simpleName)
         } ?: return RetranslateResult.Failed("no translation returned")
-        return RetranslateResult.Ok(Retranslation(t.headword, t.grammar, t.translation, t.meaning, CardExtras(t.lemma, t.widened)))
+        return RetranslateResult.Ok(Retranslation(t.headword, t.transcription, t.grammar, t.translation, t.meaning, CardExtras(t.lemma, t.widened)))
     }
 }

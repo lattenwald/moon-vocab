@@ -56,7 +56,7 @@ abstract class ImportTestBase {
     }
 
     protected fun TestScope.pipeline(
-        translate: Translator = Translator { items, _, _ -> items.associate { it.id to tr(it) } },
+        translate: Translator = Translator { items, _, _, _ -> items.associate { it.id to tr(it) } },
         books: () -> BookSource = { fakeBooks },
         draft: (SentenceResult, Translation, Int) -> DraftResult = ::buildDraft,
         judge: SenseJudge = SenseJudge { emptyMap() },
@@ -87,7 +87,8 @@ abstract class ImportTestBase {
         fun bookText(n: Int) = BookText(TITLE, "Greg Egan", "eng", listOf((0 until n).joinToString("") { SENTENCE.replace("WORD", word(it)) }))
 
         fun tr(item: TranslationItem) = Translation(
-            id = item.id, sourceLanguage = "de", focus = item.marked, headword = item.marked, lemma = item.marked, widened = false,
+            id = item.id, sourceLanguage = "de", focus = item.marked, headword = item.marked, transcription = "", lemma = item.marked,
+            widened = false,
             grammar = "n.", translation = "t-${item.marked}", meaning = "", excerpt = null,
             inventedExample = "Ein [${item.marked}] hier.", sourceNote = null,
         )

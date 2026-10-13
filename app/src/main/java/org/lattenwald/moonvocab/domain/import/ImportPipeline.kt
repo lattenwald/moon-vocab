@@ -106,7 +106,7 @@ class ImportPipeline(
             val ready = prepared.filter { it.error == null }
             var failure: String? = null
             val translations = try {
-                if (ready.isEmpty()) emptyMap() else translator.translate(ready.map { it.item }, s.targetLanguage, s.maxExcerptWords)
+                if (ready.isEmpty()) emptyMap() else translator.translate(ready.map { it.item }, s.targetLanguage, s.maxExcerptWords, s.englishAccent)
             } catch (e: LlmException.Stop) {
                 stopped = e.kind
                 break
@@ -267,7 +267,7 @@ class ImportPipeline(
 
     private fun pendingCard(d: CardDraft, book: BookEntity, s: SettingsSnapshot) = CardEntity(
         uuid = UUID.randomUUID().toString(), bookId = book.id, sourceLanguage = isoLanguage(d.sourceLanguage) ?: book.language,
-        targetLanguage = s.targetLanguage, word = d.word, lemma = d.lemma, grammar = d.grammar, excerptHtml = d.excerptHtml,
+        targetLanguage = s.targetLanguage, word = d.word, transcription = d.transcription, lemma = d.lemma, grammar = d.grammar, excerptHtml = d.excerptHtml,
         translation = d.translation, meaning = d.meaning, sentenceHtml = d.sentenceHtml, sourceNote = d.sourceNote, widened = d.widened,
         invented = d.invented, elsewhereDeck = null, status = next(null, CardEvent.TRANSLATED), previousStatus = null,
         ankiNoteId = null, ankiMod = null, sentAt = null, error = null,

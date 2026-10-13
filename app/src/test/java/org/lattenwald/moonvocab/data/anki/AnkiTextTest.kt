@@ -12,6 +12,7 @@ class AnkiTextTest {
         sourceLanguage = "en",
         targetLanguage = "ru",
         word = "R&D <lab>",
+        transcription = "ˌɑːr ən ˈdiː <læb>",
         lemma = "lab",
         grammar = "n. > pl.",
         excerptHtml = "the <span class=\"mark\">R&amp;D</span> lab",
@@ -33,6 +34,7 @@ class AnkiTextTest {
     @Test fun escapesPlainFieldsAndPassesHtmlThrough() = assertEquals(
         mapOf(
             "Word" to "R&amp;D &lt;lab&gt;",
+            "Transcription" to "ˌɑːr ən ˈdiː &lt;læb&gt;",
             "Grammar" to "n. &gt; pl.",
             "Excerpt" to "the <span class=\"mark\">R&amp;D</span> lab",
             "Translation" to "НИОКР &amp; &lt;лаборатория&gt;",
@@ -50,6 +52,7 @@ class AnkiTextTest {
     @Test fun storedFieldsArePlainExceptExcerptAndSentence() = assertEquals(
         mapOf(
             "Word" to card.word,
+            "Transcription" to card.transcription,
             "Grammar" to card.grammar,
             "Excerpt" to card.excerptHtml,
             "Translation" to card.translation,
@@ -63,8 +66,8 @@ class AnkiTextTest {
     @Test fun plainFieldsSurviveTheRoundTrip() {
         val fields = card.ankiFields("Q&A, <Anon>")
         assertEquals(
-            listOf(card.word, card.grammar, card.translation, card.meaning, "Q&A, <Anon>", card.sourceNote),
-            listOf("Word", "Grammar", "Translation", "Meaning", "Book", "Source").map { ankiToPlain(fields.getValue(it)) },
+            listOf(card.word, card.transcription, card.grammar, card.translation, card.meaning, "Q&A, <Anon>", card.sourceNote),
+            listOf("Word", "Transcription", "Grammar", "Translation", "Meaning", "Book", "Source").map { ankiToPlain(fields.getValue(it)) },
         )
     }
 

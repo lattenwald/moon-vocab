@@ -2,6 +2,7 @@ package org.lattenwald.moonvocab.data.llm
 
 import okhttp3.OkHttpClient
 import org.lattenwald.moonvocab.data.settings.LlmService
+import org.lattenwald.moonvocab.domain.card.EnglishAccent
 import org.lattenwald.moonvocab.domain.card.TranslationItem
 
 sealed interface TestResult {
@@ -16,7 +17,7 @@ class ConnectionTest(private val http: OkHttpClient, private val clock: () -> Lo
         val translator = TranslationService(LlmClient(http, { config }, sleep = {}))
         val start = clock()
         val translation = try {
-            translator.translate(listOf(SAMPLE), targetLanguage, MAX_EXCERPT_WORDS)[SAMPLE.id]
+            translator.translate(listOf(SAMPLE), targetLanguage, MAX_EXCERPT_WORDS, EnglishAccent.AMERICAN)[SAMPLE.id]
         } catch (e: LlmException.Stop) {
             return TestResult.Failed(e.kind, e.message.orEmpty())
         } catch (e: LlmException.Failed) {

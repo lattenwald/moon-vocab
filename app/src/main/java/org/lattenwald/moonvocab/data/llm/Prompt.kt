@@ -9,10 +9,16 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import org.lattenwald.moonvocab.domain.card.EnglishAccent
 
 object Prompt {
-    fun system(target: String, maxExcerptWords: Int): String =
-        SYSTEM.replace("{target}", target).replace("{max}", maxExcerptWords.toString())
+    fun system(target: String, maxExcerptWords: Int, accent: EnglishAccent): String =
+        SYSTEM.replace("{target}", target).replace("{max}", maxExcerptWords.toString()).replace("{accent}", accentName(accent))
+
+    private fun accentName(accent: EnglishAccent): String = when (accent) {
+        EnglishAccent.AMERICAN -> "General American"
+        EnglishAccent.BRITISH -> "British (Received Pronunciation)"
+    }
 
     val schema: JsonObject = buildJsonObject {
         put("type", "object")
@@ -34,6 +40,7 @@ object Prompt {
             "sourceLanguage" to string,
             "focus" to string,
             "headword" to string,
+            "transcription" to string,
             "lemma" to string,
             "widened" to JsonPrimitive("boolean"),
             "grammar" to string,
@@ -60,6 +67,7 @@ For each item:
 - focus: the word or phrase worth learning, copied exactly as it appears in the sentence (same letters, same case). Usually this is the marked text. If the marked text is a long phrase or a whole sentence, pick the one word or short phrase in it that a learner most likely looked up.
 - If the focus is part of a fixed phrase or idiom whose meaning differs from its words, widen the focus to that phrase as it appears in the sentence and set widened to true. Otherwise widened is false.
 - headword: the dictionary form of the focus, with the article for languages that put one before nouns (German "die Schnalle"). For a phrase, its dictionary form ("get the upper hand").
+- transcription: the pronunciation of the headword in IPA, in sourceLanguage, as that language's dictionaries print it: no slashes or brackets, stress marked with ˈ and ˌ. For English, the {accent} pronunciation. A word used as part of sourceLanguage is pronounced as in sourceLanguage, even if it was borrowed. For a phrase, the whole phrase.
 - lemma: the headword without article or particle.
 - grammar: a short grammar note in the style of the source language's dictionaries, with abbreviations such as "n.", "v.", "adj.", "phr.", "f., -n".
 - translation: translation into {target}: a few comma-separated options, the one that fits this sentence first.

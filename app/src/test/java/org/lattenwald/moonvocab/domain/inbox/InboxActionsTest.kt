@@ -22,7 +22,7 @@ import org.lattenwald.moonvocab.domain.import.ImportTestBase
 class InboxActionsTest : ImportTestBase() {
     private val actions by lazy { InboxActions(db, ankiLock) }
     private val firstCandidate = SenseJudge { questions -> questions.associate { it.id to it.candidates.first().ref } }
-    private val failsWord1 = Translator { items, _, _ -> items.filter { it.marked != word(1) }.associate { it.id to tr(it) } }
+    private val failsWord1 = Translator { items, _, _, _ -> items.filter { it.marked != word(1) }.associate { it.id to tr(it) } }
 
     private fun again(i: Int): NoteRow = rows(1, from = i).single().copy(time = T0 + 1_000 + i)
 

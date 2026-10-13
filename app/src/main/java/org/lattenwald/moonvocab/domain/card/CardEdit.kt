@@ -5,7 +5,7 @@ import org.lattenwald.moonvocab.data.anki.ankiToPlain
 import org.lattenwald.moonvocab.data.db.CardEntity
 
 enum class CardField(val ankiName: String) {
-    WORD("Word"), GRAMMAR("Grammar"), EXCERPT("Excerpt"), TRANSLATION("Translation"), MEANING("Meaning"), SENTENCE("Sentence")
+    WORD("Word"), TRANSCRIPTION("Transcription"), GRAMMAR("Grammar"), EXCERPT("Excerpt"), TRANSLATION("Translation"), MEANING("Meaning"), SENTENCE("Sentence")
 }
 
 private val CardField.isHtml: Boolean get() = ankiName in NoteTypeSpec.HTML_FIELDS
@@ -13,6 +13,7 @@ private val CardField.isHtml: Boolean get() = ankiName in NoteTypeSpec.HTML_FIEL
 // Stored form: excerpt and sentence are HTML with a mark span; the others are plain text.
 data class CardFields(
     val word: String,
+    val transcription: String,
     val grammar: String,
     val excerptHtml: String,
     val translation: String,
@@ -21,6 +22,7 @@ data class CardFields(
 ) {
     operator fun get(f: CardField): String = when (f) {
         CardField.WORD -> word
+        CardField.TRANSCRIPTION -> transcription
         CardField.GRAMMAR -> grammar
         CardField.EXCERPT -> excerptHtml
         CardField.TRANSLATION -> translation
@@ -31,6 +33,7 @@ data class CardFields(
 
 private fun CardFields.with(f: CardField, value: String): CardFields = when (f) {
     CardField.WORD -> copy(word = value)
+    CardField.TRANSCRIPTION -> copy(transcription = value)
     CardField.GRAMMAR -> copy(grammar = value)
     CardField.EXCERPT -> copy(excerptHtml = value)
     CardField.TRANSLATION -> copy(translation = value)
@@ -40,10 +43,11 @@ private fun CardFields.with(f: CardField, value: String): CardFields = when (f) 
 
 data class CardExtras(val lemma: String, val widened: Boolean)
 
-fun CardEntity.cardFields(): CardFields = CardFields(word, grammar, excerptHtml, translation, meaning, sentenceHtml)
+fun CardEntity.cardFields(): CardFields = CardFields(word, transcription, grammar, excerptHtml, translation, meaning, sentenceHtml)
 
 fun CardEntity.withFields(f: CardFields, extras: CardExtras? = null): CardEntity = copy(
     word = f.word,
+    transcription = f.transcription,
     grammar = f.grammar,
     excerptHtml = f.excerptHtml,
     translation = f.translation,
@@ -86,6 +90,7 @@ fun parseForm(form: CardFields, original: CardFields): FormResult {
 private fun parseField(f: CardField, value: String): String? = when (f) {
     CardField.EXCERPT -> markFromBrackets(value.trim())
     CardField.SENTENCE -> if (value.isBlank()) "" else markFromBrackets(value.trim())
+    CardField.TRANSCRIPTION -> cleanTranscription(value)
     else -> value.trim()
 }
 

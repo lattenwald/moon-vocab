@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.lattenwald.moonvocab.domain.card.EnglishAccent
 import org.lattenwald.moonvocab.domain.mark.StyleCombo
 import org.lattenwald.moonvocab.domain.mark.parseStyleCombo
 
@@ -37,6 +38,7 @@ data class SettingsSnapshot(
     val activeServiceId: String,
     val targetLanguage: String,
     val maxExcerptWords: Int,
+    val englishAccent: EnglishAccent,
     val deckPattern: String,
     val tagPattern: String,
     val reviewFirst: Boolean,
@@ -66,6 +68,7 @@ internal object SettingsKeys {
     val activeServiceId = stringPreferencesKey("activeServiceId")
     val targetLanguage = stringPreferencesKey("targetLanguage")
     val maxExcerptWords = intPreferencesKey("maxExcerptWords")
+    val englishAccent = stringPreferencesKey("englishAccent")
     val deckPattern = stringPreferencesKey("deckPattern")
     val tagPattern = stringPreferencesKey("tagPattern")
     val reviewFirst = booleanPreferencesKey("reviewFirst")
@@ -105,6 +108,7 @@ private fun Preferences.toSnapshot() = SettingsSnapshot(
     activeServiceId = this[SettingsKeys.activeServiceId] ?: DEFAULT_SERVICE.id,
     targetLanguage = this[SettingsKeys.targetLanguage] ?: "ru",
     maxExcerptWords = this[SettingsKeys.maxExcerptWords] ?: 15,
+    englishAccent = EnglishAccent.entries.firstOrNull { it.name == this[SettingsKeys.englishAccent] } ?: EnglishAccent.AMERICAN,
     deckPattern = this[SettingsKeys.deckPattern] ?: DEFAULT_DECK_PATTERN,
     tagPattern = this[SettingsKeys.tagPattern] ?: DEFAULT_TAG_PATTERN,
     reviewFirst = this[SettingsKeys.reviewFirst] ?: true,
@@ -130,6 +134,7 @@ private fun MutablePreferences.write(s: SettingsSnapshot, writeServices: Boolean
     store(SettingsKeys.activeServiceId, s.activeServiceId, DEFAULTS.activeServiceId)
     store(SettingsKeys.targetLanguage, s.targetLanguage, DEFAULTS.targetLanguage)
     store(SettingsKeys.maxExcerptWords, s.maxExcerptWords, DEFAULTS.maxExcerptWords)
+    store(SettingsKeys.englishAccent, s.englishAccent.name, DEFAULTS.englishAccent.name)
     store(SettingsKeys.deckPattern, s.deckPattern, DEFAULTS.deckPattern)
     store(SettingsKeys.tagPattern, s.tagPattern, DEFAULTS.tagPattern)
     store(SettingsKeys.reviewFirst, s.reviewFirst, DEFAULTS.reviewFirst)

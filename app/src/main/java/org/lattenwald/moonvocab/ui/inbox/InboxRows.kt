@@ -70,7 +70,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -89,6 +88,7 @@ import org.lattenwald.moonvocab.domain.inbox.CardKind
 import org.lattenwald.moonvocab.domain.inbox.InboxFilter
 import org.lattenwald.moonvocab.domain.inbox.RowLabel
 import org.lattenwald.moonvocab.ui.common.MarkedExcerpt
+import org.lattenwald.moonvocab.ui.common.WordNote
 import org.lattenwald.moonvocab.ui.common.languageName
 import org.lattenwald.moonvocab.ui.theme.BookFontFamily
 import org.lattenwald.moonvocab.work.ImportState
@@ -247,18 +247,7 @@ private fun CardText(card: InboxCard) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            if (card.grammar.isNotBlank()) {
-                Text(
-                    card.grammar,
-                    modifier = Modifier.alignByBaseline(),
-                    color = colors.onSurfaceVariant,
-                    fontSize = 14.sp,
-                    fontFamily = BookFontFamily,
-                    fontStyle = FontStyle.Italic,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            WordNote(card.transcription, card.grammar, Modifier.alignByBaseline())
         }
         if (card.failed) {
             Text(stringResource(R.string.inbox_label_failed), Modifier.padding(top = 1.dp), color = colors.error, fontSize = 14.sp, lineHeight = 20.sp)

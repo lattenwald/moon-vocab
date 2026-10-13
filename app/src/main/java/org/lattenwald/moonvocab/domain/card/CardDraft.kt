@@ -8,6 +8,7 @@ import org.lattenwald.moonvocab.domain.text.normalizeForMatch
 
 data class CardDraft(
     val word: String,
+    val transcription: String,
     val lemma: String,
     val grammar: String,
     val excerptHtml: String,
@@ -64,6 +65,7 @@ private fun fromInventedExample(t: Translation): DraftResult {
 
 private fun draft(t: Translation, excerptHtml: String, sentenceHtml: String, sourceNote: String, invented: Boolean) = CardDraft(
     word = t.headword,
+    transcription = t.transcription,
     lemma = t.lemma,
     grammar = t.grammar,
     excerptHtml = excerptHtml,

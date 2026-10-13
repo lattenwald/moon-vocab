@@ -92,7 +92,7 @@ class ImportMergeTest : ImportTestBase() {
         // Repeats: of the discarded word, within batch 1 (w9), and across batches (w1).
         val backup = MrproFixture.build(tmp, rows(10) + again(0) + again(1) + again(9))
         val s = pipeline(
-            translate = { items, _, _ -> items.filter { it.marked != word(5) }.associate { it.id to tr(it) } },
+            translate = { items, _, _, _ -> items.filter { it.marked != word(5) }.associate { it.id to tr(it) } },
             judge = firstCandidate,
         ).run(req(backup), {})
         assertEquals(1, s.skippedDiscarded)
@@ -115,7 +115,7 @@ class ImportMergeTest : ImportTestBase() {
 
     @Test fun elsewhereSearchesLemmaAndDifferentFocus() = runTest {
         pipeline(
-            translate = { items, _, _ -> items.associate { it.id to tr(it).copy(lemma = "Schnalle", focus = "Schnallen") } },
+            translate = { items, _, _, _ -> items.associate { it.id to tr(it).copy(lemma = "Schnalle", focus = "Schnallen") } },
             books = { FakeBooks(emptyMap()) },
         ).run(req(backup(1)), {})
         assertEquals(listOf(listOf("Schnalle", "Schnallen")), fakeAnki.searches)

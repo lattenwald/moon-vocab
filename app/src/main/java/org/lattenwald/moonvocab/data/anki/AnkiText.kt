@@ -11,6 +11,7 @@ import org.lattenwald.moonvocab.domain.card.escapeHtml
 // AnkiDroid fields are HTML.
 fun CardEntity.ankiFields(bookLine: String): Map<String, String> = mapOf(
     "Word" to escapeHtml(word),
+    "Transcription" to escapeHtml(transcription),
     "Grammar" to escapeHtml(grammar),
     "Excerpt" to excerptHtml,
     "Translation" to escapeHtml(translation),
@@ -23,6 +24,7 @@ fun CardEntity.ankiFields(bookLine: String): Map<String, String> = mapOf(
 
 fun CardEntity.storedFields(): Map<String, String> = mapOf(
     "Word" to word,
+    "Transcription" to transcription,
     "Grammar" to grammar,
     "Excerpt" to excerptHtml,
     "Translation" to translation,
