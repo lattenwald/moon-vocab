@@ -73,6 +73,7 @@ import org.lattenwald.moonvocab.domain.cardpage.undoable
 import org.lattenwald.moonvocab.domain.card.FormResult
 import org.lattenwald.moonvocab.domain.import.bookLine
 import org.lattenwald.moonvocab.ui.common.ankiFix
+import org.lattenwald.moonvocab.ui.common.isDown
 import org.lattenwald.moonvocab.ui.common.problemText
 import org.lattenwald.moonvocab.ui.inbox.inboxColors
 
@@ -88,7 +89,7 @@ fun CardPage(
 ) {
     val state = vm.state
     val anki by vm.anki.collectAsStateWithLifecycle()
-    val ankiDown = anki.let { it != null && it != AnkiAvailability.READY }
+    val ankiDown = anki.isDown
     val card = state.card
     val resources = LocalResources.current
     val leave by rememberUpdatedState(onBack)
@@ -295,7 +296,7 @@ private fun Notes(card: CardEntity, source: CardSource, anki: AnkiAvailability?,
     val (text, color) = when (card.status) {
         CardStatus.SENT -> when {
             source is CardSource.ReadFailed -> stringResource(R.string.card_read_failed_note, source.message)
-            source is CardSource.Unavailable || anki.let { it != null && it != AnkiAvailability.READY } -> stringResource(R.string.card_local_note)
+            source is CardSource.Unavailable || anki.isDown -> stringResource(R.string.card_local_note)
             else -> stringResource(R.string.card_sent_note)
         } to colors.onSurfaceVariant
         CardStatus.DELETED_IN_ANKI -> stringResource(R.string.card_deleted_note) to colors.onSurfaceVariant

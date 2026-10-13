@@ -142,7 +142,7 @@ class CardEditSessionTest {
 
         val unavailable = opened(sent).edit(CardField.TRANSLATION, "home").then(CardIntent.Save).state
             .then(CardIntent.SaveDone(SaveResult.Unavailable(AnkiAvailability.NOT_SET_UP))).state
-        assertEquals(CardSource.Unavailable(AnkiAvailability.NOT_SET_UP), unavailable.source)
+        assertEquals(CardSource.Unavailable, unavailable.source)
         assertEquals(listOf(CardEffect.Open(null)), unavailable.then(CardIntent.Resumed).effects)
     }
 }

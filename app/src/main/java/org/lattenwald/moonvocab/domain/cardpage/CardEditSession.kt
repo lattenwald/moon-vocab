@@ -21,7 +21,7 @@ import org.lattenwald.moonvocab.domain.import.UndoResult
 
 sealed interface CardSource {
     data object Fresh : CardSource
-    data class Unavailable(val availability: AnkiAvailability) : CardSource
+    data object Unavailable : CardSource
     data class ReadFailed(val message: String) : CardSource
     data object Deleted : CardSource
 }
@@ -259,7 +259,7 @@ private fun opened(s: CardEditState, result: OpenResult, after: AfterLocalSave?)
     val (card, source) = when (result) {
         is OpenResult.Fresh -> result.card to CardSource.Fresh
         is OpenResult.Local -> result.card to when {
-            result.unavailable != null -> CardSource.Unavailable(result.unavailable)
+            result.unavailable != null -> CardSource.Unavailable
             result.error != null -> CardSource.ReadFailed(result.error)
             else -> CardSource.Fresh
         }
@@ -296,7 +296,7 @@ private fun saveDone(s: CardEditState, r: SaveResult): CardStep = when (r) {
         finish(s.copy(card = r.card, baseline = fresh).withForm(mergeAfterConflict(s.form, s.baseline, fresh, r.fields)), CardMessage.Conflict(r.fields))
     }
     is SaveResult.Deleted -> finish(s.showing(r.card, CardSource.Deleted).copy(editing = false), CardMessage.NoteGone)
-    is SaveResult.Unavailable -> finish(s.copy(source = CardSource.Unavailable(r.availability)), CardMessage.Unavailable(r.availability))
+    is SaveResult.Unavailable -> finish(s.copy(source = CardSource.Unavailable),CardMessage.Unavailable(r.availability))
     is SaveResult.Failed ->
         finish(s, if (r.missingFields.isNotEmpty()) CardMessage.MissingFields(r.missingFields) else CardMessage.Failed(r.message))
 }

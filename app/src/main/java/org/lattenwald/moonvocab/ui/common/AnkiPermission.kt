@@ -50,7 +50,6 @@ fun rememberAnkiPermissionRequest(onResult: () -> Unit = {}): () -> Unit {
                 Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", activity.packageName, null)),
             )
         }
-        scope.launch { container.anki.refresh() }
         onResult()
     }
     return remember(launcher, scope, container, activity) {
@@ -92,17 +91,21 @@ fun AnkiAvailability.problemText(): Int? = when (this) {
     AnkiAvailability.READY -> null
 }
 
+val AnkiAvailability?.isDown: Boolean get() = this != null && this != AnkiAvailability.READY
+
 class AnkiFix(@StringRes val label: Int, val onClick: () -> Unit)
 
 @Composable
 fun ankiFix(availability: AnkiAvailability?): AnkiFix? {
     val context = LocalContext.current
     val requestAnki = rememberAnkiPermissionRequest()
-    return when (availability) {
-        AnkiAvailability.NOT_INSTALLED -> AnkiFix(R.string.inbox_banner_get) { openAnkiDroidStore(context) }
-        AnkiAvailability.NO_PERMISSION -> AnkiFix(R.string.inbox_banner_allow, requestAnki)
-        AnkiAvailability.NOT_SET_UP -> AnkiFix(R.string.anki_open) { openAnkiDroid(context) }
-        AnkiAvailability.READY, null -> null
+    return remember(availability, context, requestAnki) {
+        when (availability) {
+            AnkiAvailability.NOT_INSTALLED -> AnkiFix(R.string.inbox_banner_get) { openAnkiDroidStore(context) }
+            AnkiAvailability.NO_PERMISSION -> AnkiFix(R.string.inbox_banner_allow, requestAnki)
+            AnkiAvailability.NOT_SET_UP -> AnkiFix(R.string.anki_open) { openAnkiDroid(context) }
+            AnkiAvailability.READY, null -> null
+        }
     }
 }
 

@@ -65,7 +65,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.collectLatest
 import org.lattenwald.moonvocab.R
-import org.lattenwald.moonvocab.data.anki.AnkiAvailability
+import org.lattenwald.moonvocab.ui.common.isDown
 import org.lattenwald.moonvocab.ui.common.problemText
 
 private const val DISABLED_ALPHA = 0.45f
@@ -195,7 +195,7 @@ fun InboxScreen(
             InboxLongPress {
                 LazyColumn(Modifier.fillMaxSize().selectGestures(gestures), state = listState, contentPadding = padding) {
                     val anki = state.anki
-                    if (anki != null && anki != AnkiAvailability.READY) {
+                    if (anki != null && anki.isDown) {
                         item(key = "banner") {
                             AnkiBanner(
                                 anki,

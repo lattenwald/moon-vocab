@@ -195,7 +195,7 @@
 - Send and discard offer Undo in a snackbar. Undoing a send deletes the notes it created.
 - A new Inbox snackbar replaces the one showing.
 - A send that stops after sending some cards shows one snackbar: the count sent, the cards without a translation that stayed, `inbox_send_stopped` with the reason, and Undo.
-- Every AnkiDroid availability check, whoever makes it, updates one app-wide `AnkiStatus`; the Inbox banner, the card page, Settings and setup show that status. The app checks on every resume and after the permission dialog.
+- Every AnkiDroid availability check, whoever makes it, updates one app-wide `AnkiStatus`; the Inbox banner, the card page, Settings and setup show that status. The app checks on every resume, which also follows the permission dialog.
 - The Inbox and the card page each map their own action results to messages.
 - Cards labelled "Already in Anki" can be sent from the Inbox.
 - While an import runs, the Import button shows its progress and opens nothing.
