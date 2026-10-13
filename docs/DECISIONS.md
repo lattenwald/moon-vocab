@@ -33,6 +33,7 @@
 - A book whose file can't be found, copied or parsed has no text. Its marks get model-written examples.
 - `FolderBookSource` keeps no texts. An `OutOfMemoryError` while reading one book gives that book no text.
 - A books folder whose root can't be listed fails the import. Subfolders that can't be listed are skipped.
+- A Moon+ book path matches the folder file sharing the most trailing path components; ties go to the shorter path, then the alphabetically first.
 
 ## Sentences, excerpts, cards
 - The mark is searched case-insensitively, without changing string length.

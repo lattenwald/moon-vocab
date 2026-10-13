@@ -29,4 +29,10 @@ class BookLocatorTest {
     @Test fun missingFileIsNull() = assertNull(loc.locate("/sdcard/Books/X/Nope.epub"))
 
     @Test fun tieGoesToShorterRelativePath() = assertEquals("Other/Diaspora.epub", loc.locate("/sdcard/Books/X/Diaspora.epub"))
+
+    @Test fun anEqualLengthTieDoesNotDependOnListingOrder() {
+        val paths = listOf("Bb/Diaspora.epub", "Aa/Diaspora.epub")
+        assertEquals("Aa/Diaspora.epub", BookLocator(paths).locate("/sdcard/Books/X/Diaspora.epub"))
+        assertEquals("Aa/Diaspora.epub", BookLocator(paths.reversed()).locate("/sdcard/Books/X/Diaspora.epub"))
+    }
 }

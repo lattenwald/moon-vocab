@@ -7,19 +7,14 @@ class BookLocator(relativePaths: List<String>) {
 
     fun locate(bookPath: String): String? {
         val wanted = components(bookPath)
-        var best: String? = null
-        var bestLength = 0
-        for ((path, parts) in candidates) {
-            val length = matchingSuffixLength(wanted, parts)
-            if (length == 0) continue
-            if (length > bestLength || (length == bestLength && path.length < best!!.length)) {
-                best = path
-                bestLength = length
-            }
-        }
-        return best
+        return candidates.map { (path, parts) -> path to matchingSuffixLength(wanted, parts) }
+            .filter { (_, length) -> length > 0 }
+            .minWithOrNull(BEST)
+            ?.first
     }
 }
+
+private val BEST = compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first.length }.thenBy { it.first }
 
 private fun components(path: String): List<String> =
     path.split('/').filter { it.isNotEmpty() }.map { normalizeForMatch(it).lowercase() }

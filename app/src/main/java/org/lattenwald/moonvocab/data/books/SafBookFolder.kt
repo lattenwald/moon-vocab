@@ -11,6 +11,8 @@ import java.io.IOException
 
 interface BookFolder {
     fun listRelativePaths(): List<String>
+
+    /** Copies only a path the latest [listRelativePaths] returned. */
     fun copyToCache(relativePath: String, cacheDir: File): File
 }
 
