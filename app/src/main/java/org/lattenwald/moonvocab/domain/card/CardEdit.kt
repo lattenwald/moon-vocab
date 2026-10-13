@@ -119,10 +119,11 @@ fun planSave(baseline: CardFields, edited: CardFields, note: Map<String, String>
     val fresh = baseline.readFrom(note)
     val changed = CardField.entries.filter { edited[it] != baseline[it] }
     val inNote = edited.readFrom(edited.toNote(changed))
-    val conflicting = changed.filterTo(mutableSetOf()) { fresh[it] != baseline[it] && fresh[it] != inNote[it] }
+    val unwritten = changed.filter { fresh[it] != inNote[it] }
+    val conflicting = unwritten.filterTo(mutableSetOf()) { fresh[it] != baseline[it] }
     if (conflicting.isNotEmpty()) return SavePlan.Conflict(conflicting, fresh)
     return SavePlan.Write(
-        anki = edited.toNote(changed.filter { fresh[it] != inNote[it] }),
-        result = changed.fold(fresh) { acc, f -> acc.with(f, edited[f]) },
+        anki = edited.toNote(unwritten),
+        result = changed.fold(fresh) { acc, f -> acc.with(f, inNote[f]) },
     )
 }

@@ -45,7 +45,7 @@ class NoteSync(
         if (availability != AnkiAvailability.READY) return@locked CheckResult.Unavailable(availability)
         val sent = db.cards().byStatus(CardStatus.SENT).filter { it.ankiNoteId != null }
         if (sent.isEmpty()) return@locked CheckResult.Changed(0)
-        val notes = anki.read(sent.map { checkNotNull(it.ankiNoteId) })
+        val notes = anki.read(sent.mapNotNull { it.ankiNoteId })
         CheckResult.Changed(sent.count { writes.sync(it, notes[it.ankiNoteId]) != it })
     }
 
@@ -53,13 +53,13 @@ class NoteSync(
         store.locked { it.saveLocked(cardId, baseline, edited, extras) }
 
     private suspend fun CardWrites.sync(card: CardEntity, note: NoteSnapshot?): CardEntity {
-        val synced = when {
-            note == null -> card.noteMissing()
-            else -> card.readFrom(note.fields).let { if (it == card) card else it.copy(ankiMod = note.mod) }
-        }
+        val synced = if (note == null) card.noteMissing() else card.refreshedFrom(note)
         if (synced != card) save(synced)
         return synced
     }
+
+    private fun CardEntity.refreshedFrom(note: NoteSnapshot): CardEntity =
+        readFrom(note.fields).let { if (it == this) this else it.copy(ankiMod = note.mod) }
 
     private suspend fun CardWrites.openLocked(cardId: Long): OpenResult {
         // Re-read: the card may have changed while waiting for the lock.
@@ -99,7 +99,7 @@ class NoteSync(
             }
             when (val plan = planSave(baseline, edited, note.fields)) {
                 is SavePlan.Conflict -> {
-                    val fresh = card.readFrom(note.fields).copy(ankiMod = note.mod)
+                    val fresh = card.refreshedFrom(note)
                     save(fresh)
                     SaveResult.Conflict(fresh, plan.fields)
                 }

@@ -64,7 +64,7 @@ class CardEditTest {
     @Test fun aRetryAfterTheNoteWasWrittenSavesWithoutAConflict() {
         val edited = stored.copy(translation = "т. е. одолеть & co")
         val written = noteFields(edited, source = "", bookLine = "Moby-Dick", appId = "u1")
-        assertEquals(SavePlan.Write(emptyMap(), edited), planSave(stored, edited, written))
+        assertEquals(SavePlan.Write(emptyMap(), edited.copy(translation = "т. е. одолеть & co")), planSave(stored, edited, written))
     }
     @Test fun planWithNoChangesWritesNothing() =
         assertEquals(SavePlan.Write(emptyMap(), stored), planSave(stored, stored, note(stored)))

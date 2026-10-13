@@ -37,9 +37,10 @@ fun noteFields(fields: CardFields, source: String, bookLine: String, appId: Stri
 
 fun CardEntity.toNote(bookLine: String): Map<String, String> = noteFields(cardFields(), sourceNote, bookLine, uuid)
 
-fun CardFields.readFrom(note: Map<String, String>): CardFields = CardField.entries.fold(this) { acc, f ->
-    note[f.noteField.noteName]?.let { acc.with(f, f.noteField.decode(it)) } ?: acc
-}
+private fun Map<String, String>.decoded(f: NoteField): String? = this[f.noteName]?.let(f::decode)
+
+fun CardFields.readFrom(note: Map<String, String>): CardFields =
+    CardField.entries.fold(this) { acc, f -> note.decoded(f.noteField)?.let { acc.with(f, it) } ?: acc }
 
 fun CardEntity.readFrom(note: Map<String, String>): CardEntity =
-    withFields(cardFields().readFrom(note)).copy(sourceNote = note[NoteField.SOURCE.noteName]?.let(NoteField.SOURCE::decode) ?: sourceNote)
+    withFields(cardFields().readFrom(note)).copy(sourceNote = note.decoded(NoteField.SOURCE) ?: sourceNote)
