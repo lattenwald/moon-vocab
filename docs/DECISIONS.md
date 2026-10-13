@@ -22,7 +22,7 @@
   - `section`, `article`, `aside`, `header`, `footer`;
   - `figcaption`, `caption`, `td`, `th`, `hr`;
   - `ul`, `ol`, `dl`, `table`, `address`.
-- OPF selectors ignore namespace prefixes.
+- OPF and chapter XHTML selectors ignore namespace prefixes.
 - An FB2 is parsed from its bytes, so the declared encoding applies.
 - FB2 chapters come from the first `<body>`, plus every later `<body>` without a `name`.
 - Every FB2 `<section>` is a chapter, nested ones included, in document order. Its text is its own `p`, `v` and `subtitle` lines, titles included, not those of its subsections.

@@ -58,6 +58,19 @@ class BookTextTest {
         assertTrue("a\n  b" in b.chapters.single())
     }
 
+    @Test fun epubPrefixedXhtmlKeepsParagraphsAndPre() {
+        val b = oneChapterEpub(
+            """<?xml version="1.0" encoding="UTF-8"?>
+<html:html xmlns:html="http://www.w3.org/1999/xhtml"><html:head><html:title>t</html:title></html:head><html:body>
+<html:p>one two
+three.</html:p><html:p>Next.</html:p><html:pre>a
+  b</html:pre></html:body></html:html>""",
+        )
+        val paragraphs = b.chapters.single().split('\n').map { it.trim() }.filter { it.isNotEmpty() }
+        assertEquals(listOf("one two three.", "Next.", "a", "b"), paragraphs)
+        assertTrue("a\n  b" in b.chapters.single())
+    }
+
     @Test fun epubOpfWithPrefixedElements() {
         val b = oneChapterEpub(BookFixtures.xhtml("<p>Text.</p>"), opfNs = "opf:")
         assertTrue("Text." in b.chapters.single()); assertEquals("T", b.title); assertEquals("en", b.language)

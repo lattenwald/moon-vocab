@@ -39,15 +39,17 @@ internal object EpubText {
 
     private const val TAG = "EpubText"
 
-    private const val BLOCKS = "p, div, h1, h2, h3, h4, h5, h6, li, blockquote, pre, tr, dt, dd, br, " +
-        "section, article, aside, header, footer, figcaption, caption, td, th, hr, ul, ol, dl, table, address"
+    private val BLOCKS = listOf(
+        "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "blockquote", "pre", "tr", "dt", "dd", "br",
+        "section", "article", "aside", "header", "footer", "figcaption", "caption", "td", "th", "hr", "ul", "ol", "dl", "table", "address",
+    ).joinToString { "*|$it" }
     private val WHITESPACE = Regex("\\s+")
 
     // Source XHTML hard-wraps lines, and SentenceFinder reads a newline as a paragraph break.
     // Converted books often write <p>a</p><p>b</p> with no whitespace between, which wholeText() would glue together.
     private fun text(body: Element): String {
         for (element in body.select("*")) {
-            if (element.closest("pre") != null) continue
+            if (element.closest("*|pre") != null) continue
             element.textNodes().forEach { it.text(it.wholeText.replace(WHITESPACE, " ")) }
         }
         body.select(BLOCKS).forEach { it.after(TextNode("\n")) }
