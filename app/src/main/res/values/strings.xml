@@ -194,6 +194,8 @@
         <item quantity="other">Discarded (%d)</item>
     </plurals>
     <string name="book_deleted_label">Deleted in AnkiDroid</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
 
     <string name="sheet_title">Import from Moon+</string>
     <string name="sheet_backup_from">Backup from %1$s</string>

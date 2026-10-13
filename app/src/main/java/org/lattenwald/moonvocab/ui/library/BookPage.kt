@@ -46,6 +46,9 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -225,11 +228,13 @@ private fun CardText(card: InboxCard, deletedInAnki: Boolean) {
 @Composable
 private fun DiscardedHeader(count: Int, open: Boolean, onToggle: () -> Unit) {
     val rotation by animateFloatAsState(if (open) 180f else 0f)
+    val state = stringResource(if (open) R.string.state_expanded else R.string.state_collapsed)
     Row(
         Modifier.fillMaxWidth()
             .padding(start = 12.dp, top = 6.dp, end = 12.dp)
             .clip(RoundedCornerShape(24.dp))
-            .clickable(onClick = onToggle)
+            .clickable(role = Role.Button, onClick = onToggle)
+            .semantics { stateDescription = state }
             .heightIn(min = 48.dp)
             .padding(start = 12.dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

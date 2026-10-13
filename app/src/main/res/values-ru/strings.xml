@@ -226,6 +226,8 @@
         <item quantity="other">Убранные (%d)</item>
     </plurals>
     <string name="book_deleted_label">Удалена в AnkiDroid</string>
+    <string name="state_expanded">Развёрнуто</string>
+    <string name="state_collapsed">Свёрнуто</string>
 
     <string name="sheet_title">Импорт из Moon+</string>
     <string name="sheet_backup_from">Бэкап от %1$s</string>
