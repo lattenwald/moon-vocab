@@ -59,8 +59,21 @@ data class RowSpan(val target: Hit, val top: Int, val bottom: Int)
 
 // Rows outside top until bottom are drawn under the bars.
 fun hitAt(y: Int, rows: List<RowSpan>, top: Int, bottom: Int, clamp: Boolean): Hit {
+    if (bottom <= top) return Hit.None
     val at = if (clamp) y.coerceIn(top, bottom - 1) else y.takeIf { it in top until bottom } ?: return Hit.None
     return rows.firstOrNull { at >= it.top && at < it.bottom }?.target ?: Hit.None
+}
+
+sealed interface LongPress {
+    data class Drag(val id: Long) : LongPress
+    data class SelectBook(val bookId: Long) : LongPress
+    data object LetGo : LongPress
+}
+
+fun longPress(hit: Hit, selecting: Boolean): LongPress = when (hit) {
+    is Hit.Card -> LongPress.Drag(hit.id)
+    is Hit.Header -> if (selecting) LongPress.LetGo else LongPress.SelectBook(hit.bookId)
+    Hit.None -> LongPress.LetGo
 }
 
 fun autoScrollStep(y: Float, top: Float, bottom: Float, zone: Float, maxStep: Float): Float = when {

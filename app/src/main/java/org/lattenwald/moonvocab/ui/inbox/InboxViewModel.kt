@@ -74,10 +74,11 @@ class InboxViewModel(
     private val store: CardStore,
     private val sender: CardSender,
     private val io: CoroutineDispatcher,
-) : ViewModel() {
+) : ViewModel(), SelectHandler {
     private val filter = MutableStateFlow<InboxFilter>(InboxFilter.All)
     private val availability = MutableStateFlow<AnkiAvailability?>(null)
     private val selection = MutableStateFlow(Selection())
+    override val selecting: Boolean get() = selection.value.active
     private val missingFields = MutableStateFlow<List<String>>(emptyList())
     private val eventChannel = Channel<InboxEvent>(Channel.BUFFERED)
 
@@ -136,22 +137,22 @@ class InboxViewModel(
         if (!state.value.import.running) ImportWork.enqueue(workManager, ImportWork.retryInput())
     }
 
-    fun startDrag(id: Long) {
+    override fun startDrag(id: Long) {
         val order = visibleIds
         selection.update { it.startDrag(order, id) }
     }
 
     // The drag's order is a snapshot: a card that left the Inbox mid-drag must not come back.
-    fun dragOver(id: Long) {
+    override fun dragOver(id: Long) {
         val visible = visibleIds.toSet()
         selection.update { it.dragOver(id).retain(visible) }
     }
 
-    fun endDrag() = selection.update { it.endDrag() }
+    override fun endDrag() = selection.update { it.endDrag() }
 
     fun toggle(id: Long) = selection.update { it.toggle(id) }
 
-    fun toggleGroup(bookId: Long) {
+    override fun toggleGroup(bookId: Long) {
         val ids = state.value.list.groups.firstOrNull { it.bookId == bookId }?.cards?.map { it.id } ?: return
         selection.update { it.toggleGroup(ids) }
     }

@@ -116,14 +116,7 @@ fun InboxScreen(
     BackHandler(enabled = selecting, onBack = vm::clearSelection)
 
     val listState = rememberLazyListState()
-    val drag = rememberDragSelect(
-        listState,
-        selecting,
-        onStart = vm::startDrag,
-        onOver = vm::dragOver,
-        onEnd = vm::endDrag,
-        onGroup = vm::toggleGroup,
-    )
+    val gestures = rememberSelectGestures(listState, vm)
     val fabExpanded by remember { derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward } }
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
     if (sheetOpen) ImportSheet(sheetVm, onDismiss = { sheetOpen = false })
@@ -210,7 +203,7 @@ fun InboxScreen(
         val themeShapes = MaterialTheme.shapes
         MaterialTheme(shapes = remember(themeShapes) { themeShapes.forInboxList() }) {
             InboxLongPress {
-                LazyColumn(Modifier.fillMaxSize().dragSelect(drag), state = listState, contentPadding = padding) {
+                LazyColumn(Modifier.fillMaxSize().selectGestures(gestures), state = listState, contentPadding = padding) {
                     val anki = state.anki
                     if (anki != null && anki != AnkiAvailability.READY) {
                         item(key = "banner") {

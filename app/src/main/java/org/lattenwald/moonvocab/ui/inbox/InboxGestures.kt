@@ -7,9 +7,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedback
@@ -28,14 +26,16 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.lattenwald.moonvocab.domain.inbox.Hit
+import org.lattenwald.moonvocab.domain.inbox.LongPress
 import org.lattenwald.moonvocab.domain.inbox.RowSpan
 import org.lattenwald.moonvocab.domain.inbox.autoScrollStep
 import org.lattenwald.moonvocab.domain.inbox.hitAt
+import org.lattenwald.moonvocab.domain.inbox.longPress
 
 private const val LONG_PRESS_MILLIS = 360L
 private val AutoScrollZone = 72.dp
 private val AutoScrollMaxStep = 18.dp
-private const val GROUP_KEY = "group:"
+private const val GROUP_KEY_PREFIX = "group:"
 
 private class InboxViewConfiguration(base: ViewConfiguration) : ViewConfiguration by base {
     override val longPressTimeoutMillis: Long get() = LONG_PRESS_MILLIS
@@ -48,24 +48,28 @@ internal fun InboxLongPress(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalViewConfiguration provides config, content = content)
 }
 
-internal fun groupKey(bookId: Long): String = GROUP_KEY + bookId
+internal fun groupKey(bookId: Long): String = GROUP_KEY_PREFIX + bookId
 
 private fun targetOf(key: Any): Hit = when {
     key is Long -> Hit.Card(key)
-    key is String && key.startsWith(GROUP_KEY) -> key.removePrefix(GROUP_KEY).toLongOrNull()?.let(Hit::Header) ?: Hit.None
+    key is String && key.startsWith(GROUP_KEY_PREFIX) -> key.removePrefix(GROUP_KEY_PREFIX).toLongOrNull()?.let(Hit::Header) ?: Hit.None
     else -> Hit.None
 }
 
-internal class DragSelect(
+interface SelectHandler {
+    val selecting: Boolean
+    fun startDrag(id: Long)
+    fun dragOver(id: Long)
+    fun endDrag()
+    fun toggleGroup(bookId: Long)
+}
+
+internal class SelectGestures(
     private val listState: LazyListState,
     private val haptics: HapticFeedback,
     private val zone: Float,
     private val maxStep: Float,
-    private val selecting: () -> Boolean,
-    private val onStart: (Long) -> Unit,
-    private val onOver: (Long) -> Unit,
-    private val onEnd: () -> Unit,
-    private val onGroup: (Long) -> Unit,
+    private val handler: SelectHandler,
 ) {
     private val top get() = listState.layoutInfo.beforeContentPadding
     private val bottom get() = listState.layoutInfo.let { it.viewportSize.height - it.afterContentPadding }
@@ -94,18 +98,18 @@ internal class DragSelect(
         scope.awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false)
             val press = awaitLongPressOrCancellation(down.id) ?: return@awaitEachGesture
-            when (val hit = hit(press.position.y, clamp = false)) {
-                is Hit.Card -> {
+            when (val action = longPress(hit(press.position.y, clamp = false), handler.selecting)) {
+                is LongPress.Drag -> {
                     swallowUp = true
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onStart(hit.id)
-                    var lastId = hit.id
+                    handler.startDrag(action.id)
+                    var lastId = action.id
                     var lastY = press.position.y
                     fun over() {
                         val id = (hit(lastY, clamp = true) as? Hit.Card)?.id ?: return
                         if (id == lastId) return
                         lastId = id
-                        onOver(id)
+                        handler.dragOver(id)
                         haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                     }
                     val scroller = launch {
@@ -121,56 +125,39 @@ internal class DragSelect(
                     try {
                         // In the main pass the list's scroll sees a move first and takes one past touch slop.
                         while (true) {
-                            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == press.id } ?: break
-                            change.consume()
+                            val changes = awaitPointerEvent(PointerEventPass.Initial).changes
+                            changes.forEach { it.consume() }
+                            val change = changes.firstOrNull { it.id == press.id } ?: break
                             if (!change.pressed) break
                             lastY = change.position.y
                             over()
                         }
                     } finally {
                         scroller.cancel()
-                        onEnd()
+                        handler.endDrag()
                     }
                 }
-                is Hit.Header -> if (!selecting()) {
-                    swallowUp = true
+                is LongPress.SelectBook -> {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onGroup(hit.bookId)
+                    handler.toggleGroup(action.bookId)
                 }
-                Hit.None -> Unit
+                LongPress.LetGo -> Unit
             }
         }
     }
 }
 
 @Composable
-internal fun rememberDragSelect(
-    listState: LazyListState,
-    selecting: Boolean,
-    onStart: (Long) -> Unit,
-    onOver: (Long) -> Unit,
-    onEnd: () -> Unit,
-    onGroup: (Long) -> Unit,
-): DragSelect {
+internal fun rememberSelectGestures(listState: LazyListState, handler: SelectHandler): SelectGestures {
     val haptics = LocalHapticFeedback.current
     val density = LocalDensity.current
-    val isSelecting by rememberUpdatedState(selecting)
-    val start by rememberUpdatedState(onStart)
-    val over by rememberUpdatedState(onOver)
-    val end by rememberUpdatedState(onEnd)
-    val group by rememberUpdatedState(onGroup)
-    return remember(listState, haptics, density) {
-        with(density) {
-            DragSelect(
-                listState, haptics, AutoScrollZone.toPx(), AutoScrollMaxStep.toPx(),
-                { isSelecting }, { start(it) }, { over(it) }, { end() }, { group(it) },
-            )
-        }
+    return remember(listState, haptics, density, handler) {
+        with(density) { SelectGestures(listState, haptics, AutoScrollZone.toPx(), AutoScrollMaxStep.toPx(), handler) }
     }
 }
 
-internal fun Modifier.dragSelect(drag: DragSelect): Modifier =
-    pointerInput(drag) { drag.guardTap(this) }.pointerInput(drag) { drag.detect(this) }
+internal fun Modifier.selectGestures(gestures: SelectGestures): Modifier =
+    pointerInput(gestures) { gestures.guardTap(this) }.pointerInput(gestures) { gestures.detect(this) }
 
 internal fun Modifier.selectAction(label: String, onSelect: () -> Unit): Modifier =
     semantics(mergeDescendants = true) {

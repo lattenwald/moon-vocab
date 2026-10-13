@@ -179,11 +179,15 @@
 - Language chips appear only when the Inbox holds two or more languages. A card with no language counts as Other, listed last.
 - The Inbox's one chip row is single-select: All, then Failed, Model example and Already in Anki (each only when it has cards), then the language chips. A filter whose cards are gone falls back to All.
 - A filter whose language left the Inbox falls back to All, and the stored filter becomes All.
-- Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen only asks `hitAt` what a finger is on and calls the reducer.
+- Selection is a pure reducer in `domain/inbox/Selection.kt`. The screen asks `hitAt` what a finger is on and `longPress` what a long-press there does, then calls the reducer.
 - Long-press is 360 ms. Auto-scroll starts 72 dp from either list edge and moves at most 18 dp per frame.
-- Every touch long-press in the Inbox goes through the list's one detector. A long-press on a card starts a drag that selects or deselects the range to the finger, in or out of select mode.
-- A long-press on a book header outside select mode turns select mode on with that book's shown cards selected; moving the finger then scrolls. In select mode the detector ignores a header, and a still long-press there toggles the book like a tap.
+- Every touch long-press in the Inbox goes through the list's one detector, `SelectGestures`.
+- A long-press on a card starts a drag that selects or deselects the range to the finger, in or out of select mode.
+- A long-press on a book header outside select mode turns select mode on with that book's shown cards selected.
+- Moving the finger after a book header long-press scrolls the list.
+- In select mode the detector ignores a book header; a still long-press there toggles the book like a tap.
 - A long-press on anything else does nothing, and the list can scroll.
+- A second finger is ignored while a drag runs.
 - A drag over the top bar or bottom padding keeps hitting the edge row of the visible band; a long-press there hits nothing.
 - Outside select mode, card rows and book headers carry a long-click accessibility action ("Select", "Select this book's cards") with the same effect as the touch long-press.
 - Swipe is off while selecting.

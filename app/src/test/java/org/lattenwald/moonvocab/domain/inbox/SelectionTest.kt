@@ -65,12 +65,21 @@ class SelectionTest {
 
     @Test fun aPressOutsideTheVisibleBandHitsNothing() {
         assertEquals(Hit.None, hitAt(50, rows, top = 60, bottom = 160, clamp = false))
-        assertEquals(Hit.None, hitAt(-30, rows, top = 0, bottom = 160, clamp = false))
+        assertEquals(Hit.None, hitAt(130, rows, top = 0, bottom = 120, clamp = false))
     }
 
     @Test fun aDragPastTheBandHitsTheEdgeRow() {
         assertEquals(Hit.Card(1), hitAt(10, rows, top = 60, bottom = 160, clamp = true))
         assertEquals(Hit.Card(2), hitAt(400, rows, top = 0, bottom = 160, clamp = true))
+        assertEquals(Hit.None, hitAt(10, rows, top = 60, bottom = 60, clamp = true))
+    }
+
+    @Test fun aLongPressDragsFromACardAndSelectsABookOnlyOutsideSelectMode() {
+        assertEquals(LongPress.Drag(1), longPress(Hit.Card(1), selecting = false))
+        assertEquals(LongPress.Drag(1), longPress(Hit.Card(1), selecting = true))
+        assertEquals(LongPress.SelectBook(7), longPress(Hit.Header(7), selecting = false))
+        assertEquals(LongPress.LetGo, longPress(Hit.Header(7), selecting = true))
+        assertEquals(LongPress.LetGo, longPress(Hit.None, selecting = false))
     }
 
     @Test fun autoScrollOnlyNearTheEdges() {
