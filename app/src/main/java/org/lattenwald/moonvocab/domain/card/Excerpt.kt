@@ -26,8 +26,9 @@ fun acceptModelExcerpt(modelExcerpt: String?, sentence: String, focus: String, f
 
     val prefix = if (at > 0) ELLIPSIS.toString() else ""
     val suffix = if (end < sentence.length) ELLIPSIS.toString() else ""
-    val excerptFocus = prefix.length + focusInCore
-    return Excerpt(prefix + sentence.substring(at, end) + suffix, excerptFocus, excerptFocus + wanted.length)
+    val kept = trimCut(sentence, at, end, focusStart, focusStart + wanted.length, prefix.isNotEmpty(), suffix.isNotEmpty())
+    val excerptFocus = prefix.length + focusStart - kept.first
+    return Excerpt(prefix + sentence.substring(kept) + suffix, excerptFocus, excerptFocus + wanted.length)
 }
 
 fun cutExcerpt(sentence: String, focusStart: Int, focusEnd: Int, maxWords: Int): Excerpt {
@@ -45,8 +46,20 @@ fun cutExcerpt(sentence: String, focusStart: Int, focusEnd: Int, maxWords: Int):
 
     val prefix = if (first - left > 0) ELLIPSIS.toString() else ""
     val suffix = if (last + right < words.lastIndex) ELLIPSIS.toString() else ""
-    val shift = prefix.length - from
-    return Excerpt(prefix + sentence.substring(from, to) + suffix, focusStart + shift, focusEnd + shift)
+    val kept = trimCut(sentence, from, to, focusStart, focusEnd, prefix.isNotEmpty(), suffix.isNotEmpty())
+    val shift = prefix.length - kept.first
+    return Excerpt(prefix + sentence.substring(kept) + suffix, focusStart + shift, focusEnd + shift)
+}
+
+private const val CUT_PUNCTUATION = ",;:–—-"
+
+private fun trimCut(sentence: String, from: Int, to: Int, focusStart: Int, focusEnd: Int, cutStart: Boolean, cutEnd: Boolean): IntRange {
+    fun droppable(c: Char) = c.isWhitespace() || c in CUT_PUNCTUATION
+    var start = from
+    var end = to
+    if (cutStart) while (start < focusStart && droppable(sentence[start])) start++
+    if (cutEnd) while (end > focusEnd && droppable(sentence[end - 1])) end--
+    return start until end
 }
 
 fun markHtml(text: String, start: Int, end: Int): String =

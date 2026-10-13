@@ -57,7 +57,7 @@
   - its bracketed focus falls on the chosen occurrence.
 - Otherwise the app cuts a window of N words around the focus.
 - The excerpt has no minimum length.
-- The `…` before and after an excerpt mark where the sentence was cut.
+- The `…` before and after an excerpt mark where the sentence was cut. Whitespace and `, ; : – — -` next to a cut are dropped, never inside the focus.
 - Two cards are compared for sense when their source languages are equal (null equals null) and their `senseKey(lemma)` values are equal.
 - Sense candidates are known cards (SENT and PENDING first, then DISCARDED and DELETED_IN_ANKI, then by id) followed by earlier cards of the same batch. FAILED cards are never candidates.
 - A mark that matches an earlier mark of its batch goes wherever that mark went.

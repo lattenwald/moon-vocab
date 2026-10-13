@@ -22,6 +22,16 @@ class ExcerptTest {
         assertEquals(Excerpt("a b c…", 0, 1), cutExcerpt("a b c d e f", 0, 1, 3))
     }
 
+    @Test fun punctuationAtACutIsDropped() {
+        assertEquals(Excerpt("a b…", 0, 1), cutExcerpt("a b, c d", 0, 1, 2))
+        val s = "a b — c d"
+        assertEquals(Excerpt("…c d", 1, 2), cutExcerpt(s, s.indexOf('c'), s.indexOf('c') + 1, 3))
+    }
+
+    @Test fun modelExcerptDropsPunctuationAtACut() {
+        assertEquals(Excerpt("…Falten, Taschen…", 9, 16), acceptModelExcerpt("Falten, [Taschen],", KLEID, "Taschen", KLEID.indexOf("Taschen"), 15))
+    }
+
     @Test fun gluedEllipsisIsNotAWord() = assertEquals(3, wordCount("…mit  Falten, Taschen…"))
 
     @Test fun modelExcerptEllipsesComeFromItsPositionInTheSentence() {
