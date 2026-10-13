@@ -154,7 +154,8 @@ fun reduce(s: CardEditState, intent: CardIntent): CardStep = when (intent) {
     is CardIntent.UndoDone -> CardStep(s, listOf(CardEffect.Open(null)), undoMessage(intent.result))
     is CardIntent.Failed -> {
         val leaving = (intent.effect as? CardEffect.SaveLocal)?.then == AfterLocalSave.LEAVE
-        finish(if (leaving) s.copy(dialog = CardDialog.ConfirmLeave) else s, CardMessage.Failed(intent.message))
+        val message = if (intent.effect == CardEffect.Send) CardMessage.SendFailed(intent.message) else CardMessage.Failed(intent.message)
+        finish(if (leaving) s.copy(dialog = CardDialog.ConfirmLeave) else s, message)
     }
 }
 

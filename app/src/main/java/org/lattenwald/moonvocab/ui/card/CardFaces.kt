@@ -97,33 +97,41 @@ internal fun BackFace(fields: CardFields, bookLine: String?, color: Color) {
 }
 
 @Composable
-internal fun FrontForm(form: CardFields, invalid: Set<CardField>, color: Color, onEdit: (CardField, String) -> Unit) {
+internal fun FrontForm(form: CardFields, invalid: Set<CardField>, color: Color, readOnly: Boolean, onEdit: (CardField, String) -> Unit) {
     Face(color) {
-        FormField(CardField.WORD, form, invalid, onEdit, singleLine = true)
-        FormField(CardField.TRANSCRIPTION, form, invalid, onEdit, singleLine = true)
-        FormField(CardField.GRAMMAR, form, invalid, onEdit, singleLine = true)
-        FormField(CardField.EXCERPT, form, invalid, onEdit)
+        FormField(CardField.WORD, form, invalid, readOnly, onEdit, singleLine = true)
+        FormField(CardField.TRANSCRIPTION, form, invalid, readOnly, onEdit, singleLine = true)
+        FormField(CardField.GRAMMAR, form, invalid, readOnly, onEdit, singleLine = true)
+        FormField(CardField.EXCERPT, form, invalid, readOnly, onEdit)
     }
 }
 
 @Composable
-internal fun BackForm(form: CardFields, invalid: Set<CardField>, bookLine: String?, color: Color, onEdit: (CardField, String) -> Unit) {
+internal fun BackForm(form: CardFields, invalid: Set<CardField>, bookLine: String?, color: Color, readOnly: Boolean, onEdit: (CardField, String) -> Unit) {
     Face(color) {
-        FormField(CardField.TRANSLATION, form, invalid, onEdit)
-        FormField(CardField.MEANING, form, invalid, onEdit)
-        FormField(CardField.SENTENCE, form, invalid, onEdit)
+        FormField(CardField.TRANSLATION, form, invalid, readOnly, onEdit)
+        FormField(CardField.MEANING, form, invalid, readOnly, onEdit)
+        FormField(CardField.SENTENCE, form, invalid, readOnly, onEdit)
         BookLine(bookLine)
     }
 }
 
 @Composable
-private fun FormField(field: CardField, form: CardFields, invalid: Set<CardField>, onEdit: (CardField, String) -> Unit, singleLine: Boolean = false) {
+private fun FormField(
+    field: CardField,
+    form: CardFields,
+    invalid: Set<CardField>,
+    readOnly: Boolean,
+    onEdit: (CardField, String) -> Unit,
+    singleLine: Boolean = false,
+) {
     val bracketed = field == CardField.EXCERPT || field == CardField.SENTENCE
     val error = field in invalid
     OutlinedTextField(
         value = form[field],
         onValueChange = { onEdit(field, it) },
         modifier = Modifier.fillMaxWidth(),
+        readOnly = readOnly,
         textStyle = when {
             bracketed -> LocalTextStyle.current.copy(fontFamily = BookFontFamily)
             field == CardField.TRANSCRIPTION -> LocalTextStyle.current.copy(fontFamily = IpaFontFamily)
