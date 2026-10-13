@@ -31,7 +31,7 @@ data class CardFields(
     }
 }
 
-private fun CardFields.with(f: CardField, value: String): CardFields = when (f) {
+fun CardFields.with(f: CardField, value: String): CardFields = when (f) {
     CardField.WORD -> copy(word = value)
     CardField.TRANSCRIPTION -> copy(transcription = value)
     CardField.GRAMMAR -> copy(grammar = value)
