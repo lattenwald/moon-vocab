@@ -3,6 +3,7 @@
 
     <string name="import_channel_name">Import progress</string>
     <string name="import_notification_title">Importing marks</string>
+    <string name="share_no_file">Only Moon+ backups can be shared here</string>
     <plurals name="import_progress">
         <item quantity="one">%1$d of %2$d mark</item>
         <item quantity="other">%1$d of %2$d marks</item>

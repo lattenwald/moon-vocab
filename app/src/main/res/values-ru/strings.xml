@@ -3,6 +3,7 @@
 
     <string name="import_channel_name">Ход импорта</string>
     <string name="import_notification_title">Импорт пометок</string>
+    <string name="share_no_file">Сюда можно отправить только резервную копию Moon+</string>
     <plurals name="import_progress">
         <item quantity="one">%1$d из %2$d пометки</item>
         <item quantity="few">%1$d из %2$d пометок</item>

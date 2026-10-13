@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -43,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         val uri = runCatching { IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java) }
             .onFailure { Log.w(TAG, "unreadable share", it) }
             .getOrNull()
-        if (uri != null) share.offer(uri)
+        if (uri != null) share.offer(uri) else Toast.makeText(this, R.string.share_no_file, Toast.LENGTH_LONG).show()
     }
 
     private companion object {

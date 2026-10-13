@@ -56,7 +56,7 @@ Part 2's import filled the Inbox. You need these pending cards for part 6 anyway
 ## 5. Milestone 5 on the phone (quick)
 
 1. From your file manager, share a `.mrpro` to Moon+ Vocab. The app opens on the Inbox with the import sheet showing that file. Close it without importing.
-2. Share any non-backup file, such as a photo. The sheet says the backup is incomplete.
+2. Share any non-backup file that isn't a photo, video or text, such as a PDF or a zip. The sheet says the backup is incomplete. Share a photo or a link from the browser: Moon+ Vocab isn't in the share sheet.
 3. Back gesture: on a card page, a settings page and the language picker, swipe slowly from the edge. The page below shows through and follows your finger. Release and it goes back; swipe back the other way and it stays.
 4. Back order on the Inbox: with the import sheet open, Back closes the sheet. In selection mode, Back clears the selection.
 5. Settings → Cards. Moving the slider changes the example front. Card design opens a sample card.
