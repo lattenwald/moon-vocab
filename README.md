@@ -20,4 +20,4 @@ Needs the Android SDK with `ANDROID_HOME` set. `make help` lists the targets; `m
 
 ## Licence
 
-MIT, see [LICENSE](LICENSE). Reused code stays under its original licence and copyright: the parts that reproduce Moon+ Reader's book handling belong to Moon+ Reader's author, and bundled fonts and libraries keep their own licences.
+MIT, see [LICENSE](LICENSE). Reused code stays under its original licence and copyright: the parts that reproduce Moon+ Reader's book handling belong to Moon+ Reader's author, and bundled fonts and libraries keep their own licences. Details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
